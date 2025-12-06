@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Building2, User, Briefcase } from 'lucide-react';
+import { Building2, User, Briefcase, Users, GraduationCap, Store, Heart, Target } from 'lucide-react';
 
 interface Perfil {
   titulo: string;
@@ -17,6 +17,7 @@ interface ParaQuemEProps {
   content?: ParaQuemEContent;
   previewOverride?: ParaQuemEContent;
   variante?: 'modelo_a' | 'modelo_b';
+  disableAnimations?: boolean;
 }
 
 const defaultContent: ParaQuemEContent = {
@@ -33,6 +34,11 @@ const iconMap: Record<string, typeof Building2> = {
   Building2,
   User,
   Briefcase,
+  Users,
+  GraduationCap,
+  Store,
+  Heart,
+  Target,
 };
 
 export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a' }: ParaQuemEProps) => {

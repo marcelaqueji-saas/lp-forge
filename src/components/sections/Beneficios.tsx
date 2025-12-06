@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock } from 'lucide-react';
+import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock, Star, Heart, Award, TrendingUp, Users } from 'lucide-react';
 
 interface Beneficio {
   titulo: string;
@@ -17,6 +17,7 @@ interface BeneficiosProps {
   content?: BeneficiosContent;
   previewOverride?: BeneficiosContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
+  disableAnimations?: boolean;
 }
 
 const defaultContent: BeneficiosContent = {
@@ -40,6 +41,11 @@ const iconMap: Record<string, typeof Check> = {
   Globe,
   BarChart3,
   Clock,
+  Star,
+  Heart,
+  Award,
+  TrendingUp,
+  Users,
 };
 
 export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a' }: BeneficiosProps) => {

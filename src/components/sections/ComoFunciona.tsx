@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, MousePointer, Rocket } from 'lucide-react';
+import { Zap, MousePointer, Rocket, Star, Target, CheckCircle, Settings, Users, Lightbulb, Clock, Award, Heart } from 'lucide-react';
 
 interface Passo {
   titulo: string;
@@ -17,6 +17,7 @@ interface ComoFuncionaProps {
   content?: ComoFuncionaContent;
   previewOverride?: ComoFuncionaContent;
   variante?: 'modelo_a' | 'modelo_b';
+  disableAnimations?: boolean;
 }
 
 const defaultContent: ComoFuncionaContent = {
@@ -33,9 +34,18 @@ const iconMap: Record<string, typeof Zap> = {
   Zap,
   MousePointer,
   Rocket,
+  Star,
+  Target,
+  CheckCircle,
+  Settings,
+  Users,
+  Lightbulb,
+  Clock,
+  Award,
+  Heart,
 };
 
-export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a' }: ComoFuncionaProps) => {
+export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a', disableAnimations = false }: ComoFuncionaProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let passos: Passo[] = [];
