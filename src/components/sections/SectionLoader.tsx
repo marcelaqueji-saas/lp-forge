@@ -2,6 +2,12 @@ import React, { Suspense, lazy, ComponentType, memo } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { getSectionModel, SectionKey, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
 import { LPContent } from '@/lib/lpContentApi';
+import { 
+  parseVisualConfig, 
+  getVisualClasses, 
+  prefersReducedMotion,
+  PremiumVisualConfig 
+} from '@/lib/premiumPresets';
 
 // ============================================================
 // BASE SECTION COMPONENTS (always loaded)
@@ -357,6 +363,72 @@ function isLazyComponent(componentKey: string): boolean {
 }
 
 // ============================================================
+// SEPARATOR COMPONENT
+// ============================================================
+
+const PremiumSeparator: React.FC<{
+  type: 'line' | 'gradient' | 'glow' | 'wave' | 'diagonal' | 'curve';
+  position: 'before' | 'after';
+}> = ({ type, position }) => {
+  const isTop = position === 'before';
+  
+  switch (type) {
+    case 'line':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent`} />
+      );
+    case 'gradient':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0`} />
+      );
+    case 'glow':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 blur-sm`} />
+      );
+    case 'wave':
+      return (
+        <svg
+          viewBox="0 0 1200 60"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-12 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <path
+            d="M0,30 C300,60 600,0 900,30 C1050,45 1150,15 1200,30 L1200,60 L0,60 Z"
+            fill="currentColor"
+            className="text-background"
+          />
+        </svg>
+      );
+    case 'diagonal':
+      return (
+        <svg
+          viewBox="0 0 100 10"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-16 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <polygon points="0,10 100,0 100,10" fill="currentColor" className="text-background" />
+        </svg>
+      );
+    case 'curve':
+      return (
+        <svg
+          viewBox="0 0 1200 60"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-12 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <path
+            d="M0,60 Q600,0 1200,60 L1200,60 L0,60 Z"
+            fill="currentColor"
+            className="text-background"
+          />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
+// ============================================================
 // MAIN SECTION LOADER COMPONENT
 // ============================================================
 
@@ -404,7 +476,11 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   // 2. Get the section model for this variant
   const sectionModel = getSectionModel(sectionKey, variant);
   
-  // 3. Determine which component to render
+  // 3. Parse premium visual config from content
+  const visualConfig = parseVisualConfig(content as Record<string, any>);
+  const reducedMotion = prefersReducedMotion();
+  
+  // 4. Determine which component to render
   let Component: ComponentType<any> | null = null;
   let componentKey = '';
   
@@ -431,36 +507,57 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
     console.warn(`[SectionLoader] Using fallback component for: ${sectionKey}, variant: ${variant}`);
   }
 
-  // 4. Prepare props for the component
+  // 5. Prepare props for the component
   const legacyVariant = mapVariantToLegacy(variant);
   
-  // 5. Build inline styles from content
+  // 6. Build inline styles from content
   const sectionStyles = buildSectionStyles(content);
+  
+  // 7. Get premium visual classes
+  const visualClasses = getVisualClasses(visualConfig, reducedMotion || disableAnimations);
   
   const componentProps = {
     content: content,
     previewOverride: previewOverride,
     variante: legacyVariant,
-    disableAnimations: disableAnimations,
+    disableAnimations: disableAnimations || reducedMotion,
+    buttonStyle: visualConfig.button_style,
   };
 
   // Render with appropriate wrapper
   const isLazy = isLazyComponent(componentKey);
 
+  // Check if we need separators
+  const hasSeparatorBefore = visualConfig.separator_before && visualConfig.separator_before !== 'none';
+  const hasSeparatorAfter = visualConfig.separator_after && visualConfig.separator_after !== 'none';
+
   // Wrap in styled div if custom styles exist
-  const hasCustomStyles = Object.keys(sectionStyles).length > 0;
+  const hasCustomStyles = Object.keys(sectionStyles).length > 0 || visualClasses.length > 0 || hasSeparatorBefore || hasSeparatorAfter;
+
+  const renderComponent = () => <Component {...componentProps} />;
+
+  const wrappedContent = hasCustomStyles ? (
+    <div 
+      style={sectionStyles} 
+      className={`relative ${visualClasses}`}
+    >
+      {hasSeparatorBefore && (
+        <PremiumSeparator type={visualConfig.separator_before as any} position="before" />
+      )}
+      {renderComponent()}
+      {hasSeparatorAfter && (
+        <PremiumSeparator type={visualConfig.separator_after as any} position="after" />
+      )}
+    </div>
+  ) : (
+    renderComponent()
+  );
 
   if (isLazy) {
     return (
       <SectionErrorBoundary sectionName={sectionKey}>
         <Suspense fallback={<SectionFallback sectionName={sectionKey} />}>
-          {hasCustomStyles ? (
-            <div style={sectionStyles}>
-              <Component {...componentProps} />
-            </div>
-          ) : (
-            <Component {...componentProps} />
-          )}
+          {wrappedContent}
         </Suspense>
       </SectionErrorBoundary>
     );
@@ -468,13 +565,7 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   
   return (
     <SectionErrorBoundary sectionName={sectionKey}>
-      {hasCustomStyles ? (
-        <div style={sectionStyles}>
-          <Component {...componentProps} />
-        </div>
-      ) : (
-        <Component {...componentProps} />
-      )}
+      {wrappedContent}
     </SectionErrorBoundary>
   );
 });
