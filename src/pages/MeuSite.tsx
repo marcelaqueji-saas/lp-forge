@@ -26,6 +26,7 @@ import {
 import { SectionLoader, resolveVariant } from '@/components/sections/SectionLoader';
 import { SectionKey } from '@/lib/sectionModels';
 import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
+import { parseVisualConfig, PremiumVisualConfig } from '@/lib/premiumPresets';
 
 const MeuSite = () => {
   const { lpId } = useParams();
@@ -214,6 +215,41 @@ const MeuSite = () => {
     }
   };
 
+  const handlePremiumConfigChange = async (sectionKey: string, partialConfig: Partial<PremiumVisualConfig>) => {
+    if (!lpId) return;
+
+    try {
+      const currentContent = content[sectionKey] || {};
+      
+      // Merge premium config fields with existing content
+      const updatedContent = {
+        ...currentContent,
+        ...(partialConfig.background_style !== undefined && { background_style: partialConfig.background_style }),
+        ...(partialConfig.ornament_style !== undefined && { ornament_style: partialConfig.ornament_style }),
+        ...(partialConfig.animation_preset !== undefined && { animation_preset: partialConfig.animation_preset }),
+        ...(partialConfig.button_style !== undefined && { button_style: partialConfig.button_style }),
+        ...(partialConfig.cursor_effect !== undefined && { cursor_effect: partialConfig.cursor_effect }),
+        ...(partialConfig.separator_before !== undefined && { separator_before: partialConfig.separator_before }),
+        ...(partialConfig.separator_after !== undefined && { separator_after: partialConfig.separator_after }),
+      };
+
+      // Save to database
+      await saveSectionContent(lpId, sectionKey, updatedContent);
+
+      // Update local state immediately for instant preview
+      setContent(prev => ({
+        ...prev,
+        [sectionKey]: updatedContent,
+      }));
+
+      toast({ title: 'Efeitos visuais atualizados!' });
+      console.log(`[MeuSite] Premium config changed for ${sectionKey}:`, partialConfig);
+    } catch (error) {
+      console.error('[MeuSite] Error saving premium config:', error);
+      toast({ title: 'Erro ao salvar efeitos', variant: 'destructive' });
+    }
+  };
+
   const handleContentSave = () => {
     loadLP(); // Reload to get updated content
   };
@@ -370,6 +406,7 @@ const MeuSite = () => {
         {sectionOrder.map((section, index) => {
           const hasVariants = !!(SECTION_VARIANTS[section]?.length);
           const sectionContent = content[section] || {};
+          const premiumConfig = parseVisualConfig(sectionContent);
 
           return (
             <div 
@@ -389,9 +426,12 @@ const MeuSite = () => {
                     style_text: sectionContent.style_text as string,
                     style_gradient: sectionContent.style_gradient as string,
                   }}
+                  premiumConfig={premiumConfig}
+                  userPlan="premium"
                   onChangeLayout={() => handleChangeLayout(section)}
                   onEditContent={() => handleEditContent(section)}
                   onStyleChange={(styles) => handleStyleChange(section, styles)}
+                  onPremiumConfigChange={(config) => handlePremiumConfigChange(section, config)}
                 />
               )}
               
