@@ -368,6 +368,29 @@ interface SectionLoaderProps {
   disableAnimations?: boolean;
 }
 
+/**
+ * Build inline styles from content.style_* properties
+ */
+function buildSectionStyles(content?: LPContent): React.CSSProperties {
+  const styles: React.CSSProperties = {};
+  
+  if (!content) return styles;
+  
+  // Background color or gradient
+  if (content.style_gradient) {
+    styles.background = content.style_gradient as string;
+  } else if (content.style_bg) {
+    styles.backgroundColor = content.style_bg as string;
+  }
+  
+  // Text color
+  if (content.style_text) {
+    styles.color = content.style_text as string;
+  }
+  
+  return styles;
+}
+
 export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   sectionKey,
   content = {},
@@ -411,6 +434,9 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   // 4. Prepare props for the component
   const legacyVariant = mapVariantToLegacy(variant);
   
+  // 5. Build inline styles from content
+  const sectionStyles = buildSectionStyles(content);
+  
   const componentProps = {
     content: content,
     previewOverride: previewOverride,
@@ -421,18 +447,34 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   // Render with appropriate wrapper
   const isLazy = isLazyComponent(componentKey);
 
+  // Wrap in styled div if custom styles exist
+  const hasCustomStyles = Object.keys(sectionStyles).length > 0;
+
   if (isLazy) {
     return (
       <SectionErrorBoundary sectionName={sectionKey}>
         <Suspense fallback={<SectionFallback sectionName={sectionKey} />}>
-          <Component {...componentProps} />
+          {hasCustomStyles ? (
+            <div style={sectionStyles}>
+              <Component {...componentProps} />
+            </div>
+          ) : (
+            <Component {...componentProps} />
+          )}
         </Suspense>
       </SectionErrorBoundary>
     );
   }
+  
   return (
     <SectionErrorBoundary sectionName={sectionKey}>
-      <Component {...componentProps} />
+      {hasCustomStyles ? (
+        <div style={sectionStyles}>
+          <Component {...componentProps} />
+        </div>
+      ) : (
+        <Component {...componentProps} />
+      )}
     </SectionErrorBoundary>
   );
 });

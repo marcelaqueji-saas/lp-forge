@@ -1,25 +1,41 @@
 import { Palette, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { QuickStyleEditor } from './QuickStyleEditor';
 
 interface SectionOverlayProps {
   sectionKey: string;
   sectionName: string;
   isFirst?: boolean;
   canChangeLayout?: boolean;
+  currentStyles?: {
+    style_bg?: string;
+    style_text?: string;
+    style_gradient?: string;
+  };
+  supportsGradient?: boolean;
   onChangeLayout: () => void;
   onEditContent: () => void;
+  onStyleChange?: (styles: Record<string, string | undefined>) => void;
 }
+
+// Sections that support gradient backgrounds
+const GRADIENT_SECTIONS = ['hero', 'chamada_final', 'beneficios'];
 
 export const SectionOverlay = ({ 
   sectionKey,
   sectionName, 
   isFirst = false,
   canChangeLayout = true,
+  currentStyles = {},
+  supportsGradient,
   onChangeLayout, 
-  onEditContent 
+  onEditContent,
+  onStyleChange,
 }: SectionOverlayProps) => {
   const isMobile = useIsMobile();
+  const hasStyleEditor = !!onStyleChange;
+  const showGradient = supportsGradient ?? GRADIENT_SECTIONS.includes(sectionKey);
 
   // Mobile layout - compact bottom bar
   if (isMobile) {
@@ -34,6 +50,14 @@ export const SectionOverlay = ({
             <span className="font-medium text-xs truncate flex-1">{sectionName}</span>
             
             <div className="flex items-center gap-1.5 shrink-0">
+              {hasStyleEditor && (
+                <QuickStyleEditor
+                  sectionKey={sectionKey}
+                  currentStyles={currentStyles}
+                  supportsGradient={showGradient}
+                  onStyleChange={onStyleChange!}
+                />
+              )}
               {canChangeLayout && (
                 <Button
                   size="sm"
@@ -77,6 +101,14 @@ export const SectionOverlay = ({
           <span className="font-medium text-sm">{sectionName}</span>
           
           <div className="flex items-center gap-2">
+            {hasStyleEditor && (
+              <QuickStyleEditor
+                sectionKey={sectionKey}
+                currentStyles={currentStyles}
+                supportsGradient={showGradient}
+                onStyleChange={onStyleChange!}
+              />
+            )}
             {canChangeLayout && (
               <Button
                 size="sm"

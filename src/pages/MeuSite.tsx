@@ -178,6 +178,42 @@ const MeuSite = () => {
     }
   };
 
+  const handleStyleChange = async (sectionKey: string, styles: Record<string, string | undefined>) => {
+    if (!lpId) return;
+
+    try {
+      const currentContent = content[sectionKey] || {};
+      
+      // Merge new styles with existing content
+      const updatedContent = {
+        ...currentContent,
+        ...styles,
+      };
+
+      // Remove undefined values (reset to global)
+      Object.keys(styles).forEach(key => {
+        if (styles[key] === undefined) {
+          delete updatedContent[key];
+        }
+      });
+
+      // Save to database
+      await saveSectionContent(lpId, sectionKey, updatedContent);
+
+      // Update local state immediately for instant preview
+      setContent(prev => ({
+        ...prev,
+        [sectionKey]: updatedContent,
+      }));
+
+      toast({ title: 'Estilo atualizado!' });
+      console.log(`[MeuSite] Styles changed for ${sectionKey}:`, styles);
+    } catch (error) {
+      console.error('[MeuSite] Error saving styles:', error);
+      toast({ title: 'Erro ao salvar estilo', variant: 'destructive' });
+    }
+  };
+
   const handleContentSave = () => {
     loadLP(); // Reload to get updated content
   };
@@ -348,8 +384,14 @@ const MeuSite = () => {
                   sectionName={getSectionName(section)}
                   isFirst={index === 0}
                   canChangeLayout={hasVariants}
+                  currentStyles={{
+                    style_bg: sectionContent.style_bg as string,
+                    style_text: sectionContent.style_text as string,
+                    style_gradient: sectionContent.style_gradient as string,
+                  }}
                   onChangeLayout={() => handleChangeLayout(section)}
                   onEditContent={() => handleEditContent(section)}
+                  onStyleChange={(styles) => handleStyleChange(section, styles)}
                 />
               )}
               
