@@ -443,6 +443,71 @@ export type Database = {
         }
         Relationships: []
       }
+      saas_settings: {
+        Row: {
+          created_at: string
+          home_lp_id: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          home_lp_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          home_lp_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_settings_home_lp_id_fkey"
+            columns: ["home_lp_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      section_model_configs: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          is_featured: boolean
+          sort_order: number
+          updated_at: string
+          visible_for_free: boolean
+          visible_for_premium: boolean
+          visible_for_pro: boolean
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id: string
+          is_featured?: boolean
+          sort_order?: number
+          updated_at?: string
+          visible_for_free?: boolean
+          visible_for_premium?: boolean
+          visible_for_pro?: boolean
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_featured?: boolean
+          sort_order?: number
+          updated_at?: string
+          visible_for_free?: boolean
+          visible_for_premium?: boolean
+          visible_for_pro?: boolean
+        }
+        Relationships: []
+      }
       section_separators: {
         Row: {
           category: string

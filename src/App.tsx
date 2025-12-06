@@ -57,6 +57,7 @@ import MasterSeparators from "./pages/master/MasterSeparators";
 import MasterLPs from "./pages/master/MasterLPs";
 import MasterAudit from "./pages/master/MasterAudit";
 import MasterHomepage from "./pages/master/MasterHomepage";
+import MasterSectionModels from "./pages/master/MasterSectionModels";
 
 const queryClient = new QueryClient();
 
@@ -194,6 +195,14 @@ const App = () => (
               element={
                 <AdminMasterRoute>
                   <MasterHomepage />
+                </AdminMasterRoute>
+              }
+            />
+            <Route
+              path="/master/section-models"
+              element={
+                <AdminMasterRoute>
+                  <MasterSectionModels />
                 </AdminMasterRoute>
               }
             />
