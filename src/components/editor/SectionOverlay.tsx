@@ -2,6 +2,8 @@ import { Palette, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { QuickStyleEditor } from './QuickStyleEditor';
+import { PremiumStyleEditor } from './PremiumStyleEditor';
+import { PremiumVisualConfig } from '@/lib/premiumPresets';
 
 interface SectionOverlayProps {
   sectionKey: string;
@@ -13,10 +15,13 @@ interface SectionOverlayProps {
     style_text?: string;
     style_gradient?: string;
   };
+  premiumConfig?: PremiumVisualConfig;
   supportsGradient?: boolean;
+  userPlan?: 'free' | 'pro' | 'premium';
   onChangeLayout: () => void;
   onEditContent: () => void;
   onStyleChange?: (styles: Record<string, string | undefined>) => void;
+  onPremiumConfigChange?: (config: Partial<PremiumVisualConfig>) => void;
 }
 
 // Sections that support gradient backgrounds
@@ -28,13 +33,17 @@ export const SectionOverlay = ({
   isFirst = false,
   canChangeLayout = true,
   currentStyles = {},
+  premiumConfig = {},
   supportsGradient,
+  userPlan = 'free',
   onChangeLayout, 
   onEditContent,
   onStyleChange,
+  onPremiumConfigChange,
 }: SectionOverlayProps) => {
   const isMobile = useIsMobile();
   const hasStyleEditor = !!onStyleChange;
+  const hasPremiumEditor = !!onPremiumConfigChange;
   const showGradient = supportsGradient ?? GRADIENT_SECTIONS.includes(sectionKey);
 
   // Mobile layout - compact bottom bar
@@ -56,6 +65,14 @@ export const SectionOverlay = ({
                   currentStyles={currentStyles}
                   supportsGradient={showGradient}
                   onStyleChange={onStyleChange!}
+                />
+              )}
+              {hasPremiumEditor && (
+                <PremiumStyleEditor
+                  sectionKey={sectionKey}
+                  currentConfig={premiumConfig}
+                  onChange={onPremiumConfigChange!}
+                  userPlan={userPlan}
                 />
               )}
               {canChangeLayout && (
@@ -107,6 +124,14 @@ export const SectionOverlay = ({
                 currentStyles={currentStyles}
                 supportsGradient={showGradient}
                 onStyleChange={onStyleChange!}
+              />
+            )}
+            {hasPremiumEditor && (
+              <PremiumStyleEditor
+                sectionKey={sectionKey}
+                currentConfig={premiumConfig}
+                onChange={onPremiumConfigChange!}
+                userPlan={userPlan}
               />
             )}
             {canChangeLayout && (
