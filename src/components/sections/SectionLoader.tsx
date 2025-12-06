@@ -306,42 +306,73 @@ export function mapVariantToLegacy(variant: string): string {
   
   // Map new IDs to legacy
   const legacyMap: Record<string, string> = {
+    // Hero
     'hero-basic': 'modelo_a',
     'hero-side-image': 'modelo_a',
     'hero-dashboard': 'modelo_b',
     'hero-cards': 'modelo_b',
     'hero-cinematic-video': 'modelo_c',
     'hero-parallax-glass': 'modelo_c',
+    // Como Funciona
     'steps-basic': 'modelo_a',
     'steps-icons': 'modelo_a',
     'steps-image-left': 'modelo_b',
     'steps-vertical-timeline': 'modelo_b',
+    'como_funciona-modelo_a': 'modelo_a',
+    'como_funciona-modelo_b': 'modelo_b',
+    // Para Quem É
     'target-basic': 'modelo_a',
     'target-grid': 'modelo_a',
     'target-cards': 'modelo_b',
     'target-avatars': 'modelo_b',
     'target-lit-line': 'modelo_b',
+    'para_quem_e-modelo_a': 'modelo_a',
+    'para_quem_e-modelo_b': 'modelo_b',
+    // Benefícios
     'benefits-basic': 'modelo_a',
     'benefits-carousel': 'modelo_a',
     'benefits-bento-grid': 'modelo_b',
     'benefits-pictures': 'modelo_c',
     'benefits-motion-icons': 'modelo_c',
+    'beneficios-modelo_a': 'modelo_a',
+    'beneficios-modelo_b': 'modelo_b',
+    'beneficios-modelo_c': 'modelo_c',
+    // Provas Sociais
     'testimonials-basic': 'modelo_a',
     'testimonials-slider': 'modelo_a',
     'testimonials-cards': 'modelo_b',
     'testimonials-profile-feed': 'modelo_c',
     'testimonials-video-grid': 'modelo_c',
+    'provas_sociais-modelo_a': 'modelo_a',
+    'provas_sociais-modelo_b': 'modelo_b',
+    'provas_sociais-modelo_c': 'modelo_c',
+    // Planos
     'pricing-basic': 'modelo_a',
     'pricing-feature-grid': 'modelo_a',
     'pricing-tabs': 'modelo_b',
+    'planos-modelo_a': 'modelo_a',
+    'planos-modelo_b': 'modelo_b',
+    // FAQ
     'faq-accordion': 'modelo_a',
     'faq-cards': 'modelo_a',
     'faq-sections': 'modelo_b',
+    'faq-modelo_a': 'modelo_a',
+    'faq-modelo_b': 'modelo_b',
+    // Chamada Final
     'cta-basic': 'modelo_a',
     'cta-showcase': 'modelo_b',
     'cta-banner-glass': 'modelo_c',
+    'chamada_final-modelo_a': 'modelo_a',
+    'chamada_final-modelo_b': 'modelo_b',
+    'chamada_final-modelo_c': 'modelo_c',
+    // Rodapé
     'footer-basic': 'modelo_a',
     'footer-columns': 'modelo_b',
+    'rodape-modelo_a': 'modelo_a',
+    'rodape-modelo_b': 'modelo_b',
+    // Menu
+    'menu-modelo_a': 'modelo_a',
+    'menu-modelo_b': 'modelo_b',
   };
 
   return legacyMap[variant] || 'modelo_a';

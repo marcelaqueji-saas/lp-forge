@@ -20,6 +20,7 @@ import { DepoimentosEditor } from './DepoimentosEditor';
 import { FAQEditor } from './FAQEditor';
 import { MenuEditor } from './MenuEditor';
 import { RodapeEditor } from './RodapeEditor';
+import { PassosEditor } from './PassosEditor';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -102,6 +103,8 @@ export const ContentEditor = ({
     switch (sectionKey) {
       case 'menu':
         return <MenuEditor {...editorProps} />;
+      case 'como_funciona':
+        return <PassosEditor {...editorProps} />;
       case 'beneficios':
         return <BeneficiosEditor {...editorProps} />;
       case 'planos':
