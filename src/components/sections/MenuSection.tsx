@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { Menu as MenuIcon } from 'lucide-react';
+import { Menu as MenuIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 interface Link {
   label: string;
@@ -24,12 +24,61 @@ interface MenuSectionProps {
 const defaultContent: MenuContent = {
   brand_name: 'Minha Página',
   links_json: JSON.stringify([
-    { label: 'Início', url: '#inicio' },
-    { label: 'Sobre', url: '#sobre' },
-    { label: 'Contato', url: '#contato' },
+    { label: 'Início', url: '#hero' },
+    { label: 'Benefícios', url: '#beneficios' },
+    { label: 'Planos', url: '#planos' },
+    { label: 'FAQ', url: '#faq' },
   ]),
   cta_label: 'Fale conosco',
-  cta_url: '#contato',
+  cta_url: '#chamada_final',
+};
+
+/**
+ * Handle navigation - smooth scroll for anchors, router navigation for routes
+ */
+const handleNavigation = (url: string, e?: React.MouseEvent) => {
+  if (!url) return;
+  
+  // Handle anchor links with smooth scroll
+  if (url.startsWith('#')) {
+    e?.preventDefault();
+    const targetId = url.substring(1);
+    
+    // Try to find element by data-section-key first (editor mode)
+    let element = document.querySelector(`[data-section-key="${targetId}"]`) as HTMLElement;
+    
+    // Fallback to id
+    if (!element) {
+      element = document.getElementById(targetId) as HTMLElement;
+    }
+    
+    // Fallback to section name patterns
+    if (!element) {
+      element = document.querySelector(`#${targetId}, [id*="${targetId}"]`) as HTMLElement;
+    }
+    
+    if (element) {
+      const headerOffset = 80; // Account for fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    } else {
+      console.warn(`[MenuSection] Target element not found: ${targetId}`);
+    }
+    return;
+  }
+  
+  // External links - let browser handle
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return; // Let the <a> tag handle it normally
+  }
+  
+  // Internal routes - use navigation (for SPAs)
+  // The <a> tag will handle it if using React Router Link behavior
 };
 
 export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverride }: MenuSectionProps) => {
@@ -43,9 +92,18 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
     links = [];
   }
 
+  const handleLinkClick = useCallback((url: string, e: React.MouseEvent) => {
+    handleNavigation(url, e);
+    setMobileMenuOpen(false);
+  }, []);
+
   if (variante === 'modelo_b') {
     return (
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+      <header 
+        className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border"
+        id="menu"
+        data-section-key="menu"
+      >
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,7 +112,11 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
         >
           {/* Brand centered */}
           <div className="text-center mb-3">
-            <a href="#" className="text-xl font-bold text-foreground hover:text-primary transition-colors">
+            <a 
+              href="#hero" 
+              onClick={(e) => handleLinkClick('#hero', e)}
+              className="text-xl font-bold text-foreground hover:text-primary transition-colors"
+            >
               {finalContent.brand_name}
             </a>
           </div>
@@ -64,7 +126,8 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             {links.map((link, index) => (
               <a
                 key={index}
-                href={link.url}
+                href={link.url || '#'}
+                onClick={(e) => handleLinkClick(link.url || '#', e)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
@@ -72,7 +135,12 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             ))}
             {finalContent.cta_label && finalContent.cta_url && (
               <Button size="sm" asChild>
-                <a href={finalContent.cta_url}>{finalContent.cta_label}</a>
+                <a 
+                  href={finalContent.cta_url}
+                  onClick={(e) => handleLinkClick(finalContent.cta_url!, e)}
+                >
+                  {finalContent.cta_label}
+                </a>
               </Button>
             )}
           </nav>
@@ -83,8 +151,13 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
             >
-              <MenuIcon className="w-5 h-5" />
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <MenuIcon className="w-5 h-5" />
+              )}
             </Button>
           </div>
 
@@ -98,16 +171,21 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
               {links.map((link, index) => (
                 <a
                   key={index}
-                  href={link.url}
+                  href={link.url || '#'}
+                  onClick={(e) => handleLinkClick(link.url || '#', e)}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
               {finalContent.cta_label && finalContent.cta_url && (
                 <Button size="sm" asChild className="mt-2">
-                  <a href={finalContent.cta_url}>{finalContent.cta_label}</a>
+                  <a 
+                    href={finalContent.cta_url}
+                    onClick={(e) => handleLinkClick(finalContent.cta_url!, e)}
+                  >
+                    {finalContent.cta_label}
+                  </a>
                 </Button>
               )}
             </motion.nav>
@@ -119,7 +197,11 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
 
   // Modelo A - Classic horizontal layout
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+    <header 
+      className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border"
+      id="menu"
+      data-section-key="menu"
+    >
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,7 +210,11 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
       >
         <div className="flex items-center justify-between">
           {/* Brand left */}
-          <a href="#" className="text-xl font-bold text-foreground hover:text-primary transition-colors">
+          <a 
+            href="#hero"
+            onClick={(e) => handleLinkClick('#hero', e)}
+            className="text-xl font-bold text-foreground hover:text-primary transition-colors"
+          >
             {finalContent.brand_name}
           </a>
           
@@ -137,7 +223,8 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             {links.map((link, index) => (
               <a
                 key={index}
-                href={link.url}
+                href={link.url || '#'}
+                onClick={(e) => handleLinkClick(link.url || '#', e)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
@@ -145,7 +232,12 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             ))}
             {finalContent.cta_label && finalContent.cta_url && (
               <Button size="sm" asChild>
-                <a href={finalContent.cta_url}>{finalContent.cta_label}</a>
+                <a 
+                  href={finalContent.cta_url}
+                  onClick={(e) => handleLinkClick(finalContent.cta_url!, e)}
+                >
+                  {finalContent.cta_label}
+                </a>
               </Button>
             )}
           </nav>
@@ -156,8 +248,13 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             size="sm"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
           >
-            <MenuIcon className="w-5 h-5" />
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <MenuIcon className="w-5 h-5" />
+            )}
           </Button>
         </div>
 
@@ -171,16 +268,21 @@ export const MenuSection = ({ content = {}, variante = 'modelo_a', previewOverri
             {links.map((link, index) => (
               <a
                 key={index}
-                href={link.url}
+                href={link.url || '#'}
+                onClick={(e) => handleLinkClick(link.url || '#', e)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
               </a>
             ))}
             {finalContent.cta_label && finalContent.cta_url && (
               <Button size="sm" asChild className="w-fit mt-2">
-                <a href={finalContent.cta_url}>{finalContent.cta_label}</a>
+                <a 
+                  href={finalContent.cta_url}
+                  onClick={(e) => handleLinkClick(finalContent.cta_url!, e)}
+                >
+                  {finalContent.cta_label}
+                </a>
               </Button>
             )}
           </motion.nav>

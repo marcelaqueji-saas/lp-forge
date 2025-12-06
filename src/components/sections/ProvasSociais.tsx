@@ -57,7 +57,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
     if (!featured) return null;
     
     return (
-      <section className="section-padding bg-gradient-to-br from-primary/5 to-accent/5">
+      <section className="section-padding bg-gradient-to-br from-primary/5 to-accent/5" id="provas_sociais" data-section-key="provas_sociais">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -106,7 +106,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-card/50 to-background">
+      <section className="section-padding bg-gradient-to-b from-card/50 to-background" id="provas_sociais" data-section-key="provas_sociais">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -156,7 +156,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
 
   // Modelo A - Grid de cards
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="provas_sociais" data-section-key="provas_sociais">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

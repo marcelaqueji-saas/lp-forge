@@ -60,7 +60,7 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
 
   if (variante === 'modelo_b') {
     return (
-      <section id="como-funciona" className="section-padding bg-card/50">
+      <section id="como_funciona" data-section-key="como_funciona" className="section-padding bg-card/50">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -123,7 +123,7 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
 
   // Modelo A - Cards horizontais
   return (
-    <section id="como-funciona" className="section-padding">
+    <section id="como_funciona" data-section-key="como_funciona" className="section-padding">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

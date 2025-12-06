@@ -39,7 +39,7 @@ export const ChamadaFinal = ({
   // Modelo C - Minimal side-by-side
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding">
+      <section className="section-padding" id="chamada_final" data-section-key="chamada_final">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -68,7 +68,7 @@ export const ChamadaFinal = ({
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden">
+      <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
         <div className="absolute inset-0 gradient-bg opacity-10" />
         <div className="section-container relative">
           <motion.div
@@ -100,7 +100,7 @@ export const ChamadaFinal = ({
 
   // Modelo A - Full width gradient
   return (
-    <section className="section-padding relative overflow-hidden">
+    <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
       <div className="absolute inset-0 gradient-bg" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
       <div className="section-container relative text-center text-primary-foreground">
