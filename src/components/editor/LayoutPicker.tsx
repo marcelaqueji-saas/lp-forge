@@ -73,9 +73,13 @@ export const LayoutPicker = ({
 
   const userPlan = (profile?.plan as PlanTier) || 'free';
 
+  // Sync selected state when currentVariant changes
   useEffect(() => {
-    setSelected(currentVariant);
-  }, [currentVariant]);
+    if (currentVariant) {
+      setSelected(currentVariant);
+      console.log(`[LayoutPicker] Current variant synced: ${currentVariant}`);
+    }
+  }, [currentVariant, open]);
 
   // Load templates from DB and model configs when section changes
   useEffect(() => {
@@ -231,6 +235,8 @@ export const LayoutPicker = ({
       setUpgradeOpen(true);
       return;
     }
+    
+    console.log(`[LayoutPicker] Selecting variant: ${variant.id} for section: ${sectionKey}`);
     setSelected(variant.id);
     onSelect(variant.id);
   };

@@ -1,27 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getLPBySlug, getAllContent, getSettings, LandingPage, LPContent, LPSettings } from '@/lib/lpContentApi';
+import { getLPBySlug, getAllContent, getSettings, getSectionOrder, LandingPage, LPContent, LPSettings, DEFAULT_SECTION_ORDER } from '@/lib/lpContentApi';
 import { initGA4, initMetaPixel } from '@/lib/analytics';
 import { captureUTMParams } from '@/lib/utm';
 import { Loader2 } from 'lucide-react';
-
-// Section components
-import { Hero } from '@/components/sections/Hero';
-import { ComoFunciona } from '@/components/sections/ComoFunciona';
-import { ParaQuemE } from '@/components/sections/ParaQuemE';
-import { Beneficios } from '@/components/sections/Beneficios';
-import { ProvasSociais } from '@/components/sections/ProvasSociais';
-import { Planos } from '@/components/sections/Planos';
-import { FAQ } from '@/components/sections/FAQ';
-import { ChamadaFinal } from '@/components/sections/ChamadaFinal';
-import { Rodape } from '@/components/sections/Rodape';
+import { SectionLoader } from '@/components/sections/SectionLoader';
+import { SectionKey } from '@/lib/sectionModels';
 import { LeadForm } from '@/components/sections/LeadForm';
+import { SEOHead } from '@/components/SEOHead';
 
 const LandingPageBySlug = () => {
   const { slug } = useParams<{ slug: string }>();
   const [lp, setLp] = useState<LandingPage | null>(null);
   const [content, setContent] = useState<Record<string, LPContent>>({});
   const [settings, setSettings] = useState<LPSettings>({});
+  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -41,14 +34,16 @@ const LandingPageBySlug = () => {
         return;
       }
 
-      const [contentData, settingsData] = await Promise.all([
+      const [contentData, settingsData, orderData] = await Promise.all([
         getAllContent(lpData.id),
         getSettings(lpData.id),
+        getSectionOrder(lpData.id),
       ]);
 
       setLp(lpData);
       setContent(contentData);
       setSettings(settingsData);
+      setSectionOrder(orderData);
       setLoading(false);
 
       // Initialize tracking
@@ -63,10 +58,6 @@ const LandingPageBySlug = () => {
 
     loadLP();
   }, [slug]);
-
-  const getVariante = (section: string): 'modelo_a' | 'modelo_b' => {
-    return (settings[`${section}_variante`] as 'modelo_a' | 'modelo_b') || 'modelo_a';
-  };
 
   if (loading) {
     return (
@@ -87,44 +78,39 @@ const LandingPageBySlug = () => {
     );
   }
 
+  // Filter sections that should render (exclude lead_form as it's handled separately)
+  const sectionsToRender = sectionOrder.filter(s => s !== 'lead_form');
+
   return (
     <div className="min-h-screen bg-background">
-      <Hero 
-        content={content.hero} 
-        variante={getVariante('hero')} 
-      />
-      <ComoFunciona 
-        content={content.como_funciona} 
-        variante={getVariante('como_funciona')} 
-      />
-      <ParaQuemE 
-        content={content.para_quem_e} 
-        variante={getVariante('para_quem_e')} 
-      />
-      <Beneficios 
-        content={content.beneficios} 
-        variante={getVariante('beneficios')} 
-      />
-      <ProvasSociais 
-        content={content.provas_sociais} 
-        variante={getVariante('provas_sociais')} 
-      />
-      <Planos 
-        content={content.planos} 
-        variante={getVariante('planos')} 
-      />
-      <LeadForm lpId={lp.id} />
-      <FAQ 
-        content={content.faq} 
-        variante={getVariante('faq')} 
-      />
-      <ChamadaFinal 
-        content={content.chamada_final} 
-        variante={getVariante('chamada_final')} 
-      />
-      <Rodape 
-        content={content.rodape} 
-      />
+      <SEOHead settings={settings} />
+      
+      {sectionsToRender.map((section) => {
+        // Special handling for lead form - render after planos
+        if (section === 'planos') {
+          return (
+            <div key={section}>
+              <SectionLoader
+                sectionKey={section as SectionKey}
+                content={content[section] || {}}
+                settings={settings}
+                disableAnimations={false}
+              />
+              <LeadForm lpId={lp.id} />
+            </div>
+          );
+        }
+
+        return (
+          <SectionLoader
+            key={section}
+            sectionKey={section as SectionKey}
+            content={content[section] || {}}
+            settings={settings}
+            disableAnimations={false}
+          />
+        );
+      })}
     </div>
   );
 };
