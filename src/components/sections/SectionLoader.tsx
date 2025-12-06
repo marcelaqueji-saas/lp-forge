@@ -418,7 +418,7 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
     disableAnimations: disableAnimations,
   };
 
-  // 5. Render with appropriate wrapper
+  // Render with appropriate wrapper
   const isLazy = isLazyComponent(componentKey);
 
   if (isLazy) {
@@ -430,10 +430,6 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
       </SectionErrorBoundary>
     );
   }
-
-  // Log dynamic layout switching
-  console.log('Dynamic layout switching fully operational.');
-
   return (
     <SectionErrorBoundary sectionName={sectionKey}>
       <Component {...componentProps} />
