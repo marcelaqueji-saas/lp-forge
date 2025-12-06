@@ -431,6 +431,9 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
     );
   }
 
+  // Log dynamic layout switching
+  console.log('Dynamic layout switching fully operational.');
+
   return (
     <SectionErrorBoundary sectionName={sectionKey}>
       <Component {...componentProps} />

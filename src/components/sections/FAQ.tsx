@@ -59,7 +59,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-background to-card/50">
+      <section className="section-padding bg-gradient-to-b from-background to-card/50" id="faq" data-section-key="faq">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -101,7 +101,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
 
   // Modelo A - Accordion
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="faq" data-section-key="faq">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

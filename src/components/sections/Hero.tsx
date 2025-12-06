@@ -59,7 +59,7 @@ export const Hero = ({
   // Modelo C - Minimal hero with full-width image background
   if (variante === 'modelo_c') {
     return (
-      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden" id="hero" data-section-key="hero">
         {/* Background Image */}
         {finalContent.imagem_principal && (
           <div className="absolute inset-0">
@@ -133,7 +133,7 @@ export const Hero = ({
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden">
+      <section className="section-padding relative overflow-hidden" id="hero" data-section-key="hero">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
         <div className="section-container relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -216,7 +216,7 @@ export const Hero = ({
 
   // Modelo A - Imagem à direita
   return (
-    <section className="section-padding relative overflow-hidden">
+    <section className="section-padding relative overflow-hidden" id="hero" data-section-key="hero">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       <div className="section-container relative">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">

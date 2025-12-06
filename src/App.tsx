@@ -21,6 +21,8 @@ import SiteSaasLP from "./pages/SiteSaasLP";
 // Auth pages
 import AuthRegister from "./pages/auth/AuthRegister";
 import AuthLogin from "./pages/auth/AuthLogin";
+import ResetPasswordRequest from "./pages/auth/ResetPasswordRequest";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Client pages
 import Onboarding from "./pages/Onboarding";
@@ -81,6 +83,8 @@ const App = () => (
             {/* Auth routes */}
             <Route path="/auth/register" element={<AuthRegister />} />
             <Route path="/auth/login" element={<AuthLogin />} />
+            <Route path="/reset-password-request" element={<ResetPasswordRequest />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Client onboarding routes */}

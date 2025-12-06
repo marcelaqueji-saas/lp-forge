@@ -55,3 +55,11 @@ export const PASSWORD_REQUIREMENTS = [
   { key: 'hasLowercase', label: 'Uma letra minúscula' },
   { key: 'hasNumber', label: 'Um número' },
 ] as const;
+
+/**
+ * Check if password meets minimum requirements
+ */
+export function isPasswordValid(password: string): boolean {
+  const validation = validatePassword(password);
+  return validation.isValid;
+}

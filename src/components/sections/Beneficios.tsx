@@ -68,7 +68,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
   // Modelo C - Two columns with large icons
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding">
+      <section className="section-padding" id="beneficios" data-section-key="beneficios">
         <div className="section-container">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -112,7 +112,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden">
+      <section className="section-padding relative overflow-hidden" id="beneficios" data-section-key="beneficios">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="section-container relative">
           <motion.div
@@ -159,7 +159,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   // Modelo A - Grid de cards
   return (
-    <section className="section-padding bg-card/50">
+    <section className="section-padding bg-card/50" id="beneficios" data-section-key="beneficios">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

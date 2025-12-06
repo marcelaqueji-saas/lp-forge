@@ -79,7 +79,7 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a' }:
 
   if (variante === 'modelo_b') {
     return (
-      <section id="planos" className="section-padding">
+      <section id="planos" data-section-key="planos" className="section-padding">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

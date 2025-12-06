@@ -60,7 +60,7 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-background to-card/50">
+      <section className="section-padding bg-gradient-to-b from-background to-card/50" id="para_quem_e" data-section-key="para_quem_e">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -108,7 +108,7 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
 
   // Modelo A - Grid vertical
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="para_quem_e" data-section-key="para_quem_e">
       <div className="section-container">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
