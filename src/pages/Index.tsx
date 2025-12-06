@@ -1,14 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MenuSection } from '@/components/sections/MenuSection';
-import { Hero } from '@/components/sections/Hero';
-import { ComoFunciona } from '@/components/sections/ComoFunciona';
-import { ParaQuemE } from '@/components/sections/ParaQuemE';
-import { Beneficios } from '@/components/sections/Beneficios';
-import { ProvasSociais } from '@/components/sections/ProvasSociais';
-import { Planos } from '@/components/sections/Planos';
-import { FAQ } from '@/components/sections/FAQ';
-import { ChamadaFinal } from '@/components/sections/ChamadaFinal';
-import { Rodape } from '@/components/sections/Rodape';
 import { SEOHead } from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -28,19 +18,8 @@ import { captureUTMParams } from '@/lib/utm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
-const SECTION_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  menu: MenuSection,
-  hero: Hero,
-  como_funciona: ComoFunciona,
-  para_quem_e: ParaQuemE,
-  beneficios: Beneficios,
-  provas_sociais: ProvasSociais,
-  planos: Planos,
-  faq: FAQ,
-  chamada_final: ChamadaFinal,
-  rodape: Rodape,
-};
+import { SectionLoader } from '@/components/sections/SectionLoader';
+import { SectionKey } from '@/lib/sectionModels';
 
 const VIEW_TRACKED_KEY = 'lp_view_tracked_';
 
@@ -246,40 +225,20 @@ const Index = () => {
     );
   }
 
-  const getVariante = (section: string): 'modelo_a' | 'modelo_b' | 'modelo_c' => {
-    return (settings[`${section}_variante`] as any) || 'modelo_a';
-  };
-
   return (
     <div className="app-shell">
       <div className="min-h-screen lp-container">
         <SEOHead settings={settings} />
 
-        {sectionOrder.map((section) => {
-          const Component = SECTION_COMPONENTS[section];
-          if (!Component) return null;
-
-          const props: any = {
-            content: content[section],
-            key: section,
-          };
-
-          if (section !== 'rodape') {
-            props.variante = getVariante(section);
-          }
-
-          if (section === 'chamada_final' && lpId) {
-            props.lpId = lpId;
-            props.onPrimaryCTAClick = handleChamadaFinalCTAClick;
-          }
-
-          if (section === 'hero' && lpId) {
-            props.onPrimaryCTAClick = handleHeroPrimaryCTAClick;
-            props.onSecondaryCTAClick = handleHeroSecondaryCTAClick;
-          }
-
-          return <Component {...props} />;
-        })}
+        {sectionOrder.map((section) => (
+          <SectionLoader
+            key={section}
+            sectionKey={section as SectionKey}
+            content={content[section] || {}}
+            settings={settings}
+            disableAnimations={false}
+          />
+        ))}
       </div>
     </div>
   );
