@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, User, Mail, Lock, Sparkles } from 'lucide-react';
 import InteractiveTilesBackground from '@/components/layout/InteractiveTilesBackground';
+import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
+import { validatePassword } from '@/lib/passwordValidation';
 
 const AuthRegister = () => {
   const [nome, setNome] = useState('');
@@ -13,6 +15,8 @@ const AuthRegister = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const passwordValidation = validatePassword(password);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +26,10 @@ const AuthRegister = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (!passwordValidation.isValid) {
       toast({
-        title: 'A senha deve ter pelo menos 6 caracteres',
+        title: 'Senha não atende aos requisitos',
+        description: 'A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula e um número.',
         variant: 'destructive',
       });
       return;
@@ -166,9 +171,10 @@ const AuthRegister = () => {
                     placeholder="••••••••"
                     className="input-field pl-10 h-11 text-sm"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
+                <PasswordStrengthIndicator password={password} />
               </div>
 
               <button
