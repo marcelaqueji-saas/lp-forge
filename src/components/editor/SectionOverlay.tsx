@@ -68,12 +68,14 @@ export const SectionOverlay = ({
                 />
               )}
               {hasPremiumEditor && (
-                <PremiumStyleEditor
-                  sectionKey={sectionKey}
-                  currentConfig={premiumConfig}
-                  onChange={onPremiumConfigChange!}
-                  userPlan={userPlan}
-                />
+                <div data-tour-id={isFirst ? 'section-hero-effects' : undefined}>
+                  <PremiumStyleEditor
+                    sectionKey={sectionKey}
+                    currentConfig={premiumConfig}
+                    onChange={onPremiumConfigChange!}
+                    userPlan={userPlan}
+                  />
+                </div>
               )}
               {canChangeLayout && (
                 <Button
@@ -127,12 +129,14 @@ export const SectionOverlay = ({
               />
             )}
             {hasPremiumEditor && (
-              <PremiumStyleEditor
-                sectionKey={sectionKey}
-                currentConfig={premiumConfig}
-                onChange={onPremiumConfigChange!}
-                userPlan={userPlan}
-              />
+              <div data-tour-id={isFirst ? 'section-hero-effects' : undefined}>
+                <PremiumStyleEditor
+                  sectionKey={sectionKey}
+                  currentConfig={premiumConfig}
+                  onChange={onPremiumConfigChange!}
+                  userPlan={userPlan}
+                />
+              </div>
             )}
             {canChangeLayout && (
               <Button
