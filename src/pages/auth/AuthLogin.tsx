@@ -71,12 +71,23 @@ const AuthLogin = () => {
       });
 
       if (error) {
+        let errorMessage = error.message;
+        
+        // Handle specific error cases
+        if (error.message === 'Invalid login credentials') {
+          errorMessage = 'Email ou senha incorretos';
+        } else if (error.message.toLowerCase().includes('email not confirmed')) {
+          toast({
+            title: 'Email não confirmado',
+            description: 'Verifique sua caixa de entrada e clique no link de confirmação antes de fazer login.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
         toast({
           title: 'Erro ao entrar',
-          description:
-            error.message === 'Invalid login credentials'
-              ? 'Email ou senha incorretos'
-              : error.message,
+          description: errorMessage,
           variant: 'destructive',
         });
         return;
@@ -111,7 +122,7 @@ const AuthLogin = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {

@@ -8,6 +8,7 @@ import { SectionLoader } from '@/components/sections/SectionLoader';
 import { SectionKey } from '@/lib/sectionModels';
 import { LeadForm } from '@/components/sections/LeadForm';
 import { SEOHead } from '@/components/SEOHead';
+import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
 
 const LandingPageBySlug = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -58,6 +59,17 @@ const LandingPageBySlug = () => {
 
     loadLP();
   }, [slug]);
+
+  // Apply theme when settings change
+  useEffect(() => {
+    if (Object.keys(settings).length > 0) {
+      applyThemeToLP(settings);
+    }
+    
+    return () => {
+      removeThemeFromLP();
+    };
+  }, [settings]);
 
   if (loading) {
     return (

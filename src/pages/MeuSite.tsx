@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SectionLoader, resolveVariant } from '@/components/sections/SectionLoader';
 import { SectionKey } from '@/lib/sectionModels';
+import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
 
 const MeuSite = () => {
   const { lpId } = useParams();
@@ -53,6 +54,17 @@ const MeuSite = () => {
   useEffect(() => {
     checkAuthAndLoad();
   }, [lpId]);
+
+  // Apply theme when settings change
+  useEffect(() => {
+    if (Object.keys(settings).length > 0) {
+      applyThemeToLP(settings);
+    }
+    
+    return () => {
+      removeThemeFromLP();
+    };
+  }, [settings]);
 
   const checkAuthAndLoad = async () => {
     const { data: { session } } = await supabase.auth.getSession();

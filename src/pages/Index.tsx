@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { SectionLoader } from '@/components/sections/SectionLoader';
 import { SectionKey } from '@/lib/sectionModels';
+import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
 
 const VIEW_TRACKED_KEY = 'lp_view_tracked_';
 
@@ -137,6 +138,17 @@ const Index = () => {
 
     loadLP();
   }, []);
+
+  // Apply theme tokens when settings change
+  useEffect(() => {
+    if (Object.keys(settings).length > 0) {
+      applyThemeToLP(settings);
+    }
+    
+    return () => {
+      removeThemeFromLP();
+    };
+  }, [settings]);
 
   useEffect(() => {
     if (settings.custom_css) {
