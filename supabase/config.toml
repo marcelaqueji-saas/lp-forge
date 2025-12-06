@@ -1,0 +1,13 @@
+project_id = vnywuwuixejhaciovqli
+
+[functions.verify-captcha]
+verify_jwt = false
+
+[functions.health]
+verify_jwt = false
+
+[functions.verify-domain]
+verify_jwt = false
+
+[functions.export-backup]
+verify_jwt = false

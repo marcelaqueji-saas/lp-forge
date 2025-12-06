@@ -1,0 +1,394 @@
+================================================================================
+                      DOCUMENTAÇÃO COMPLETA - SAAS-LP
+                         Mini SaaS de Landing Pages
+================================================================================
+
+Data de Geração: 2025-12-05
+Versão: 1.0
+
+================================================================================
+                              ÍNDICE
+================================================================================
+
+1. VISÃO GERAL DO PROJETO
+2. STACK TÉCNICA
+3. ESTRUTURA DE BANCO DE DADOS
+4. ROTAS E NAVEGAÇÃO
+5. FUNCIONALIDADES IMPLEMENTADAS
+6. FUNCIONALIDADES PENDENTES / MELHORIAS FUTURAS
+7. FLUXOS DETALHADOS
+8. COMO USAR
+
+================================================================================
+                        1. VISÃO GERAL DO PROJETO
+================================================================================
+
+O saas-lp é um mini SaaS para criação e gerenciamento de Landing Pages com:
+
+✅ IMPLEMENTADO:
+- Landing Page pública 100% editável via painel admin
+- Suporte a múltiplas LPs (multi-tenant preparado)
+- Sistema de preview em tempo real antes de publicar
+- Duplicação de LPs para criar novas páginas rapidamente
+- Rastreamento completo (GA4, Meta Pixel, UTM)
+- Captura de leads com dados de UTM associados
+- Dois modelos de layout por seção (modelo_a / modelo_b)
+- Interface admin com design Apple-like
+
+================================================================================
+                          2. STACK TÉCNICA
+================================================================================
+
+FRONTEND:
+- React 18.3 + TypeScript
+- Vite (bundler)
+- React Router DOM 6.30 (roteamento)
+- Tailwind CSS (estilização)
+- shadcn/ui (componentes base)
+- Framer Motion (animações)
+- Lucide React (ícones)
+
+BACKEND/DADOS:
+- Supabase (Lovable Cloud)
+  - PostgreSQL (banco de dados)
+  - Row Level Security (RLS) habilitado
+  - Autenticação com email/senha
+
+ARQUIVOS DE CONFIGURAÇÃO:
+- .env (variáveis de ambiente - auto-gerado)
+- supabase/config.toml (configuração Supabase)
+- tailwind.config.ts (design system)
+- src/index.css (tokens CSS)
+
+================================================================================
+                      3. ESTRUTURA DE BANCO DE DADOS
+================================================================================
+
+TABELA: landing_pages
+-----------------------
+Armazena as landing pages cadastradas.
+
+Campos:
+- id (uuid, PK) - Identificador único
+- owner_id (uuid, nullable) - Usuário dono da LP
+- nome (text) - Nome da LP no admin
+- slug (text, UNIQUE) - URL amigável (/lp/slug)
+- dominio (text, nullable) - Domínio personalizado (futuro)
+- publicado (boolean) - Se está visível ao público
+- created_at (timestamptz) - Data de criação
+
+RLS:
+- Owners podem gerenciar suas LPs
+- Público pode ver LPs publicadas
+
+-----------------------
+TABELA: lp_content
+-----------------------
+Armazena o conteúdo editável de cada seção.
+
+Campos:
+- id (uuid, PK) - Identificador único
+- lp_id (uuid, FK) - Referência à landing_pages
+- section (text) - Nome da seção (hero, beneficios, etc)
+- key (text) - Chave do campo (titulo, subtitulo, etc)
+- value (text) - Valor do campo (texto ou JSON)
+- updated_at (timestamptz) - Última atualização
+
+Índice único: (lp_id, section, key)
+
+-----------------------
+TABELA: lp_settings
+-----------------------
+Armazena configurações e estilos da LP.
+
+Campos:
+- id (uuid, PK) - Identificador único
+- lp_id (uuid, FK) - Referência à landing_pages
+- key (text) - Nome da configuração
+- value (text) - Valor da configuração
+- updated_at (timestamptz) - Última atualização
+
+Chaves comuns:
+- cor_primaria, cor_secundaria, cor_fundo, cor_texto
+- hero_variante, beneficios_variante, etc (modelo_a/modelo_b)
+- ga4_id, meta_pixel_id (tracking)
+
+-----------------------
+TABELA: lp_leads
+-----------------------
+Armazena leads capturados com UTM.
+
+Campos:
+- id (uuid, PK) - Identificador único
+- lp_id (uuid, FK) - Referência à landing_pages
+- nome (text, nullable) - Nome do lead
+- email (text, nullable) - Email do lead
+- telefone (text, nullable) - Telefone do lead
+- utm (jsonb, nullable) - Parâmetros UTM capturados
+- created_at (timestamptz) - Data de captura
+
+================================================================================
+                        4. ROTAS E NAVEGAÇÃO
+================================================================================
+
+ROTAS PÚBLICAS:
+---------------
+/                       → LP padrão (slug='default')
+/lp/:slug               → LP por slug (ex: /lp/minha-empresa)
+
+ROTAS ADMIN:
+------------
+/admin/login            → Tela de login
+/admin                  → Dashboard com lista de LPs
+/admin/lp/:id/sections  → Lista de seções da LP para editar
+/admin/lp/:id/sections/:section → Editor de seção específica
+/admin/lp/:id/preview   → Preview completo + publicar/despublicar
+/admin/lp/:id/estilos   → Editor de estilos e tracking
+/admin/lp/:id/analytics → Lista de leads capturados
+
+================================================================================
+                    5. FUNCIONALIDADES IMPLEMENTADAS
+================================================================================
+
+✅ LANDING PAGE PÚBLICA
+-----------------------
+- 9 seções completas e editáveis:
+  1. Hero (Topo)
+  2. Como Funciona
+  3. Para Quem É
+  4. Benefícios
+  5. Provas Sociais
+  6. Planos
+  7. FAQ
+  8. Chamada Final
+  9. Rodapé
+
+- Cada seção com 2 variantes de layout (modelo_a / modelo_b)
+- Formulário de captura de leads
+- Animações suaves com Framer Motion
+- Design responsivo (mobile-first)
+
+✅ RASTREAMENTO E ANALYTICS
+---------------------------
+- Integração GA4 (Google Analytics 4)
+- Integração Meta Pixel (Facebook/Instagram)
+- Captura automática de UTM params (source, medium, campaign, etc)
+- Persistência de UTM em sessionStorage
+- Leads salvos com UTM associado
+- Eventos de clique em CTAs
+
+✅ PAINEL ADMIN
+---------------
+- Login com autenticação Supabase
+- Dashboard com lista de todas as LPs
+- Status de publicação visível (publicado/rascunho)
+- Acesso rápido a todas as funções de cada LP
+
+✅ EDIÇÃO DE CONTEÚDO
+---------------------
+- Editor por seção com campos específicos
+- Preview ao vivo enquanto edita (lado a lado)
+- Suporte a campos de texto, textarea, URL e JSON
+- Salvamento individual por seção
+- Toggle de preview ligado/desligado
+
+✅ DUPLICAÇÃO DE LP (NOVO)
+--------------------------
+- Duplicar qualquer LP existente
+- Copia todo o conteúdo de todas as seções
+- Copia todas as configurações e estilos
+- Nova LP criada como rascunho (não publicada)
+- Geração automática de slug a partir do nome
+
+✅ CRIAÇÃO DE NOVA LP
+---------------------
+- Criar LP do zero pelo dashboard
+- Definir nome e slug personalizado
+- Validação de formato de slug
+- LP criada como rascunho
+
+✅ EXCLUSÃO DE LP
+-----------------
+- Excluir LP com confirmação de segurança
+- Digitar nome da LP para confirmar
+- Exclui leads, settings, content e LP
+- LP padrão (default) não pode ser excluída
+
+✅ PREVIEW EM TEMPO REAL (NOVO)
+-------------------------------
+- Visualização completa da LP antes de publicar
+- Seletor de viewport (Desktop, Tablet, Mobile)
+- Simulação de larguras reais de dispositivo
+- Botão de publicar/despublicar direto no preview
+- Indicador de status atual (publicado/rascunho)
+
+✅ SISTEMA DE VARIANTES
+-----------------------
+- Cada seção pode ter 2 layouts diferentes
+- Seleção de variante na lista de seções
+- Persistência em lp_settings
+- Preview reflete a variante selecionada
+
+✅ EDITOR DE ESTILOS
+--------------------
+- Cores personalizáveis (primária, secundária, fundo, texto)
+- Configuração de GA4 ID
+- Configuração de Meta Pixel ID
+- Preview visual com as cores aplicadas
+
+✅ ANALYTICS / LEADS
+--------------------
+- Lista de todos os leads capturados
+- Exibição de nome, email, telefone
+- Dados de UTM expandidos por lead
+- Ordenação por data (mais recentes primeiro)
+
+================================================================================
+                 6. FUNCIONALIDADES PENDENTES / MELHORIAS FUTURAS
+================================================================================
+
+❌ PENDENTE - Exportação de leads para CSV
+❌ PENDENTE - Upload de imagens (storage)
+❌ PENDENTE - Domínios personalizados por LP
+❌ PENDENTE - Templates prontos para novas LPs
+❌ PENDENTE - Arrastar e reordenar seções
+❌ PENDENTE - Histórico de versões / rollback
+❌ PENDENTE - Métricas avançadas (taxa de conversão, tempo na página)
+❌ PENDENTE - A/B testing automático
+❌ PENDENTE - Editor visual WYSIWYG
+❌ PENDENTE - Multi-idioma por LP
+❌ PENDENTE - Agendamento de publicação
+❌ PENDENTE - Integrações com CRMs (HubSpot, Pipedrive)
+❌ PENDENTE - Webhooks para leads
+❌ PENDENTE - Editor de CSS customizado
+❌ PENDENTE - Página de pricing/planos do SaaS
+
+================================================================================
+                          7. FLUXOS DETALHADOS
+================================================================================
+
+FLUXO 1: ACESSAR LP PÚBLICA
+---------------------------
+1. Usuário acessa "/" ou "/lp/:slug"
+2. Sistema busca LP por slug (ou default para "/")
+3. Verifica se LP está publicada
+4. Se não publicada → 404
+5. Carrega todo conteúdo de lp_content
+6. Carrega configurações de lp_settings
+7. Inicializa tracking (GA4, Meta Pixel)
+8. Captura UTM params da URL
+9. Renderiza todas as seções com variantes corretas
+
+FLUXO 2: LOGIN NO ADMIN
+-----------------------
+1. Usuário acessa "/admin/login"
+2. Preenche email e senha
+3. Sistema autentica via supabase.auth.signInWithPassword
+4. Se erro → exibe mensagem amigável
+5. Se sucesso → redireciona para "/admin"
+6. Sessão mantida via token JWT
+
+FLUXO 3: EDITAR SEÇÃO
+---------------------
+1. Do dashboard, clica em "Editar seções"
+2. Lista de 9 seções é exibida
+3. Pode alterar variante de layout (dropdown)
+4. Clica em "Editar conteúdo" de uma seção
+5. Formulário com campos específicos carrega
+6. Altera valores nos campos
+7. Preview ao vivo mostra alterações (sem salvar ainda)
+8. Clica em "Salvar"
+9. Sistema faz upsert em lp_content
+10. Toast confirma sucesso
+
+FLUXO 4: DUPLICAR LP
+--------------------
+1. No dashboard, clica em "Duplicar" no card da LP
+2. Dialog abre com nome e slug pré-preenchidos
+3. Pode editar nome e slug
+4. Clica em "Duplicar"
+5. Sistema cria nova entrada em landing_pages
+6. Copia todas as linhas de lp_content
+7. Copia todas as linhas de lp_settings
+8. Nova LP aparece no dashboard
+9. Status: rascunho (não publicada)
+
+FLUXO 5: PREVIEW E PUBLICAÇÃO
+-----------------------------
+1. No dashboard, clica em "Preview / Publicar"
+2. Página de preview carrega a LP completa
+3. Usa seletor de viewport para testar responsividade
+4. Verifica que está tudo correto
+5. Clica em "Publicar" (ou "Despublicar")
+6. Sistema atualiza campo `publicado` da LP
+7. Toast confirma ação
+8. LP agora acessível publicamente (ou não)
+
+FLUXO 6: CAPTURA DE LEAD
+------------------------
+1. Visitante acessa LP pública
+2. UTM params são capturados automaticamente
+3. Visitante preenche formulário de lead
+4. Clica em enviar
+5. Sistema salva em lp_leads com:
+   - lp_id da LP atual
+   - nome, email, telefone
+   - utm (objeto JSON com todos os params)
+6. Toast confirma envio
+7. Admin pode ver lead em /admin/lp/:id/analytics
+
+FLUXO 7: EXCLUIR LP
+-------------------
+1. No dashboard, clica no ícone de lixeira
+2. Dialog de confirmação aparece
+3. Usuário deve digitar nome exato da LP
+4. Clica em "Excluir LP"
+5. Sistema deleta em ordem:
+   - lp_leads (dependentes)
+   - lp_settings (dependentes)
+   - lp_content (dependentes)
+   - landing_pages (principal)
+6. LP removida do dashboard
+7. Toast confirma exclusão
+
+================================================================================
+                            8. COMO USAR
+================================================================================
+
+PRIMEIRO ACESSO:
+1. Crie um usuário no Lovable Cloud > Authentication > Add User
+2. Acesse /admin/login e faça login
+3. A LP padrão (slug='default') já existe
+
+EDITAR LP PADRÃO:
+1. No dashboard, clique em "Editar seções"
+2. Edite cada seção conforme necessário
+3. Altere variantes de layout se desejar
+4. Vá em "Preview / Publicar" para verificar
+5. Clique em "Publicar" quando satisfeito
+
+CRIAR NOVA LP:
+1. Clique em "Nova LP" no dashboard
+2. Defina nome e slug
+3. Nova LP criada vazia
+4. Dica: duplique a LP default para começar com conteúdo
+
+CONFIGURAR TRACKING:
+1. Vá em "Estilos e tracking"
+2. Adicione seu GA4 Measurement ID (G-XXXXXXXXXX)
+3. Adicione seu Meta Pixel ID
+4. Salve e verifique no navegador se scripts carregam
+
+CAPTURAR LEADS:
+1. Leads são capturados automaticamente pelo formulário
+2. Vá em "Analytics / Leads" para ver a lista
+3. UTM params são exibidos para cada lead
+
+URLS DAS LPS:
+- LP default: /
+- Outras LPs: /lp/{slug}
+- Exemplo: /lp/minha-empresa
+
+================================================================================
+                              FIM DO DOCUMENTO
+================================================================================

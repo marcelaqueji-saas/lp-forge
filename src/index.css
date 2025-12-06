@@ -1,0 +1,382 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 15% 96%;
+    --secondary-foreground: 222 20% 20%;
+
+    --muted: 210 15% 96%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 210 8% 70%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 210 16% 90%;
+    --input: 210 16% 90%;
+    --ring: 220 10% 70%;
+
+    --radius: 1rem;
+
+    --success: 142 40% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 20% 20%;
+    --sidebar-primary: 222 47% 11%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 15% 96%;
+    --sidebar-accent-foreground: 222 20% 20%;
+    --sidebar-border: 210 16% 90%;
+    --sidebar-ring: 220 10% 70%;
+
+    /* vidro bem translúcido (tipo iOS) */
+    --lp-glass: 0 0% 100% / 0.18;
+    --lp-shadow: 0 18px 40px -12px hsl(222 20% 10% / 0.40);
+    --lp-shadow-lg: 0 26px 70px -18px hsl(222 20% 10% / 0.55);
+
+    /* gradiente neutro (pode ser sobrescrito pela LP) */
+    --lp-gradient-start: 210 10% 70%;
+    --lp-gradient-end: 222 8% 35%;
+  }
+
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 210 20% 96%;
+
+    --card: 222 30% 12%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 222 30% 12%;
+    --popover-foreground: 210 20% 96%;
+
+    --primary: 210 15% 92%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 222 25% 18%;
+    --secondary-foreground: 210 20% 96%;
+
+    --muted: 222 25% 18%;
+    --muted-foreground: 210 15% 70%;
+
+    --accent: 210 10% 65%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 25% 20%;
+    --input: 222 25% 20%;
+    --ring: 210 10% 70%;
+
+    --sidebar-background: 222 30% 10%;
+    --sidebar-foreground: 210 20% 96%;
+    --sidebar-primary: 210 15% 92%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 25% 18%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 222 25% 20%;
+    --sidebar-ring: 210 10% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* fallback com emoji colorido */
+    font-family: 'Inter', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji',
+      system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-[32px] rounded-[2rem] border;
+    /* translucidez real – dá pra ver bem os blocos atrás */
+    background-color: hsla(0, 0%, 100%, 0.45);
+    border-color: hsla(0, 0%, 100%, 0.85);
+    box-shadow: 0 24px 60px rgba(15,23,42,0.12);
+    color: #0f172a;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    box-shadow: var(--lp-shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-2xl rounded-[1.75rem] border;
+    background-color: hsla(0, 0%, 100%, 0.24);
+    border-color: hsla(0, 0%, 100%, 0.75);
+    box-shadow: var(--lp-shadow-lg);
+    color: #f9fafb;
+  }
+
+  .glass-soft {
+    @apply backdrop-blur-xl rounded-[1.75rem] border;
+    background-color: hsla(0, 0%, 100%, 0.14);
+    border-color: hsla(0, 0%, 100%, 0.55);
+    box-shadow: var(--lp-shadow);
+    color: #f9fafb;
+  }
+
+  /* bolhas / pills tipo controle rápido – tudo branco dentro */
+  .glass-pill {
+    @apply inline-flex items-center justify-center rounded-full backdrop-blur-2xl border px-4 py-2;
+    background-color: hsla(0, 0%, 100%, 0.20);
+    border-color: hsla(0, 0%, 100%, 0.65);
+    color: #f9fafb;
+  }
+
+  .glass-circle {
+    @apply flex items-center justify-center rounded-full backdrop-blur-2xl border;
+    background-color: hsla(0, 0%, 100%, 0.20);
+    border-color: hsla(0, 0%, 100%, 0.65);
+    color: #f9fafb;
+  }
+
+  .glass-sidebar {
+    @apply backdrop-blur-2xl border-r;
+    background-color: hsla(0, 0%, 100%, 0.12);
+    border-color: hsla(0, 0%, 100%, 0.40);
+    color: #0f172a;
+  }
+
+  .glass-header {
+    @apply backdrop-blur-2xl border-b;
+    background-color: hsla(0, 0%, 100%, 0.14);
+    border-color: hsla(0, 0%, 100%, 0.40);
+    color: #0f172a;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--lp-gradient-start)) 0%,
+      hsl(var(--lp-gradient-end)) 100%
+    );
+  }
+
+  .gradient-bg {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.12), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.10), transparent 55%),
+      linear-gradient(
+        135deg,
+        hsl(var(--lp-gradient-start)) 0%,
+        hsl(var(--lp-gradient-end)) 100%
+      );
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--lp-gradient-start)) 0%,
+      hsl(var(--lp-gradient-end)) 100%
+    );
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32 px-4 md:px-6;
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-lg md:text-xl text-muted-foreground max-w-2xl;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-primary-foreground transition-all duration-300;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 100%
+    );
+    box-shadow: 0 4px 14px -2px hsl(var(--primary) / 0.4);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px -2px hsl(var(--primary) / 0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-foreground bg-card border border-border transition-all duration-300;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-secondary;
+    transform: translateY(-1px);
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl bg-card border border-border focus:border-foreground focus:ring-2 focus:ring-foreground/10 outline-none transition-all duration-200;
+  }
+
+  .admin-sidebar {
+    @apply fixed left-0 top-0 h-screen w-64 p-4 border-r;
+    background-color: hsla(0, 0%, 100%, 0.80);
+    border-color: hsla(0, 0%, 100%, 0.70);
+    backdrop-filter: blur(22px);
+    color: #0f172a;
+  }
+
+  .admin-content {
+    @apply ml-64 p-6;
+  }
+
+  .app-shell {
+    @apply min-h-screen w-full overflow-x-hidden;
+    /* fundo claro com glows – mesmo mood das telas de login/register */
+    background:
+      radial-gradient(circle at 0% 0%, rgba(248, 250, 252, 0.95), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(219, 234, 254, 0.95), transparent 55%),
+      radial-gradient(circle at 50% 100%, rgba(221, 214, 254, 0.8), transparent 60%);
+    background-color: #e5edf7;
+  }
+
+    /* 🔹 Tiles do painel */
+  .glass-tile {
+    @apply relative w-full text-left rounded-[2.25rem] border
+      px-4 py-4 md:px-5 md:py-5 flex items-start gap-3
+      transition-all duration-300 overflow-hidden;
+    background-color: hsla(0, 0%, 100%, 0.18);
+    border-color: hsla(0, 0%, 100%, 0.70);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(26px);
+    color: #0f172a;
+  }
+
+  .glass-tile:hover {
+    @apply cursor-pointer;
+    transform: translateY(-4px);
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.65);
+  }
+
+  /* ❌ barra colorida removida – mantemos só se quiser um leve highlight neutro
+     se quiser sumir total pode até apagar essa classe */
+  .glass-tile-bar {
+    display: none;
+  }
+
+  /* ícone com fundo glass claro + sombra leve */
+  .glass-tile-icon {
+    @apply relative z-10 w-9 h-9 md:w-10 md:h-10 rounded-full
+      flex items-center justify-center backdrop-blur-2xl border;
+    background-color: hsla(0, 0%, 100%, 0.35);
+    border-color: hsla(0, 0%, 100%, 0.85);
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.25);
+  }
+
+  .glass-tile-title {
+    @apply relative z-10 text-sm md:text-base font-semibold text-slate-900;
+    margin-top: 0.25rem;
+  }
+
+  .glass-tile-subtitle {
+    @apply relative z-10 text-xs md:text-sm text-slate-500;
+  }
+
+  .glass-tile--primary {
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.75);
+    border-color: hsla(0, 0%, 100%, 0.85);
+  }
+}
+
+@layer utilities {
+  .app-scroll {
+    @apply scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent;
+  }
+
+  .animate-fade-up { animation: fadeUp 0.6s ease-out forwards; }
+  .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+  .animate-scale-in { animation: scaleIn 0.4s ease-out forwards; }
+  .animate-slide-left { animation: slideLeft 0.5s ease-out forwards; }
+  .animate-slide-right { animation: slideRight 0.5s ease-out forwards; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slideLeft {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slideRight {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes tile-sheen {
+    to { transform: translateX(120%); }
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+}
