@@ -7,7 +7,6 @@ import { Loader2, ArrowLeft, Mail, Phone, User, Calendar, Link as LinkIcon, Glob
 import { toast } from '@/hooks/use-toast';
 import { userHasFeature } from '@/lib/planFeatures';
 import ABTestPanel from '@/components/admin/ABTestPanel';
-import { toast } from '@/hooks/use-toast';
 
 interface Lead {
   id: string;
@@ -381,6 +380,29 @@ const AdminAnalytics = () => {
                   <li>• <strong>Taxa de Conversão:</strong> Porcentagem de visitantes que se tornaram leads</li>
                 </ul>
               </div>
+            </div>
+          )}
+
+          {/* A/B Tests Tab */}
+          {activeTab === 'abtests' && (
+            <div className="space-y-6">
+              {canUseABTest ? (
+                id && <ABTestPanel lpId={id} />
+              ) : (
+                <div className="glass-card p-8 text-center">
+                  <FlaskConical className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">Testes A/B</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Recurso disponível nos planos Pro e Premium
+                  </p>
+                  <button 
+                    className="btn-primary"
+                    onClick={() => toast({ title: 'Entre em contato para upgrade do plano' })}
+                  >
+                    Fazer Upgrade
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

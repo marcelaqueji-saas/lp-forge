@@ -37,7 +37,7 @@ import { SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
 
 interface ABTestPanelProps {
   lpId: string;
-  userRole: 'owner' | 'editor' | 'viewer';
+  userRole?: 'owner' | 'editor' | 'viewer';
 }
 
 const SECTIONS = [
@@ -49,7 +49,7 @@ const SECTIONS = [
   { key: 'chamada_final', label: 'Chamada Final' },
 ];
 
-export const ABTestPanel = ({ lpId, userRole }: ABTestPanelProps) => {
+export const ABTestPanel = ({ lpId, userRole = 'viewer' }: ABTestPanelProps) => {
   const { tests, loading, createTest, updateTest, deleteTest } = useABTest(lpId);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newTest, setNewTest] = useState({
