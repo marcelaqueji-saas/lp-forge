@@ -1,4 +1,4 @@
-project_id = vnywuwuixejhaciovqli
+project_id = "ulsugfcfhoetdmhglvuy"
 
 [functions.verify-captcha]
 verify_jwt = false
@@ -11,3 +11,15 @@ verify_jwt = false
 
 [functions.export-backup]
 verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
+
+[functions.robots]
+verify_jwt = false
+
+[functions.export-leads]
+verify_jwt = true
+
+[functions.get-analytics]
+verify_jwt = true

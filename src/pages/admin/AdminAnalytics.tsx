@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import { getLPById, getLeads, getUserRoleForLP, getEventCounts, exportLeadsToCSV, getWebhooks, createWebhook, updateWebhook, deleteWebhook, LandingPage, LPRole, LPEventCounts, LPWebhook } from '@/lib/lpContentApi';
-import { Loader2, ArrowLeft, Mail, Phone, User, Calendar, Link as LinkIcon, Globe, Download, Eye, MousePointerClick, Users, TrendingUp, Webhook, Plus, Trash2, Power, PowerOff } from 'lucide-react';
+import { getLPById, getLeads, getUserRoleForLP, getEventCounts, getWebhooks, createWebhook, updateWebhook, deleteWebhook, LandingPage, LPRole, LPEventCounts, LPWebhook } from '@/lib/lpContentApi';
+import { Loader2, ArrowLeft, Mail, Phone, User, Calendar, Link as LinkIcon, Globe, Download, Eye, MousePointerClick, Users, TrendingUp, Webhook, Plus, Trash2, Power, PowerOff, FlaskConical, Lock } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { userHasFeature } from '@/lib/planFeatures';
+import ABTestPanel from '@/components/admin/ABTestPanel';
 import { toast } from '@/hooks/use-toast';
 
 interface Lead {
@@ -26,7 +29,10 @@ const AdminAnalytics = () => {
   const [webhooks, setWebhooks] = useState<LPWebhook[]>([]);
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [newWebhookTipo, setNewWebhookTipo] = useState<'generic' | 'hubspot' | 'pipedrive'>('generic');
-  const [activeTab, setActiveTab] = useState<'leads' | 'metrics' | 'webhooks'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'metrics' | 'webhooks' | 'abtests'>('leads');
+  const [canExportLeads, setCanExportLeads] = useState(false);
+  const [canUseABTest, setCanUseABTest] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,25 +62,62 @@ const AdminAnalytics = () => {
       setUserRole(role);
       setEventCounts(counts);
       setWebhooks(webhooksData);
+      
+      // Verificar features do plano
+      const [exportFeature, abTestFeature] = await Promise.all([
+        userHasFeature('export_leads'),
+        userHasFeature('ab_testing'),
+      ]);
+      setCanExportLeads(exportFeature);
+      setCanUseABTest(abTestFeature);
+      
       setLoading(false);
     };
 
     checkAuth();
   }, [id, navigate]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (!canExportLeads) {
+      toast({ title: 'Recurso disponível no plano Pro', variant: 'destructive' });
+      return;
+    }
     if (userRole === 'viewer') {
       toast({ title: 'Você não tem permissão para exportar', variant: 'destructive' });
       return;
     }
 
-    const csv = exportLeadsToCSV(leads);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `leads-${lp?.slug || 'export'}-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    toast({ title: 'CSV exportado com sucesso!' });
+    setExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-leads?lp_id=${id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao exportar');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `leads-${lp?.slug || 'export'}-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast({ title: 'CSV exportado com sucesso!' });
+    } catch (error: any) {
+      toast({ title: error.message || 'Erro ao exportar', variant: 'destructive' });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleCreateWebhook = async () => {
@@ -117,7 +160,7 @@ const AdminAnalytics = () => {
     }
   };
 
-  const canExport = userRole === 'owner' || userRole === 'editor';
+  const canExport = (userRole === 'owner' || userRole === 'editor') && canExportLeads;
   const canManageWebhooks = userRole === 'owner';
   const conversionRate = eventCounts.view > 0 ? ((eventCounts.lead_submit / eventCounts.view) * 100).toFixed(1) : '0';
 
@@ -152,8 +195,14 @@ const AdminAnalytics = () => {
             </div>
           </div>
           {canExport && leads.length > 0 && (
-            <button onClick={handleExportCSV} className="btn-primary gap-2">
-              <Download className="w-4 h-4" />
+            <button onClick={handleExportCSV} disabled={exporting} className="btn-primary gap-2">
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Exportar CSV
+            </button>
+          )}
+          {!canExportLeads && leads.length > 0 && (
+            <button disabled className="btn-primary gap-2 opacity-50 cursor-not-allowed" title="Disponível no plano Pro">
+              <Lock className="w-4 h-4" />
               Exportar CSV
             </button>
           )}
@@ -167,6 +216,7 @@ const AdminAnalytics = () => {
             {[
               { id: 'leads', label: 'Leads', icon: Users },
               { id: 'metrics', label: 'Métricas', icon: TrendingUp },
+              { id: 'abtests', label: 'Testes A/B', icon: FlaskConical },
               { id: 'webhooks', label: 'Webhooks', icon: Webhook },
             ].map(tab => (
               <button
@@ -180,6 +230,9 @@ const AdminAnalytics = () => {
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
+                {tab.id === 'abtests' && !canUseABTest && (
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                )}
               </button>
             ))}
           </nav>
