@@ -16,6 +16,7 @@ interface FAQProps {
   content?: FAQContent;
   previewOverride?: FAQContent;
   variante?: 'modelo_a' | 'modelo_b';
+  cardStyle?: string;
 }
 
 const defaultContent: FAQContent = {
@@ -29,7 +30,7 @@ const defaultContent: FAQContent = {
   ]),
 };
 
-export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FAQProps) => {
+export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: FAQProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -82,7 +83,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="glass-card p-6"
+                className={`p-6 ${cardStyle || 'premium-card-soft'}`}
               >
                 <h3 className="font-semibold mb-3 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full gradient-bg flex items-center justify-center text-primary-foreground text-xs shrink-0">
@@ -124,7 +125,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
             <motion.div
               key={index}
               variants={itemVariants}
-              className="glass-card overflow-hidden"
+              className={`overflow-hidden ${cardStyle || 'premium-card-soft'}`}
             >
               <button
                 onClick={() => toggleQuestion(index)}

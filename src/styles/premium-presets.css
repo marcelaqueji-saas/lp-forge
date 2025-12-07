@@ -415,6 +415,85 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
+   CARD STYLES (Configurable per LP)
+   ───────────────────────────────────────────────────────────── */
+
+/* Soft card - subtle background with light shadows */
+.premium-card-soft {
+  background: hsla(var(--card), 0.85);
+  border-radius: 1rem;
+  border: 1px solid hsla(var(--border), 0.5);
+  box-shadow: 0 4px 16px hsla(var(--foreground), 0.04);
+}
+
+/* Solid card - opaque background */
+.premium-card-solid {
+  background: hsl(var(--card));
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 2px 8px hsla(var(--foreground), 0.06);
+}
+
+/* Outline card - transparent with border */
+.premium-card-outline {
+  background: hsla(var(--card), 0.3);
+  border-radius: 1rem;
+  border: 1px solid hsla(var(--border), 0.6);
+  box-shadow: none;
+}
+
+/* Glass subtle - light blur */
+.premium-card-glass-subtle {
+  background: hsla(var(--card), 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+  border: 1px solid hsla(var(--foreground), 0.06);
+  box-shadow: 0 8px 24px hsla(var(--foreground), 0.08);
+}
+
+/* Glass medium - medium blur with glow */
+.premium-card-glass-medium {
+  background: hsla(var(--card), 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  border: 1px solid hsla(var(--foreground), 0.08);
+  box-shadow: 
+    0 12px 32px hsla(var(--foreground), 0.10),
+    inset 0 0 0 1px hsla(255, 255, 255, 0.1);
+}
+
+/* Glass heavy - strong blur with glow (Apple style) */
+.premium-card-glass-heavy {
+  background: hsla(var(--card), 0.25);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-radius: 2rem;
+  border: 1px solid hsla(var(--foreground), 0.1);
+  box-shadow: 
+    0 20px 48px hsla(var(--foreground), 0.12),
+    inset 0 0 0 1px hsla(255, 255, 255, 0.15);
+}
+
+/* Hover states for configurable cards */
+.premium-card-soft:hover,
+.premium-card-solid:hover,
+.premium-card-outline:hover {
+  box-shadow: 0 8px 24px hsla(var(--foreground), 0.08);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+.premium-card-glass-subtle:hover,
+.premium-card-glass-medium:hover,
+.premium-card-glass-heavy:hover {
+  box-shadow: 0 20px 48px hsla(var(--foreground), 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
    SPOTLIGHT EFFECT
    ───────────────────────────────────────────────────────────── */
 
@@ -444,7 +523,13 @@
   
   .premium-btn-liquid:hover,
   .premium-btn-glow:hover,
-  .premium-btn-glass:hover {
+  .premium-btn-glass:hover,
+  .premium-card-soft:hover,
+  .premium-card-solid:hover,
+  .premium-card-outline:hover,
+  .premium-card-glass-subtle:hover,
+  .premium-card-glass-medium:hover,
+  .premium-card-glass-heavy:hover {
     transform: none !important;
   }
 }

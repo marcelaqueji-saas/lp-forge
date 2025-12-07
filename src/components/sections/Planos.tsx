@@ -20,6 +20,7 @@ interface PlanosProps {
   content?: PlanosContent;
   previewOverride?: PlanosContent;
   variante?: 'modelo_a' | 'modelo_b';
+  cardStyle?: string;
 }
 
 const defaultContent: PlanosContent = {
@@ -50,7 +51,7 @@ const defaultContent: PlanosContent = {
   ]),
 };
 
-export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a' }: PlanosProps) => {
+export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: PlanosProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let planos: Plano[] = [];
@@ -117,7 +118,7 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a' }:
                     className={`h-full rounded-2xl p-8 ${
                       plano.destaque
                         ? 'gradient-bg text-primary-foreground shadow-glow-lg'
-                        : 'glass-card border-2 border-transparent hover:border-primary/30 transition-colors'
+                        : cardStyle || 'premium-card-soft border-2 border-transparent hover:border-primary/30 transition-colors'
                     }`}
                   >
                     {plano.destaque && (
@@ -204,7 +205,7 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a' }:
                   className={`h-full rounded-2xl p-8 ${
                     plano.destaque
                       ? 'bg-card shadow-glow'
-                      : 'glass-card'
+                      : cardStyle || 'premium-card-soft'
                   }`}
                 >
                   {plano.destaque && (

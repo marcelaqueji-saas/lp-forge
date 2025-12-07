@@ -51,6 +51,15 @@ export type SeparatorStyle =
   | 'diagonal'
   | 'curve';
 
+export type CardStyle = 
+  | 'default'
+  | 'soft'
+  | 'solid'
+  | 'outline'
+  | 'glass-subtle'
+  | 'glass-medium'
+  | 'glass-heavy';
+
 export interface PremiumVisualConfig {
   background_style?: BackgroundStyle;
   ornament_style?: OrnamentStyle;
@@ -59,6 +68,7 @@ export interface PremiumVisualConfig {
   cursor_effect?: CursorEffect;
   separator_before?: SeparatorStyle;
   separator_after?: SeparatorStyle;
+  card_style?: CardStyle;
 }
 
 // ============================================================
@@ -120,6 +130,16 @@ export const SEPARATOR_OPTIONS: { value: SeparatorStyle; label: string; premium?
   { value: 'curve', label: 'Curva', premium: true },
 ];
 
+export const CARD_OPTIONS: { value: CardStyle; label: string; premium?: boolean }[] = [
+  { value: 'default', label: 'Padrão' },
+  { value: 'soft', label: 'Suave' },
+  { value: 'solid', label: 'Sólido' },
+  { value: 'outline', label: 'Com borda' },
+  { value: 'glass-subtle', label: 'Vidro leve', premium: true },
+  { value: 'glass-medium', label: 'Vidro médio', premium: true },
+  { value: 'glass-heavy', label: 'Vidro intenso', premium: true },
+];
+
 // ============================================================
 // CSS CLASS MAPPING
 // ============================================================
@@ -172,6 +192,16 @@ export const SEPARATOR_CLASSES: Record<SeparatorStyle, string> = {
   'curve': 'premium-separator-curve',
 };
 
+export const CARD_CLASSES: Record<CardStyle, string> = {
+  'default': '',
+  'soft': 'premium-card-soft',
+  'solid': 'premium-card-solid',
+  'outline': 'premium-card-outline',
+  'glass-subtle': 'premium-card-glass-subtle',
+  'glass-medium': 'premium-card-glass-medium',
+  'glass-heavy': 'premium-card-glass-heavy',
+};
+
 // ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
@@ -213,6 +243,13 @@ export function getSeparatorClasses(style: SeparatorStyle = 'none', position: 'b
 }
 
 /**
+ * Get card classes
+ */
+export function getCardClasses(style: CardStyle = 'default'): string {
+  return CARD_CLASSES[style] || '';
+}
+
+/**
  * Parse visual config from content object
  */
 export function parseVisualConfig(content: Record<string, any>): PremiumVisualConfig {
@@ -224,6 +261,7 @@ export function parseVisualConfig(content: Record<string, any>): PremiumVisualCo
     cursor_effect: (content.cursor_effect as CursorEffect) || 'none',
     separator_before: (content.separator_before as SeparatorStyle) || 'none',
     separator_after: (content.separator_after as SeparatorStyle) || 'none',
+    card_style: (content.card_style as CardStyle) || 'default',
   };
 }
 
