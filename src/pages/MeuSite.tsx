@@ -231,6 +231,7 @@ const MeuSite = () => {
         ...(partialConfig.cursor_effect !== undefined && { cursor_effect: partialConfig.cursor_effect }),
         ...(partialConfig.separator_before !== undefined && { separator_before: partialConfig.separator_before }),
         ...(partialConfig.separator_after !== undefined && { separator_after: partialConfig.separator_after }),
+        ...(partialConfig.card_style !== undefined && { card_style: partialConfig.card_style }),
       };
 
       // Save to database

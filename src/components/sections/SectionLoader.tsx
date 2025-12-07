@@ -5,6 +5,7 @@ import { LPContent } from '@/lib/lpContentApi';
 import { 
   parseVisualConfig, 
   getVisualClasses, 
+  getCardClasses,
   prefersReducedMotion,
   PremiumVisualConfig 
 } from '@/lib/premiumPresets';
@@ -547,12 +548,16 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
   // 7. Get premium visual classes
   const visualClasses = getVisualClasses(visualConfig, reducedMotion || disableAnimations);
   
+  // 8. Get card style classes
+  const cardClasses = getCardClasses(visualConfig.card_style);
+  
   const componentProps = {
     content: content,
     previewOverride: previewOverride,
     variante: legacyVariant,
     disableAnimations: disableAnimations || reducedMotion,
     buttonStyle: visualConfig.button_style,
+    cardStyle: cardClasses,
   };
 
   // Render with appropriate wrapper

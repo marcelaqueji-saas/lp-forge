@@ -29,12 +29,14 @@ import {
   BUTTON_OPTIONS,
   CURSOR_OPTIONS,
   SEPARATOR_OPTIONS,
+  CARD_OPTIONS,
   BackgroundStyle,
   OrnamentStyle,
   AnimationPreset,
   ButtonStyle,
   CursorEffect,
   SeparatorStyle,
+  CardStyle,
 } from '@/lib/premiumPresets';
 
 interface PremiumStyleEditorProps {
@@ -160,6 +162,12 @@ export const PremiumStyleEditor: React.FC<PremiumStyleEditorProps> = ({
                   (v) => handleChange('ornament_style', v as OrnamentStyle)
                 )}
                 {renderSelect(
+                  'Estilo dos cards',
+                  currentConfig.card_style,
+                  CARD_OPTIONS,
+                  (v) => handleChange('card_style', v as CardStyle)
+                )}
+                {renderSelect(
                   'Separador (antes)',
                   currentConfig.separator_before,
                   SEPARATOR_OPTIONS,
@@ -243,6 +251,7 @@ export const PremiumStyleEditor: React.FC<PremiumStyleEditorProps> = ({
                   cursor_effect: 'none',
                   separator_before: 'none',
                   separator_after: 'none',
+                  card_style: 'default',
                 })
               }
             >

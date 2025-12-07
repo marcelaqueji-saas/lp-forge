@@ -18,6 +18,7 @@ interface ParaQuemEProps {
   previewOverride?: ParaQuemEContent;
   variante?: 'modelo_a' | 'modelo_b';
   disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const defaultContent: ParaQuemEContent = {
@@ -41,7 +42,7 @@ const iconMap: Record<string, typeof Building2> = {
   Target,
 };
 
-export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a' }: ParaQuemEProps) => {
+export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: ParaQuemEProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let perfis: Perfil[] = [];
@@ -137,11 +138,11 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
             {perfis.map((perfil, index) => {
               const Icon = iconMap[perfil.icone || 'User'] || User;
               return (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  className="glass-card-hover p-6 flex items-start gap-4"
-                >
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className={`p-6 flex items-start gap-4 ${cardStyle || 'premium-card-soft'}`}
+              >
                   <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center shrink-0">
                     <Icon className="w-6 h-6 text-primary-foreground" />
                   </div>

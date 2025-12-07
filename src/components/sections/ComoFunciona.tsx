@@ -18,6 +18,7 @@ interface ComoFuncionaProps {
   previewOverride?: ComoFuncionaContent;
   variante?: 'modelo_a' | 'modelo_b';
   disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const defaultContent: ComoFuncionaContent = {
@@ -45,7 +46,7 @@ const iconMap: Record<string, typeof Zap> = {
   Heart,
 };
 
-export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a', disableAnimations = false }: ComoFuncionaProps) => {
+export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a', disableAnimations = false, cardStyle = '' }: ComoFuncionaProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let passos: Passo[] = [];
