@@ -1,20 +1,10 @@
-import { useEffect, useState, useRef, Suspense, lazy } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { MenuSection } from '@/components/sections/MenuSection';
-import { Hero } from '@/components/sections/Hero';
-import { ComoFunciona } from '@/components/sections/ComoFunciona';
-import { ParaQuemE } from '@/components/sections/ParaQuemE';
-import { Beneficios } from '@/components/sections/Beneficios';
-import { ProvasSociais } from '@/components/sections/ProvasSociais';
-import { Planos } from '@/components/sections/Planos';
-import { FAQ } from '@/components/sections/FAQ';
-import { ChamadaFinal } from '@/components/sections/ChamadaFinal';
-import { Rodape } from '@/components/sections/Rodape';
 import { SEOHead } from '@/components/SEOHead';
 import { 
   getLPById, getAllContent, getSettings, getSectionOrder, 
-  saveSettings, LPContent, LPSettings, getUserRoleForLP, DEFAULT_SECTION_ORDER,
+  saveSettings, saveSectionContent, LPContent, LPSettings, getUserRoleForLP, DEFAULT_SECTION_ORDER,
   SECTION_NAMES
 } from '@/lib/lpContentApi';
 import { hasCompletedEditorTour, markOnboardingCompleted } from '@/lib/userApi';
@@ -33,35 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  isPremiumVariant, 
-  getComponentForVariant, 
-  logTemplateError,
-  canHandleAnimations 
-} from '@/lib/premiumTemplateLoader';
-
-// Standard section components
-const SECTION_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  menu: MenuSection,
-  hero: Hero,
-  como_funciona: ComoFunciona,
-  para_quem_e: ParaQuemE,
-  beneficios: Beneficios,
-  provas_sociais: ProvasSociais,
-  planos: Planos,
-  faq: FAQ,
-  chamada_final: ChamadaFinal,
-  rodape: Rodape,
-};
-
-// Premium section error boundary fallback
-const PremiumFallback = ({ sectionName }: { sectionName: string }) => (
-  <div className="py-20 text-center bg-muted/30">
-    <p className="text-muted-foreground">
-      Seção {sectionName} - preview simplificado no editor
-    </p>
-  </div>
-);
+import { SectionLoader, resolveVariant } from '@/components/sections/SectionLoader';
+import { SectionKey } from '@/lib/sectionModels';
+import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
+import { parseVisualConfig, PremiumVisualConfig } from '@/lib/premiumPresets';
 
 const MeuSite = () => {
   const { lpId } = useParams();
@@ -90,6 +55,17 @@ const MeuSite = () => {
   useEffect(() => {
     checkAuthAndLoad();
   }, [lpId]);
+
+  // Apply theme when settings change
+  useEffect(() => {
+    if (Object.keys(settings).length > 0) {
+      applyThemeToLP(settings);
+    }
+    
+    return () => {
+      removeThemeFromLP();
+    };
+  }, [settings]);
 
   const checkAuthAndLoad = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -165,14 +141,114 @@ const MeuSite = () => {
   const handleSelectVariant = async (variantId: string) => {
     if (!lpId || !activeSection) return;
 
-    const settingKey = `${activeSection}_variante`;
-    const newSettings = { ...settings, [settingKey]: variantId };
-    
-    setSettings(newSettings);
-    await saveSettings(lpId, { [settingKey]: variantId });
-    
-    toast({ title: 'Layout atualizado!' });
-    setLayoutPickerOpen(false);
+    try {
+      // Get current content for the section
+      const currentContent = content[activeSection] || {};
+      
+      // Update content with new variant
+      const updatedContent = {
+        ...currentContent,
+        variant: variantId,
+      };
+
+      // Save to database
+      await saveSectionContent(lpId, activeSection, updatedContent);
+
+      // Also update settings for backwards compatibility
+      const settingKey = `${activeSection}_variante`;
+      await saveSettings(lpId, { [settingKey]: variantId });
+
+      // Update local state immediately for instant preview
+      setContent(prev => ({
+        ...prev,
+        [activeSection]: updatedContent,
+      }));
+      
+      setSettings(prev => ({
+        ...prev,
+        [settingKey]: variantId,
+      }));
+
+      toast({ title: 'Layout atualizado!' });
+      setLayoutPickerOpen(false);
+      
+      console.log(`[MeuSite] Variant changed: ${activeSection} → ${variantId}`);
+    } catch (error) {
+      console.error('[MeuSite] Error saving variant:', error);
+      toast({ title: 'Erro ao salvar layout', variant: 'destructive' });
+    }
+  };
+
+  const handleStyleChange = async (sectionKey: string, styles: Record<string, string | undefined>) => {
+    if (!lpId) return;
+
+    try {
+      const currentContent = content[sectionKey] || {};
+      
+      // Merge new styles with existing content
+      const updatedContent = {
+        ...currentContent,
+        ...styles,
+      };
+
+      // Remove undefined values (reset to global)
+      Object.keys(styles).forEach(key => {
+        if (styles[key] === undefined) {
+          delete updatedContent[key];
+        }
+      });
+
+      // Save to database
+      await saveSectionContent(lpId, sectionKey, updatedContent);
+
+      // Update local state immediately for instant preview
+      setContent(prev => ({
+        ...prev,
+        [sectionKey]: updatedContent,
+      }));
+
+      toast({ title: 'Estilo atualizado!' });
+      console.log(`[MeuSite] Styles changed for ${sectionKey}:`, styles);
+    } catch (error) {
+      console.error('[MeuSite] Error saving styles:', error);
+      toast({ title: 'Erro ao salvar estilo', variant: 'destructive' });
+    }
+  };
+
+  const handlePremiumConfigChange = async (sectionKey: string, partialConfig: Partial<PremiumVisualConfig>) => {
+    if (!lpId) return;
+
+    try {
+      const currentContent = content[sectionKey] || {};
+      
+      // Merge premium config fields with existing content
+      const updatedContent = {
+        ...currentContent,
+        ...(partialConfig.background_style !== undefined && { background_style: partialConfig.background_style }),
+        ...(partialConfig.ornament_style !== undefined && { ornament_style: partialConfig.ornament_style }),
+        ...(partialConfig.animation_preset !== undefined && { animation_preset: partialConfig.animation_preset }),
+        ...(partialConfig.button_style !== undefined && { button_style: partialConfig.button_style }),
+        ...(partialConfig.cursor_effect !== undefined && { cursor_effect: partialConfig.cursor_effect }),
+        ...(partialConfig.separator_before !== undefined && { separator_before: partialConfig.separator_before }),
+        ...(partialConfig.separator_after !== undefined && { separator_after: partialConfig.separator_after }),
+        ...(partialConfig.card_style !== undefined && { card_style: partialConfig.card_style }),
+      };
+
+      // Save to database
+      await saveSectionContent(lpId, sectionKey, updatedContent);
+
+      // Update local state immediately for instant preview
+      setContent(prev => ({
+        ...prev,
+        [sectionKey]: updatedContent,
+      }));
+
+      toast({ title: 'Efeitos visuais atualizados!' });
+      console.log(`[MeuSite] Premium config changed for ${sectionKey}:`, partialConfig);
+    } catch (error) {
+      console.error('[MeuSite] Error saving premium config:', error);
+      toast({ title: 'Erro ao salvar efeitos', variant: 'destructive' });
+    }
   };
 
   const handleContentSave = () => {
@@ -206,7 +282,11 @@ const MeuSite = () => {
   };
 
   const getVariante = (section: string): string => {
-    return settings[`${section}_variante`] || 'modelo_a';
+    return resolveVariant(
+      section as SectionKey, 
+      content[section], 
+      settings
+    );
   };
 
   const getSectionName = (section: string): string => {
@@ -218,44 +298,6 @@ const MeuSite = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
-
-  // Render section with premium variant support
-  const renderSection = (section: string, index: number) => {
-    const variante = getVariante(section);
-    const sectionContent = content[section] || {};
-    
-    // Check if this is a premium variant
-    if (isPremiumVariant(variante)) {
-      const PremiumComponent = getComponentForVariant(variante);
-      
-      if (PremiumComponent) {
-        return (
-          <Suspense fallback={<PremiumFallback sectionName={getSectionName(section)} />}>
-            <PremiumComponentWrapper
-              Component={PremiumComponent}
-              content={sectionContent}
-              disableAnimations={disableAnimations}
-              sectionName={getSectionName(section)}
-              variantId={variante}
-            />
-          </Suspense>
-        );
-      }
-    }
-
-    // Standard component
-    const Component = SECTION_COMPONENTS[section];
-    if (!Component) return null;
-
-    const hasVariants = !!(SECTION_VARIANTS[section]?.length);
-    const props: any = { content: sectionContent };
-    
-    if (hasVariants) {
-      props.variante = variante;
-    }
-
-    return <Component {...props} />;
   };
 
   if (loading) {
@@ -364,6 +406,8 @@ const MeuSite = () => {
         
         {sectionOrder.map((section, index) => {
           const hasVariants = !!(SECTION_VARIANTS[section]?.length);
+          const sectionContent = content[section] || {};
+          const premiumConfig = parseVisualConfig(sectionContent);
 
           return (
             <div 
@@ -378,11 +422,27 @@ const MeuSite = () => {
                   sectionName={getSectionName(section)}
                   isFirst={index === 0}
                   canChangeLayout={hasVariants}
+                  currentStyles={{
+                    style_bg: sectionContent.style_bg as string,
+                    style_text: sectionContent.style_text as string,
+                    style_gradient: sectionContent.style_gradient as string,
+                  }}
+                  premiumConfig={premiumConfig}
+                  userPlan="premium"
                   onChangeLayout={() => handleChangeLayout(section)}
                   onEditContent={() => handleEditContent(section)}
+                  onStyleChange={(styles) => handleStyleChange(section, styles)}
+                  onPremiumConfigChange={(config) => handlePremiumConfigChange(section, config)}
                 />
               )}
-              {renderSection(section, index)}
+              
+              {/* Dynamic section rendering via SectionLoader */}
+              <SectionLoader
+                sectionKey={section as SectionKey}
+                content={sectionContent}
+                settings={settings}
+                disableAnimations={disableAnimations}
+              />
             </div>
           );
         })}
@@ -395,7 +455,6 @@ const MeuSite = () => {
             size="lg"
             className="h-12 w-12 rounded-full shadow-lg gradient-bg"
             onClick={() => {
-              // Scroll to first section
               const firstSection = sectionOrder[0];
               if (firstSection) {
                 scrollToSection(firstSection);
@@ -436,44 +495,6 @@ const MeuSite = () => {
       <EditorTour run={runTour} onFinish={handleTourFinish} />
     </div>
   );
-};
-
-// Wrapper for premium components with error boundary
-const PremiumComponentWrapper = ({ 
-  Component, 
-  content, 
-  disableAnimations, 
-  sectionName,
-  variantId 
-}: { 
-  Component: React.ComponentType<any>;
-  content: any;
-  disableAnimations: boolean;
-  sectionName: string;
-  variantId: string;
-}) => {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return <PremiumFallback sectionName={sectionName} />;
-  }
-
-  try {
-    return (
-      <Component 
-        content={content} 
-        disableAnimations={disableAnimations}
-      />
-    );
-  } catch (error) {
-    logTemplateError(variantId, String(error), {
-      reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-      connectionType: (navigator as any).connection?.effectiveType,
-      deviceMemory: (navigator as any).deviceMemory,
-    });
-    setHasError(true);
-    return <PremiumFallback sectionName={sectionName} />;
-  }
 };
 
 export default MeuSite;

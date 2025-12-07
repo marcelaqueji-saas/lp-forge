@@ -1,14 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MenuSection } from '@/components/sections/MenuSection';
-import { Hero } from '@/components/sections/Hero';
-import { ComoFunciona } from '@/components/sections/ComoFunciona';
-import { ParaQuemE } from '@/components/sections/ParaQuemE';
-import { Beneficios } from '@/components/sections/Beneficios';
-import { ProvasSociais } from '@/components/sections/ProvasSociais';
-import { Planos } from '@/components/sections/Planos';
-import { FAQ } from '@/components/sections/FAQ';
-import { ChamadaFinal } from '@/components/sections/ChamadaFinal';
-import { Rodape } from '@/components/sections/Rodape';
 import { SEOHead } from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -25,22 +15,13 @@ import {
 } from '@/lib/lpContentApi';
 import { initGA4, initMetaPixel, trackPageView } from '@/lib/analytics';
 import { captureUTMParams } from '@/lib/utm';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
-const SECTION_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  menu: MenuSection,
-  hero: Hero,
-  como_funciona: ComoFunciona,
-  para_quem_e: ParaQuemE,
-  beneficios: Beneficios,
-  provas_sociais: ProvasSociais,
-  planos: Planos,
-  faq: FAQ,
-  chamada_final: ChamadaFinal,
-  rodape: Rodape,
-};
+import { SectionLoader } from '@/components/sections/SectionLoader';
+import { SectionKey } from '@/lib/sectionModels';
+import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
+import { motion } from 'framer-motion';
+import { Loader2, Sparkles, Zap, Shield, Layout, ArrowRight } from 'lucide-react';
 
 const VIEW_TRACKED_KEY = 'lp_view_tracked_';
 
@@ -159,6 +140,17 @@ const Index = () => {
     loadLP();
   }, []);
 
+  // Apply theme tokens when settings change
+  useEffect(() => {
+    if (Object.keys(settings).length > 0) {
+      applyThemeToLP(settings);
+    }
+    
+    return () => {
+      removeThemeFromLP();
+    };
+  }, [settings]);
+
   useEffect(() => {
     if (settings.custom_css) {
       const styleId = 'lp-custom-css';
@@ -180,109 +172,144 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="app-shell min-h-screen flex items-center justify-center px-4">
-        <div className="glass-card w-full max-w-md p-8 md:p-10">
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 glass-pill text-[11px] font-medium tracking-[0.18em] uppercase">
-              Carregando
-            </div>
-            <p className="text-xs text-slate-100/75">
-              Preparando sua experiência SaaS-LP…
-            </p>
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-40 mx-auto rounded-lg" />
-            <Skeleton className="h-4 w-56 mx-auto rounded-lg" />
-            <div className="flex gap-3 mt-4">
-              <Skeleton className="h-10 flex-1 rounded-xl" />
-              <Skeleton className="h-10 flex-1 rounded-xl" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-violet-50/20">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="relative mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-xl flex items-center justify-center mx-auto">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           </div>
-        </div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (noHomepage) {
     return (
-      <div className="app-shell min-h-screen flex items-center justify-center px-4">
-        <div className="glass-card w-full max-w-md px-8 py-9 md:px-10 md:py-10 text-center">
-          <div className="mx-auto mb-6 glass-circle h-16 w-16">
-            <div className="glass-circle h-9 w-9 text-xs font-semibold">
-              SL
+      <div className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/50 to-violet-50/30 relative">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-100/20 to-violet-100/20 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-semibold tracking-tight">SaaS-LP</span>
             </div>
-          </div>
+          </motion.div>
 
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-100/70 mb-2">
-            SaaS-LP
-          </p>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 text-slate-50">
-            Crie landing pages com visual de produto grande
-          </h1>
-          <p className="text-sm text-slate-100/75 mb-7">
-            Construa e publique páginas modernas, conecte seu domínio e acompanhe
-            os resultados em um painel visual simples de usar.
-          </p>
+          {/* Main card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="w-full max-w-lg"
+          >
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl border border-white/80 shadow-2xl shadow-slate-200/50 p-8 md:p-10">
+              <div className="text-center mb-8">
+                <span className="inline-block px-3 py-1 text-xs font-medium tracking-wide uppercase bg-primary/5 text-primary rounded-full mb-4">
+                  Plataforma de Landing Pages
+                </span>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-3">
+                  Crie landing pages com visual de produto grande
+                </h1>
+                <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                  Construa e publique páginas modernas, conecte seu domínio e acompanhe os resultados em um painel visual.
+                </p>
+              </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto glass-pill justify-center text-sm font-semibold shadow-[0_18px_45px_rgba(15,23,42,0.9)]"
-              onClick={() => navigate('/auth/register')}
-            >
-              Começar agora
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full sm:w-auto rounded-full border border-white/60 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-slate-50"
-              onClick={() => navigate('/auth/login')}
-            >
-              Já tenho conta
-            </Button>
-          </div>
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <Button
+                  size="lg"
+                  className="flex-1 h-12 rounded-xl font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+                  onClick={() => navigate('/auth/register')}
+                >
+                  Começar agora
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 h-12 rounded-xl font-medium bg-white/50 border-slate-200/80 hover:bg-white/80"
+                  onClick={() => navigate('/auth/login')}
+                >
+                  Já tenho conta
+                </Button>
+              </div>
+
+              {/* Features */}
+              <div className="grid grid-cols-3 gap-3">
+                <FeatureCard
+                  icon={<Zap className="w-4 h-4" />}
+                  label="Rápido"
+                />
+                <FeatureCard
+                  icon={<Shield className="w-4 h-4" />}
+                  label="Seguro"
+                />
+                <FeatureCard
+                  icon={<Layout className="w-4 h-4" />}
+                  label="Responsivo"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Footer */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-8 text-xs text-muted-foreground"
+          >
+            © 2024 SaaS-LP. Todos os direitos reservados.
+          </motion.p>
         </div>
       </div>
     );
   }
 
-  const getVariante = (section: string): 'modelo_a' | 'modelo_b' | 'modelo_c' => {
-    return (settings[`${section}_variante`] as any) || 'modelo_a';
-  };
-
   return (
-    <div className="app-shell">
-      <div className="min-h-screen lp-container">
-        <SEOHead settings={settings} />
+    <div className="min-h-screen lp-container">
+      <SEOHead settings={settings} />
 
-        {sectionOrder.map((section) => {
-          const Component = SECTION_COMPONENTS[section];
-          if (!Component) return null;
-
-          const props: any = {
-            content: content[section],
-            key: section,
-          };
-
-          if (section !== 'rodape') {
-            props.variante = getVariante(section);
-          }
-
-          if (section === 'chamada_final' && lpId) {
-            props.lpId = lpId;
-            props.onPrimaryCTAClick = handleChamadaFinalCTAClick;
-          }
-
-          if (section === 'hero' && lpId) {
-            props.onPrimaryCTAClick = handleHeroPrimaryCTAClick;
-            props.onSecondaryCTAClick = handleHeroSecondaryCTAClick;
-          }
-
-          return <Component {...props} />;
-        })}
-      </div>
+      {sectionOrder.map((section) => (
+        <SectionLoader
+          key={section}
+          sectionKey={section as SectionKey}
+          content={content[section] || {}}
+          settings={settings}
+          disableAnimations={false}
+        />
+      ))}
     </div>
   );
 };
+
+const FeatureCard = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
+  <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+    <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary">
+      {icon}
+    </div>
+    <span className="text-xs font-medium text-muted-foreground">{label}</span>
+  </div>
+);
 
 export default Index;

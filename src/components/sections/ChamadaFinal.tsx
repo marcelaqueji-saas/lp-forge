@@ -14,6 +14,7 @@ interface ChamadaFinalProps {
   previewOverride?: ChamadaFinalContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
   onPrimaryCTAClick?: () => void;
+  cardStyle?: string;
 }
 
 const defaultContent: ChamadaFinalContent = {
@@ -27,7 +28,8 @@ export const ChamadaFinal = ({
   content = {}, 
   previewOverride, 
   variante = 'modelo_a',
-  onPrimaryCTAClick 
+  onPrimaryCTAClick,
+  cardStyle = ''
 }: ChamadaFinalProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
@@ -39,7 +41,7 @@ export const ChamadaFinal = ({
   // Modelo C - Minimal side-by-side
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding">
+      <section className="section-padding" id="chamada_final" data-section-key="chamada_final">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -68,7 +70,7 @@ export const ChamadaFinal = ({
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden">
+      <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
         <div className="absolute inset-0 gradient-bg opacity-10" />
         <div className="section-container relative">
           <motion.div
@@ -76,7 +78,7 @@ export const ChamadaFinal = ({
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="glass-card p-12 md:p-16 text-center max-w-4xl mx-auto"
+            className={`p-12 md:p-16 text-center max-w-4xl mx-auto ${cardStyle || 'premium-card-glass-medium'}`}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
@@ -100,7 +102,7 @@ export const ChamadaFinal = ({
 
   // Modelo A - Full width gradient
   return (
-    <section className="section-padding relative overflow-hidden">
+    <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
       <div className="absolute inset-0 gradient-bg" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
       <div className="section-container relative text-center text-primary-foreground">

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Joyride, { CallBackProps, STATUS, Step, ACTIONS, EVENTS } from 'react-joyride';
-import { hasCompletedEditorTour, markEditorTourCompleted, markOnboardingCompleted } from '@/lib/userApi';
+import { markEditorTourCompleted, markOnboardingCompleted } from '@/lib/userApi';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface EditorTourProps {
@@ -14,7 +14,7 @@ const desktopTourSteps: Step[] = [
     placement: 'center',
     content: (
       <div className="text-center py-4">
-        <h3 className="text-xl font-bold mb-2">Bem-vindo! 🎉</h3>
+        <h3 className="text-xl font-bold mb-2">Bem-vindo ao Editor! ✨</h3>
         <p className="text-muted-foreground">
           Tudo o que você vê aqui pode ser editado. Vamos fazer um tour rápido para você conhecer as ferramentas.
         </p>
@@ -62,6 +62,19 @@ const desktopTourSteps: Step[] = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour-id="section-hero-effects"]',
+    content: (
+      <div>
+        <h4 className="font-semibold mb-1">Efeitos visuais premium ✨</h4>
+        <p className="text-sm text-muted-foreground">
+          Aqui você ativa fundos em glass, gradientes animados, animações suaves e efeitos de cursor para deixar sua seção com cara de produto premium.
+        </p>
+      </div>
+    ),
+    placement: 'bottom',
+    disableBeacon: true,
+  },
+  {
     target: '[data-tour-id="editor-top-actions"]',
     content: (
       <div>
@@ -79,9 +92,12 @@ const desktopTourSteps: Step[] = [
     placement: 'center',
     content: (
       <div className="text-center py-4">
-        <h3 className="text-xl font-bold mb-2">Ótimo! 🚀</h3>
-        <p className="text-muted-foreground">
+        <h3 className="text-xl font-bold mb-2">Pronto! 🚀</h3>
+        <p className="text-muted-foreground mb-3">
           Agora é só rolar a página e editar cada parte do seu site. Bom trabalho!
+        </p>
+        <p className="text-xs text-muted-foreground">
+          💡 Dica: Sua página deve estar em conformidade com a LGPD. Configure os avisos de cookies e política de privacidade nas configurações.
         </p>
       </div>
     ),
@@ -96,7 +112,7 @@ const mobileTourSteps: Step[] = [
     placement: 'center',
     content: (
       <div className="text-center py-3">
-        <h3 className="text-lg font-bold mb-2">Bem-vindo! 🎉</h3>
+        <h3 className="text-lg font-bold mb-2">Bem-vindo! ✨</h3>
         <p className="text-sm text-muted-foreground">
           Tudo pode ser editado! Use os botões em cada seção.
         </p>
@@ -110,7 +126,7 @@ const mobileTourSteps: Step[] = [
       <div>
         <h4 className="font-semibold mb-1 text-sm">Edite suas seções</h4>
         <p className="text-xs text-muted-foreground">
-          Toque em "Editar" para mudar textos e em 🎨 para trocar o layout.
+          Toque em "Editar" para mudar textos, 🎨 para layout e ✨ para efeitos premium.
         </p>
       </div>
     ),
@@ -123,8 +139,11 @@ const mobileTourSteps: Step[] = [
     content: (
       <div className="text-center py-3">
         <h3 className="text-lg font-bold mb-2">Pronto! 🚀</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-2">
           Role a página e edite cada seção. Bom trabalho!
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          💡 Configure LGPD e cookies nas configurações.
         </p>
       </div>
     ),
@@ -171,27 +190,44 @@ export const EditorTour = ({ run, onFinish }: EditorTourProps) => {
           arrowColor: 'hsl(var(--card))',
           zIndex: 10000,
         },
+        overlay: {
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        },
         tooltip: {
-          borderRadius: 12,
-          padding: isMobile ? 12 : 16,
-          maxWidth: isMobile ? 280 : 380,
+          borderRadius: 20,
+          padding: isMobile ? 16 : 20,
+          maxWidth: isMobile ? 300 : 400,
+          boxShadow: '0 20px 50px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          background: 'rgba(255, 255, 255, 0.85)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+        },
+        tooltipContainer: {
+          textAlign: 'left',
         },
         tooltipContent: {
           padding: isMobile ? '8px 4px' : '12px 4px',
         },
         buttonNext: {
-          borderRadius: 8,
-          padding: isMobile ? '6px 12px' : '8px 16px',
+          borderRadius: 999,
+          padding: isMobile ? '8px 16px' : '10px 20px',
           fontSize: isMobile ? 13 : 14,
+          fontWeight: 500,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          transition: 'all 0.2s ease',
         },
         buttonBack: {
-          marginRight: 8,
+          marginRight: 10,
           color: 'hsl(var(--muted-foreground))',
           fontSize: isMobile ? 13 : 14,
+          fontWeight: 500,
         },
         buttonSkip: {
           color: 'hsl(var(--muted-foreground))',
-          fontSize: isMobile ? 13 : 14,
+          fontSize: isMobile ? 12 : 13,
+        },
+        spotlight: {
+          borderRadius: 16,
         },
       }}
       locale={{
@@ -199,7 +235,7 @@ export const EditorTour = ({ run, onFinish }: EditorTourProps) => {
         close: 'Fechar',
         last: 'Concluir',
         next: 'Próximo',
-        skip: 'Pular',
+        skip: 'Pular tour',
       }}
     />
   );

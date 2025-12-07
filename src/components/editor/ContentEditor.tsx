@@ -12,7 +12,6 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { getSectionContent, saveSectionContent, LPContent } from '@/lib/lpContentApi';
-import { SECTION_IMAGE_TOKENS } from '@/lib/styleTokens';
 import { toast } from '@/hooks/use-toast';
 import { BeneficiosEditor } from './BeneficiosEditor';
 import { PlanosEditor } from './PlanosEditor';
@@ -21,6 +20,7 @@ import { DepoimentosEditor } from './DepoimentosEditor';
 import { FAQEditor } from './FAQEditor';
 import { MenuEditor } from './MenuEditor';
 import { RodapeEditor } from './RodapeEditor';
+import { PassosEditor } from './PassosEditor';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -29,6 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { getSectionModel, SectionKey, FieldConfig, ImageConfig } from '@/lib/sectionModels';
 
 interface ContentEditorProps {
   open: boolean;
@@ -38,63 +39,6 @@ interface ContentEditorProps {
   sectionName: string;
   onSave: () => void;
 }
-
-// Field configurations for each section
-const SECTION_FIELDS: Record<string, { key: string; label: string; type: 'text' | 'textarea' | 'url' }[]> = {
-  menu: [
-    { key: 'brand_name', label: 'Nome/Brand', type: 'text' },
-    { key: 'cta_label', label: 'Texto do botão principal (opcional)', type: 'text' },
-    { key: 'cta_url', label: 'URL do botão principal', type: 'url' },
-  ],
-  hero: [
-    { key: 'badge', label: 'Badge/Tag', type: 'text' },
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'destaque', label: 'Texto em destaque', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-    { key: 'texto_botao_primario', label: 'Texto botão principal', type: 'text' },
-    { key: 'url_botao_primario', label: 'URL botão principal', type: 'url' },
-    { key: 'texto_botao_secundario', label: 'Texto botão secundário', type: 'text' },
-    { key: 'url_botao_secundario', label: 'URL botão secundário', type: 'url' },
-  ],
-  como_funciona: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-  ],
-  para_quem_e: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-  ],
-  beneficios: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-  ],
-  provas_sociais: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-  ],
-  planos: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-  ],
-  faq: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-  ],
-  chamada_final: [
-    { key: 'titulo', label: 'Título', type: 'text' },
-    { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
-    { key: 'texto_botao', label: 'Texto do botão', type: 'text' },
-    { key: 'url_botao', label: 'URL do botão', type: 'url' },
-  ],
-  rodape: [
-    { key: 'copyright', label: 'Texto de copyright', type: 'text' },
-  ],
-};
-
-// Sections that have JSON list editors
-const SECTIONS_WITH_JSON_EDITOR = ['menu', 'beneficios', 'planos', 'para_quem_e', 'provas_sociais', 'faq', 'rodape'];
-
-// Sections that have image fields
-const SECTIONS_WITH_IMAGES = ['menu', 'hero', 'beneficios', 'provas_sociais', 'planos', 'chamada_final'];
 
 export const ContentEditor = ({
   open,
@@ -141,10 +85,14 @@ export const ContentEditor = ({
     setSaving(false);
   };
 
-  const fields = SECTION_FIELDS[sectionKey] || [];
-  const hasJsonEditor = SECTIONS_WITH_JSON_EDITOR.includes(sectionKey);
-  const hasImages = SECTIONS_WITH_IMAGES.includes(sectionKey);
-  const sectionImages = SECTION_IMAGE_TOKENS[sectionKey] || [];
+  // Usar o sistema centralizado de modelos
+  const variant = (content?.variant as string) || undefined;
+  const sectionModel = getSectionModel(sectionKey as SectionKey, variant);
+  
+  const fields: FieldConfig[] = sectionModel?.fields ?? [];
+  const hasJsonEditor = sectionModel?.hasJsonEditor ?? false;
+  const sectionImages: ImageConfig[] = sectionModel?.images ?? [];
+  const hasImages = sectionImages.length > 0;
 
   const renderJsonEditor = () => {
     const editorProps = {
@@ -155,6 +103,8 @@ export const ContentEditor = ({
     switch (sectionKey) {
       case 'menu':
         return <MenuEditor {...editorProps} />;
+      case 'como_funciona':
+        return <PassosEditor {...editorProps} />;
       case 'beneficios':
         return <BeneficiosEditor {...editorProps} />;
       case 'planos':

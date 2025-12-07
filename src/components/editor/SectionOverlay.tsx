@@ -1,25 +1,50 @@
 import { Palette, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { QuickStyleEditor } from './QuickStyleEditor';
+import { PremiumStyleEditor } from './PremiumStyleEditor';
+import { PremiumVisualConfig } from '@/lib/premiumPresets';
 
 interface SectionOverlayProps {
   sectionKey: string;
   sectionName: string;
   isFirst?: boolean;
   canChangeLayout?: boolean;
+  currentStyles?: {
+    style_bg?: string;
+    style_text?: string;
+    style_gradient?: string;
+  };
+  premiumConfig?: PremiumVisualConfig;
+  supportsGradient?: boolean;
+  userPlan?: 'free' | 'pro' | 'premium';
   onChangeLayout: () => void;
   onEditContent: () => void;
+  onStyleChange?: (styles: Record<string, string | undefined>) => void;
+  onPremiumConfigChange?: (config: Partial<PremiumVisualConfig>) => void;
 }
+
+// Sections that support gradient backgrounds
+const GRADIENT_SECTIONS = ['hero', 'chamada_final', 'beneficios'];
 
 export const SectionOverlay = ({ 
   sectionKey,
   sectionName, 
   isFirst = false,
   canChangeLayout = true,
+  currentStyles = {},
+  premiumConfig = {},
+  supportsGradient,
+  userPlan = 'free',
   onChangeLayout, 
-  onEditContent 
+  onEditContent,
+  onStyleChange,
+  onPremiumConfigChange,
 }: SectionOverlayProps) => {
   const isMobile = useIsMobile();
+  const hasStyleEditor = !!onStyleChange;
+  const hasPremiumEditor = !!onPremiumConfigChange;
+  const showGradient = supportsGradient ?? GRADIENT_SECTIONS.includes(sectionKey);
 
   // Mobile layout - compact bottom bar
   if (isMobile) {
@@ -34,6 +59,24 @@ export const SectionOverlay = ({
             <span className="font-medium text-xs truncate flex-1">{sectionName}</span>
             
             <div className="flex items-center gap-1.5 shrink-0">
+              {hasStyleEditor && (
+                <QuickStyleEditor
+                  sectionKey={sectionKey}
+                  currentStyles={currentStyles}
+                  supportsGradient={showGradient}
+                  onStyleChange={onStyleChange!}
+                />
+              )}
+              {hasPremiumEditor && (
+                <div data-tour-id={isFirst ? 'section-hero-effects' : undefined}>
+                  <PremiumStyleEditor
+                    sectionKey={sectionKey}
+                    currentConfig={premiumConfig}
+                    onChange={onPremiumConfigChange!}
+                    userPlan={userPlan}
+                  />
+                </div>
+              )}
               {canChangeLayout && (
                 <Button
                   size="sm"
@@ -77,6 +120,24 @@ export const SectionOverlay = ({
           <span className="font-medium text-sm">{sectionName}</span>
           
           <div className="flex items-center gap-2">
+            {hasStyleEditor && (
+              <QuickStyleEditor
+                sectionKey={sectionKey}
+                currentStyles={currentStyles}
+                supportsGradient={showGradient}
+                onStyleChange={onStyleChange!}
+              />
+            )}
+            {hasPremiumEditor && (
+              <div data-tour-id={isFirst ? 'section-hero-effects' : undefined}>
+                <PremiumStyleEditor
+                  sectionKey={sectionKey}
+                  currentConfig={premiumConfig}
+                  onChange={onPremiumConfigChange!}
+                  userPlan={userPlan}
+                />
+              </div>
+            )}
             {canChangeLayout && (
               <Button
                 size="sm"

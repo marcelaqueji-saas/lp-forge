@@ -1,0 +1,611 @@
+import React, { Suspense, lazy, ComponentType, memo } from 'react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { getSectionModel, SectionKey, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
+import { LPContent } from '@/lib/lpContentApi';
+import { 
+  parseVisualConfig, 
+  getVisualClasses, 
+  getCardClasses,
+  prefersReducedMotion,
+  PremiumVisualConfig 
+} from '@/lib/premiumPresets';
+
+// ============================================================
+// BASE SECTION COMPONENTS (always loaded)
+// ============================================================
+import { Hero } from './Hero';
+import { ComoFunciona } from './ComoFunciona';
+import { ParaQuemE } from './ParaQuemE';
+import { Beneficios } from './Beneficios';
+import { ProvasSociais } from './ProvasSociais';
+import { Planos } from './Planos';
+import { FAQ } from './FAQ';
+import { ChamadaFinal } from './ChamadaFinal';
+import { Rodape } from './Rodape';
+import { MenuSection } from './MenuSection';
+
+// Premium components (lazy loaded)
+const HeroParallax = lazy(() => import('./premium/HeroParallax'));
+const HeroSplit = lazy(() => import('./premium/HeroSplit'));
+const Cards3DShowcase = lazy(() => import('./premium/Cards3DShowcase'));
+const FeaturesFloat = lazy(() => import('./premium/FeaturesFloat'));
+const TestimonialCinematic = lazy(() => import('./premium/TestimonialCinematic'));
+const CTAFinal = lazy(() => import('./premium/CTAFinal'));
+
+// ============================================================
+// COMPONENT REGISTRY - Maps model IDs and component names to React components
+// ============================================================
+
+export const SECTION_COMPONENTS: Record<string, ComponentType<any>> = {
+  // Menu
+  'MenuSection': MenuSection,
+  'menu-modelo_a': MenuSection,
+  'menu-modelo_b': MenuSection,
+  
+  // Hero - Base
+  'Hero': Hero,
+  'hero-basic': Hero,
+  'hero-modelo_a': Hero,
+  'hero-modelo_b': Hero,
+  'hero-modelo_c': Hero,
+  'hero-side-image': Hero,
+  'HeroSideImage': Hero,
+  'hero-dashboard': Hero,
+  'HeroDashboard': Hero,
+  'hero-cards': Hero,
+  'HeroCards': Hero,
+  'hero-cinematic-video': Hero,
+  'HeroCinematicVideo': Hero,
+  'hero-parallax-glass': Hero,
+  'HeroParallaxGlass': Hero,
+  // Hero - Premium
+  'hero-parallax': HeroParallax,
+  'HeroParallax': HeroParallax,
+  'hero-split': HeroSplit,
+  'HeroSplit': HeroSplit,
+  
+  // Como Funciona
+  'ComoFunciona': ComoFunciona,
+  'steps-basic': ComoFunciona,
+  'como_funciona-modelo_a': ComoFunciona,
+  'como_funciona-modelo_b': ComoFunciona,
+  'steps-icons': ComoFunciona,
+  'StepsIcons': ComoFunciona,
+  'steps-image-left': ComoFunciona,
+  'StepsImageLeft': ComoFunciona,
+  'steps-vertical-timeline': ComoFunciona,
+  'StepsVerticalTimeline': ComoFunciona,
+  
+  // Para Quem É
+  'ParaQuemE': ParaQuemE,
+  'target-basic': ParaQuemE,
+  'para_quem_e-modelo_a': ParaQuemE,
+  'para_quem_e-modelo_b': ParaQuemE,
+  'target-grid': ParaQuemE,
+  'TargetGrid': ParaQuemE,
+  'target-cards': ParaQuemE,
+  'TargetCards': ParaQuemE,
+  'target-avatars': ParaQuemE,
+  'TargetAvatars': ParaQuemE,
+  'target-lit-line': ParaQuemE,
+  'TargetLitLine': ParaQuemE,
+  
+  // Benefícios
+  'Beneficios': Beneficios,
+  'benefits-basic': Beneficios,
+  'beneficios-modelo_a': Beneficios,
+  'beneficios-modelo_b': Beneficios,
+  'beneficios-modelo_c': Beneficios,
+  'benefits-carousel': Beneficios,
+  'BenefitsCarousel': Beneficios,
+  'benefits-bento-grid': Beneficios,
+  'BenefitsBentoGrid': Beneficios,
+  'beneficios-showcase_3d': Cards3DShowcase,
+  'beneficios-features_float': FeaturesFloat,
+  'benefits-pictures': Beneficios,
+  'BenefitsPictures': Beneficios,
+  'benefits-motion-icons': Beneficios,
+  'BenefitsMotionIcons': Beneficios,
+  // Premium
+  'Cards3DShowcase': Cards3DShowcase,
+  'FeaturesFloat': FeaturesFloat,
+  
+  // Provas Sociais
+  'ProvasSociais': ProvasSociais,
+  'testimonials-basic': ProvasSociais,
+  'provas_sociais-modelo_a': ProvasSociais,
+  'provas_sociais-modelo_b': ProvasSociais,
+  'provas_sociais-modelo_c': ProvasSociais,
+  'testimonials-slider': ProvasSociais,
+  'TestimonialsSlider': ProvasSociais,
+  'testimonials-cards': ProvasSociais,
+  'TestimonialsCards': ProvasSociais,
+  'testimonials-profile-feed': ProvasSociais,
+  'TestimonialsProfileFeed': ProvasSociais,
+  'testimonials-video-grid': ProvasSociais,
+  'TestimonialsVideoGrid': ProvasSociais,
+  // Premium
+  'testimonial-cinematic': TestimonialCinematic,
+  'testimonial_cinematic': TestimonialCinematic,
+  'TestimonialCinematic': TestimonialCinematic,
+  
+  // Planos
+  'Planos': Planos,
+  'pricing-basic': Planos,
+  'planos-modelo_a': Planos,
+  'planos-modelo_b': Planos,
+  'pricing-feature-grid': Planos,
+  'PricingFeatureGrid': Planos,
+  'pricing-tabs': Planos,
+  'PricingTabs': Planos,
+  
+  // FAQ
+  'FAQ': FAQ,
+  'faq-accordion': FAQ,
+  'faq-modelo_a': FAQ,
+  'faq-modelo_b': FAQ,
+  'faq-cards': FAQ,
+  'FAQCards': FAQ,
+  'faq-sections': FAQ,
+  'FAQSections': FAQ,
+  
+  // Chamada Final
+  'ChamadaFinal': ChamadaFinal,
+  'cta-basic': ChamadaFinal,
+  'chamada_final-modelo_a': ChamadaFinal,
+  'chamada_final-modelo_b': ChamadaFinal,
+  'chamada_final-modelo_c': ChamadaFinal,
+  'cta-showcase': ChamadaFinal,
+  'CTAShowcase': ChamadaFinal,
+  'cta-banner-glass': ChamadaFinal,
+  'CTABannerGlass': ChamadaFinal,
+  // Premium
+  'cta_final_animated': CTAFinal,
+  'CTAFinal': CTAFinal,
+  
+  // Rodapé
+  'Rodape': Rodape,
+  'footer-basic': Rodape,
+  'rodape-modelo_a': Rodape,
+  'rodape-modelo_b': Rodape,
+  'footer-columns': Rodape,
+  'FooterColumns': Rodape,
+};
+
+// ============================================================
+// FALLBACK COMPONENTS BY SECTION
+// ============================================================
+
+const SECTION_FALLBACK: Record<SectionKey, ComponentType<any>> = {
+  menu: MenuSection,
+  hero: Hero,
+  como_funciona: ComoFunciona,
+  para_quem_e: ParaQuemE,
+  beneficios: Beneficios,
+  provas_sociais: ProvasSociais,
+  planos: Planos,
+  faq: FAQ,
+  chamada_final: ChamadaFinal,
+  rodape: Rodape,
+};
+
+// ============================================================
+// LOADING AND ERROR COMPONENTS
+// ============================================================
+
+const SectionFallback = ({ sectionName }: { sectionName: string }) => (
+  <div className="py-20 text-center bg-muted/30">
+    <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary mb-2" />
+    <p className="text-muted-foreground text-sm">Carregando {sectionName}...</p>
+  </div>
+);
+
+const SectionError = ({ 
+  sectionName, 
+  error 
+}: { 
+  sectionName: string; 
+  error?: string;
+}) => (
+  <div className="py-12 text-center bg-destructive/5 border border-destructive/20 rounded-lg mx-4 my-4">
+    <AlertCircle className="w-6 h-6 text-destructive mx-auto mb-2" />
+    <p className="text-destructive font-medium text-sm">
+      Erro ao carregar {sectionName}
+    </p>
+    {error && (
+      <p className="text-muted-foreground text-xs mt-1">{error}</p>
+    )}
+  </div>
+);
+
+// ============================================================
+// ERROR BOUNDARY
+// ============================================================
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class SectionErrorBoundary extends React.Component<
+  { children: React.ReactNode; sectionName: string },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode; sectionName: string }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`[SectionLoader] Error in ${this.props.sectionName}:`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SectionError 
+          sectionName={this.props.sectionName} 
+          error={this.state.error?.message}
+        />
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ============================================================
+// VARIANT RESOLUTION UTILITIES
+// ============================================================
+
+/**
+ * Resolves the variant ID from multiple sources:
+ * 1. content.variant (new system)
+ * 2. settings[sectionKey_variante] (legacy system)
+ * 3. First model of the section (fallback)
+ */
+export function resolveVariant(
+  sectionKey: SectionKey,
+  content?: LPContent,
+  settings?: Record<string, string | undefined>
+): string {
+  // 1. Check content.variant first (new system)
+  const variantFromContent = content?.variant as string | undefined;
+  if (variantFromContent) return variantFromContent;
+
+  // 2. Check settings (legacy system)
+  const variantFromSettings = settings?.[`${sectionKey}_variante`];
+  if (variantFromSettings) return variantFromSettings;
+
+  // 3. Return first model of section as fallback
+  const models = SECTION_MODELS_BY_SECTION[sectionKey];
+  if (models && models.length > 0) {
+    return models[0].id;
+  }
+
+  // 4. Ultimate fallback
+  return 'modelo_a';
+}
+
+/**
+ * Maps variant IDs to legacy format for components that still use modelo_a/b/c
+ */
+export function mapVariantToLegacy(variant: string): string {
+  // If already legacy format
+  if (variant.startsWith('modelo_')) {
+    return variant;
+  }
+  
+  // Extract from section-modelo_X format
+  const match = variant.match(/modelo_[a-z]$/);
+  if (match) {
+    return match[0];
+  }
+  
+  // Map new IDs to legacy
+  const legacyMap: Record<string, string> = {
+    // Hero
+    'hero-basic': 'modelo_a',
+    'hero-side-image': 'modelo_a',
+    'hero-dashboard': 'modelo_b',
+    'hero-cards': 'modelo_b',
+    'hero-cinematic-video': 'modelo_c',
+    'hero-parallax-glass': 'modelo_c',
+    // Como Funciona
+    'steps-basic': 'modelo_a',
+    'steps-icons': 'modelo_a',
+    'steps-image-left': 'modelo_b',
+    'steps-vertical-timeline': 'modelo_b',
+    'como_funciona-modelo_a': 'modelo_a',
+    'como_funciona-modelo_b': 'modelo_b',
+    // Para Quem É
+    'target-basic': 'modelo_a',
+    'target-grid': 'modelo_a',
+    'target-cards': 'modelo_b',
+    'target-avatars': 'modelo_b',
+    'target-lit-line': 'modelo_b',
+    'para_quem_e-modelo_a': 'modelo_a',
+    'para_quem_e-modelo_b': 'modelo_b',
+    // Benefícios
+    'benefits-basic': 'modelo_a',
+    'benefits-carousel': 'modelo_a',
+    'benefits-bento-grid': 'modelo_b',
+    'benefits-pictures': 'modelo_c',
+    'benefits-motion-icons': 'modelo_c',
+    'beneficios-modelo_a': 'modelo_a',
+    'beneficios-modelo_b': 'modelo_b',
+    'beneficios-modelo_c': 'modelo_c',
+    // Provas Sociais
+    'testimonials-basic': 'modelo_a',
+    'testimonials-slider': 'modelo_a',
+    'testimonials-cards': 'modelo_b',
+    'testimonials-profile-feed': 'modelo_c',
+    'testimonials-video-grid': 'modelo_c',
+    'provas_sociais-modelo_a': 'modelo_a',
+    'provas_sociais-modelo_b': 'modelo_b',
+    'provas_sociais-modelo_c': 'modelo_c',
+    // Planos
+    'pricing-basic': 'modelo_a',
+    'pricing-feature-grid': 'modelo_a',
+    'pricing-tabs': 'modelo_b',
+    'planos-modelo_a': 'modelo_a',
+    'planos-modelo_b': 'modelo_b',
+    // FAQ
+    'faq-accordion': 'modelo_a',
+    'faq-cards': 'modelo_a',
+    'faq-sections': 'modelo_b',
+    'faq-modelo_a': 'modelo_a',
+    'faq-modelo_b': 'modelo_b',
+    // Chamada Final
+    'cta-basic': 'modelo_a',
+    'cta-showcase': 'modelo_b',
+    'cta-banner-glass': 'modelo_c',
+    'chamada_final-modelo_a': 'modelo_a',
+    'chamada_final-modelo_b': 'modelo_b',
+    'chamada_final-modelo_c': 'modelo_c',
+    // Rodapé
+    'footer-basic': 'modelo_a',
+    'footer-columns': 'modelo_b',
+    'rodape-modelo_a': 'modelo_a',
+    'rodape-modelo_b': 'modelo_b',
+    // Menu
+    'menu-modelo_a': 'modelo_a',
+    'menu-modelo_b': 'modelo_b',
+  };
+
+  return legacyMap[variant] || 'modelo_a';
+}
+
+/**
+ * Check if a component is lazy-loaded (premium)
+ */
+function isLazyComponent(componentKey: string): boolean {
+  const lazyComponents = [
+    'HeroParallax', 'hero-parallax',
+    'HeroSplit', 'hero-split',
+    'Cards3DShowcase', 'beneficios-showcase_3d',
+    'FeaturesFloat', 'beneficios-features_float',
+    'TestimonialCinematic', 'testimonial-cinematic', 'testimonial_cinematic',
+    'CTAFinal', 'cta_final_animated',
+  ];
+  return lazyComponents.includes(componentKey);
+}
+
+// ============================================================
+// SEPARATOR COMPONENT
+// ============================================================
+
+const PremiumSeparator: React.FC<{
+  type: 'line' | 'gradient' | 'glow' | 'wave' | 'diagonal' | 'curve';
+  position: 'before' | 'after';
+}> = ({ type, position }) => {
+  const isTop = position === 'before';
+  
+  switch (type) {
+    case 'line':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent`} />
+      );
+    case 'gradient':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0`} />
+      );
+    case 'glow':
+      return (
+        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 blur-sm`} />
+      );
+    case 'wave':
+      return (
+        <svg
+          viewBox="0 0 1200 60"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-12 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <path
+            d="M0,30 C300,60 600,0 900,30 C1050,45 1150,15 1200,30 L1200,60 L0,60 Z"
+            fill="currentColor"
+            className="text-background"
+          />
+        </svg>
+      );
+    case 'diagonal':
+      return (
+        <svg
+          viewBox="0 0 100 10"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-16 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <polygon points="0,10 100,0 100,10" fill="currentColor" className="text-background" />
+        </svg>
+      );
+    case 'curve':
+      return (
+        <svg
+          viewBox="0 0 1200 60"
+          preserveAspectRatio="none"
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-12 ${isTop ? 'rotate-180' : ''}`}
+        >
+          <path
+            d="M0,60 Q600,0 1200,60 L1200,60 L0,60 Z"
+            fill="currentColor"
+            className="text-background"
+          />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
+// ============================================================
+// MAIN SECTION LOADER COMPONENT
+// ============================================================
+
+interface SectionLoaderProps {
+  sectionKey: SectionKey;
+  content?: LPContent;
+  previewOverride?: LPContent;
+  settings?: Record<string, string | undefined>;
+  disableAnimations?: boolean;
+}
+
+/**
+ * Build inline styles from content.style_* properties
+ */
+function buildSectionStyles(content?: LPContent): React.CSSProperties {
+  const styles: React.CSSProperties = {};
+  
+  if (!content) return styles;
+  
+  // Background color or gradient
+  if (content.style_gradient) {
+    styles.background = content.style_gradient as string;
+  } else if (content.style_bg) {
+    styles.backgroundColor = content.style_bg as string;
+  }
+  
+  // Text color
+  if (content.style_text) {
+    styles.color = content.style_text as string;
+  }
+  
+  return styles;
+}
+
+export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
+  sectionKey,
+  content = {},
+  previewOverride,
+  settings = {},
+  disableAnimations = false,
+}) => {
+  // 1. Resolve the variant to use
+  const variant = resolveVariant(sectionKey, content, settings);
+  
+  // 2. Get the section model for this variant
+  const sectionModel = getSectionModel(sectionKey, variant);
+  
+  // 3. Parse premium visual config from content
+  const visualConfig = parseVisualConfig(content as Record<string, any>);
+  const reducedMotion = prefersReducedMotion();
+  
+  // 4. Determine which component to render
+  let Component: ComponentType<any> | null = null;
+  let componentKey = '';
+  
+  // Try to find component by variant ID first
+  if (SECTION_COMPONENTS[variant]) {
+    Component = SECTION_COMPONENTS[variant];
+    componentKey = variant;
+  }
+  // Then try the model's component name
+  else if (sectionModel?.component && SECTION_COMPONENTS[sectionModel.component]) {
+    Component = SECTION_COMPONENTS[sectionModel.component];
+    componentKey = sectionModel.component;
+  }
+  // Fallback to section's default component
+  else {
+    Component = SECTION_FALLBACK[sectionKey];
+    componentKey = sectionKey;
+    
+    if (!Component) {
+      console.warn(`[SectionLoader] No component found for section: ${sectionKey}, variant: ${variant}`);
+      return <SectionError sectionName={sectionKey} error={`Componente não encontrado: ${variant}`} />;
+    }
+    
+    console.warn(`[SectionLoader] Using fallback component for: ${sectionKey}, variant: ${variant}`);
+  }
+
+  // 5. Prepare props for the component
+  const legacyVariant = mapVariantToLegacy(variant);
+  
+  // 6. Build inline styles from content
+  const sectionStyles = buildSectionStyles(content);
+  
+  // 7. Get premium visual classes
+  const visualClasses = getVisualClasses(visualConfig, reducedMotion || disableAnimations);
+  
+  // 8. Get card style classes
+  const cardClasses = getCardClasses(visualConfig.card_style);
+  
+  const componentProps = {
+    content: content,
+    previewOverride: previewOverride,
+    variante: legacyVariant,
+    disableAnimations: disableAnimations || reducedMotion,
+    buttonStyle: visualConfig.button_style,
+    cardStyle: cardClasses,
+  };
+
+  // Render with appropriate wrapper
+  const isLazy = isLazyComponent(componentKey);
+
+  // Check if we need separators
+  const hasSeparatorBefore = visualConfig.separator_before && visualConfig.separator_before !== 'none';
+  const hasSeparatorAfter = visualConfig.separator_after && visualConfig.separator_after !== 'none';
+
+  // Wrap in styled div if custom styles exist
+  const hasCustomStyles = Object.keys(sectionStyles).length > 0 || visualClasses.length > 0 || hasSeparatorBefore || hasSeparatorAfter;
+
+  const renderComponent = () => <Component {...componentProps} />;
+
+  const wrappedContent = hasCustomStyles ? (
+    <div 
+      style={sectionStyles} 
+      className={`relative ${visualClasses}`}
+    >
+      {hasSeparatorBefore && (
+        <PremiumSeparator type={visualConfig.separator_before as any} position="before" />
+      )}
+      {renderComponent()}
+      {hasSeparatorAfter && (
+        <PremiumSeparator type={visualConfig.separator_after as any} position="after" />
+      )}
+    </div>
+  ) : (
+    renderComponent()
+  );
+
+  if (isLazy) {
+    return (
+      <SectionErrorBoundary sectionName={sectionKey}>
+        <Suspense fallback={<SectionFallback sectionName={sectionKey} />}>
+          {wrappedContent}
+        </Suspense>
+      </SectionErrorBoundary>
+    );
+  }
+  
+  return (
+    <SectionErrorBoundary sectionName={sectionKey}>
+      {wrappedContent}
+    </SectionErrorBoundary>
+  );
+});
+
+SectionLoader.displayName = 'SectionLoader';
+
+export default SectionLoader;

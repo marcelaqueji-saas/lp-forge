@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, MousePointer, Rocket } from 'lucide-react';
+import { Zap, MousePointer, Rocket, Star, Target, CheckCircle, Settings, Users, Lightbulb, Clock, Award, Heart } from 'lucide-react';
 
 interface Passo {
   titulo: string;
@@ -17,6 +17,8 @@ interface ComoFuncionaProps {
   content?: ComoFuncionaContent;
   previewOverride?: ComoFuncionaContent;
   variante?: 'modelo_a' | 'modelo_b';
+  disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const defaultContent: ComoFuncionaContent = {
@@ -33,9 +35,18 @@ const iconMap: Record<string, typeof Zap> = {
   Zap,
   MousePointer,
   Rocket,
+  Star,
+  Target,
+  CheckCircle,
+  Settings,
+  Users,
+  Lightbulb,
+  Clock,
+  Award,
+  Heart,
 };
 
-export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a' }: ComoFuncionaProps) => {
+export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a', disableAnimations = false, cardStyle = '' }: ComoFuncionaProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let passos: Passo[] = [];
@@ -60,7 +71,7 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
 
   if (variante === 'modelo_b') {
     return (
-      <section id="como-funciona" className="section-padding bg-card/50">
+      <section id="como_funciona" data-section-key="como_funciona" className="section-padding bg-card/50">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -123,7 +134,7 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
 
   // Modelo A - Cards horizontais
   return (
-    <section id="como-funciona" className="section-padding">
+    <section id="como_funciona" data-section-key="como_funciona" className="section-padding">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

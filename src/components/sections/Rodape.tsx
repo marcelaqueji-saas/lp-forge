@@ -38,7 +38,7 @@ export const Rodape = ({ content = {}, variante = 'modelo_a', previewOverride }:
   // Modelo B - Two lines, stacked layout
   if (variante === 'modelo_b') {
     return (
-      <footer className="py-10 px-4 border-t border-border bg-muted/30">
+      <footer id="rodape" data-section-key="rodape" className="py-10 px-4 border-t border-border bg-muted/30">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0 }}
@@ -69,7 +69,7 @@ export const Rodape = ({ content = {}, variante = 'modelo_a', previewOverride }:
 
   // Modelo A - Single line, horizontal layout (default)
   return (
-    <footer className="py-8 px-4 border-t border-border bg-card/50">
+    <footer id="rodape" data-section-key="rodape" className="py-8 px-4 border-t border-border bg-card/50">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0 }}

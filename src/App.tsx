@@ -2,13 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import {
   AdminMasterRoute,
   ClientRoute,
   ProtectedRoute,
 } from "@/components/auth/ProtectedRoute";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 // Public pages
 import Index from "./pages/Index";
@@ -21,6 +22,8 @@ import SiteSaasLP from "./pages/SiteSaasLP";
 // Auth pages
 import AuthRegister from "./pages/auth/AuthRegister";
 import AuthLogin from "./pages/auth/AuthLogin";
+import ResetPasswordRequest from "./pages/auth/ResetPasswordRequest";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Client pages
 import Onboarding from "./pages/Onboarding";
@@ -57,8 +60,22 @@ import MasterSeparators from "./pages/master/MasterSeparators";
 import MasterLPs from "./pages/master/MasterLPs";
 import MasterAudit from "./pages/master/MasterAudit";
 import MasterHomepage from "./pages/master/MasterHomepage";
+import MasterSectionModels from "./pages/master/MasterSectionModels";
 
 const queryClient = new QueryClient();
+
+// Componente para decidir quando mostrar o banner de cookies
+const ConditionalCookieBanner = () => {
+  const location = useLocation();
+  
+  // Não mostrar em rotas administrativas/auth
+  const adminRoutes = ['/admin', '/master', '/painel', '/meu-site', '/auth', '/onboarding', '/reset-password'];
+  const isAdminRoute = adminRoutes.some(route => location.pathname.startsWith(route));
+  
+  if (isAdminRoute) return null;
+  
+  return <CookieConsentBanner />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -80,6 +97,8 @@ const App = () => (
             {/* Auth routes */}
             <Route path="/auth/register" element={<AuthRegister />} />
             <Route path="/auth/login" element={<AuthLogin />} />
+            <Route path="/reset-password-request" element={<ResetPasswordRequest />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Client onboarding routes */}
@@ -194,6 +213,14 @@ const App = () => (
               element={
                 <AdminMasterRoute>
                   <MasterHomepage />
+                </AdminMasterRoute>
+              }
+            />
+            <Route
+              path="/master/section-models"
+              element={
+                <AdminMasterRoute>
+                  <MasterSectionModels />
                 </AdminMasterRoute>
               }
             />
@@ -333,6 +360,9 @@ const App = () => (
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          
+          {/* Cookie Consent Banner - apenas em rotas públicas */}
+          <ConditionalCookieBanner />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

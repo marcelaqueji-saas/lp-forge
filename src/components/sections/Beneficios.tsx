@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock } from 'lucide-react';
+import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock, Star, Heart, Award, TrendingUp, Users } from 'lucide-react';
 
 interface Beneficio {
   titulo: string;
@@ -17,6 +17,8 @@ interface BeneficiosProps {
   content?: BeneficiosContent;
   previewOverride?: BeneficiosContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
+  disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const defaultContent: BeneficiosContent = {
@@ -40,9 +42,14 @@ const iconMap: Record<string, typeof Check> = {
   Globe,
   BarChart3,
   Clock,
+  Star,
+  Heart,
+  Award,
+  TrendingUp,
+  Users,
 };
 
-export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a' }: BeneficiosProps) => {
+export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: BeneficiosProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let beneficios: Beneficio[] = [];
@@ -68,7 +75,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
   // Modelo C - Two columns with large icons
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding">
+      <section className="section-padding" id="beneficios" data-section-key="beneficios">
         <div className="section-container">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -94,7 +101,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
                   <motion.div
                     key={index}
                     variants={itemVariants}
-                    className="glass-card p-5 text-center"
+                    className={`p-5 text-center ${cardStyle || 'premium-card-soft'}`}
                   >
                     <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-3">
                       <Icon className="w-7 h-7 text-primary-foreground" />
@@ -112,7 +119,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden">
+      <section className="section-padding relative overflow-hidden" id="beneficios" data-section-key="beneficios">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="section-container relative">
           <motion.div
@@ -159,7 +166,7 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   // Modelo A - Grid de cards
   return (
-    <section className="section-padding bg-card/50">
+    <section className="section-padding bg-card/50" id="beneficios" data-section-key="beneficios">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -179,13 +186,13 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
           viewport={{ once: true }}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {beneficios.map((beneficio, index) => {
+            {beneficios.map((beneficio, index) => {
             const Icon = iconMap[beneficio.icone || 'Check'] || Check;
             return (
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="glass-card-hover p-6"
+                className={`p-6 ${cardStyle || 'premium-card-soft'}`}
               >
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-primary" />

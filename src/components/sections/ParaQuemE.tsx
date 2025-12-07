@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Building2, User, Briefcase } from 'lucide-react';
+import { Building2, User, Briefcase, Users, GraduationCap, Store, Heart, Target } from 'lucide-react';
 
 interface Perfil {
   titulo: string;
@@ -17,6 +17,8 @@ interface ParaQuemEProps {
   content?: ParaQuemEContent;
   previewOverride?: ParaQuemEContent;
   variante?: 'modelo_a' | 'modelo_b';
+  disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const defaultContent: ParaQuemEContent = {
@@ -33,9 +35,14 @@ const iconMap: Record<string, typeof Building2> = {
   Building2,
   User,
   Briefcase,
+  Users,
+  GraduationCap,
+  Store,
+  Heart,
+  Target,
 };
 
-export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a' }: ParaQuemEProps) => {
+export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: ParaQuemEProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let perfis: Perfil[] = [];
@@ -60,7 +67,7 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-background to-card/50">
+      <section className="section-padding bg-gradient-to-b from-background to-card/50" id="para_quem_e" data-section-key="para_quem_e">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -108,7 +115,7 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
 
   // Modelo A - Grid vertical
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="para_quem_e" data-section-key="para_quem_e">
       <div className="section-container">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -131,11 +138,11 @@ export const ParaQuemE = ({ content = {}, previewOverride, variante = 'modelo_a'
             {perfis.map((perfil, index) => {
               const Icon = iconMap[perfil.icone || 'User'] || User;
               return (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  className="glass-card-hover p-6 flex items-start gap-4"
-                >
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className={`p-6 flex items-start gap-4 ${cardStyle || 'premium-card-soft'}`}
+              >
                   <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center shrink-0">
                     <Icon className="w-6 h-6 text-primary-foreground" />
                   </div>

@@ -15,6 +15,12 @@ import { PlanTier } from '@/lib/authApi';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { isPremiumVariant } from '@/lib/premiumTemplateLoader';
+import { 
+  SECTION_MODELS_BY_SECTION, 
+  SectionKey, 
+  SectionModel,
+  PlanLevel 
+} from '@/lib/sectionModels';
 
 interface LayoutOption {
   id: string;
@@ -25,6 +31,16 @@ interface LayoutOption {
   category?: string;
   thumbnail?: string | null;
   isPremium?: boolean;
+}
+
+interface ModelConfig {
+  id: string;
+  enabled: boolean;
+  visible_for_free: boolean;
+  visible_for_pro: boolean;
+  visible_for_premium: boolean;
+  is_featured: boolean;
+  sort_order: number;
 }
 
 interface LayoutPickerProps {
@@ -48,6 +64,7 @@ export const LayoutPicker = ({
 }: LayoutPickerProps) => {
   const [selected, setSelected] = useState(currentVariant);
   const [dbTemplates, setDbTemplates] = useState<LayoutOption[]>([]);
+  const [modelConfigs, setModelConfigs] = useState<Record<string, ModelConfig>>({});
   const [loading, setLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [blockedPlan, setBlockedPlan] = useState<PlanTier>('pro');
@@ -56,14 +73,19 @@ export const LayoutPicker = ({
 
   const userPlan = (profile?.plan as PlanTier) || 'free';
 
+  // Sync selected state when currentVariant changes
   useEffect(() => {
-    setSelected(currentVariant);
-  }, [currentVariant]);
+    if (currentVariant) {
+      setSelected(currentVariant);
+      console.log(`[LayoutPicker] Current variant synced: ${currentVariant}`);
+    }
+  }, [currentVariant, open]);
 
-  // Load templates from DB when section changes
+  // Load templates from DB and model configs when section changes
   useEffect(() => {
     if (open && sectionKey) {
       loadDbTemplates();
+      loadModelConfigs();
     }
   }, [open, sectionKey]);
 
@@ -94,14 +116,100 @@ export const LayoutPicker = ({
     setLoading(false);
   };
 
-  // Merge DB templates with default variants
-  const allVariants = [...variants];
-  dbTemplates.forEach(dbT => {
-    if (!allVariants.find(v => v.id === dbT.id)) {
-      allVariants.push(dbT);
-    }
-  });
+  const loadModelConfigs = async () => {
+    if (!sectionKey) return;
+    
+    // Carregar configs dos modelos da seção atual
+    const sectionModels = SECTION_MODELS_BY_SECTION[sectionKey as SectionKey] || [];
+    const modelIds = sectionModels.map(m => m.id);
+    
+    if (modelIds.length === 0) return;
 
+    const { data } = await supabase
+      .from('section_model_configs')
+      .select('*')
+      .in('id', modelIds);
+
+    if (data) {
+      const configMap: Record<string, ModelConfig> = {};
+      data.forEach((item: any) => {
+        configMap[item.id] = item as ModelConfig;
+      });
+      setModelConfigs(configMap);
+    }
+  };
+
+  // Construir lista de variantes a partir de sectionModels + DB + fallback variants
+  const buildVariantsList = (): LayoutOption[] => {
+    const result: LayoutOption[] = [];
+    const addedIds = new Set<string>();
+
+    // 1. Adicionar modelos do sectionModels.ts filtrados por config
+    if (sectionKey) {
+      const sectionModels = SECTION_MODELS_BY_SECTION[sectionKey as SectionKey] || [];
+      
+      sectionModels.forEach((model: SectionModel) => {
+        const config = modelConfigs[model.id];
+        
+        // Se config existe e enabled=false, não incluir (exceto se já está em uso)
+        if (config && !config.enabled && currentVariant !== model.id) {
+          return;
+        }
+
+        // Verificar visibilidade por plano
+        if (config) {
+          if (userPlan === 'free' && !config.visible_for_free) return;
+          if (userPlan === 'pro' && !config.visible_for_pro) return;
+          if (userPlan === 'premium' && !config.visible_for_premium) return;
+        }
+
+        const option: LayoutOption = {
+          id: model.id,
+          name: model.name,
+          description: model.description || '',
+          preview: model.name,
+          minPlan: model.plan as PlanTier,
+          isPremium: isPremiumVariant(model.id),
+        };
+
+        result.push(option);
+        addedIds.add(model.id);
+      });
+    }
+
+    // 2. Adicionar templates do banco que não estão no sectionModels
+    dbTemplates.forEach(dbT => {
+      if (!addedIds.has(dbT.id)) {
+        result.push(dbT);
+        addedIds.add(dbT.id);
+      }
+    });
+
+    // 3. Adicionar variantes default que não foram incluídas
+    variants.forEach(v => {
+      if (!addedIds.has(v.id)) {
+        result.push(v);
+        addedIds.add(v.id);
+      }
+    });
+
+    // Ordenar: featured primeiro, depois por sort_order
+    return result.sort((a, b) => {
+      const configA = modelConfigs[a.id];
+      const configB = modelConfigs[b.id];
+      
+      // Featured primeiro
+      if (configA?.is_featured && !configB?.is_featured) return -1;
+      if (!configA?.is_featured && configB?.is_featured) return 1;
+      
+      // Depois por sort_order
+      const orderA = configA?.sort_order ?? 999;
+      const orderB = configB?.sort_order ?? 999;
+      return orderA - orderB;
+    });
+  };
+
+  const allVariants = buildVariantsList();
   const safeVariants = allVariants ?? [];
 
   const canUseVariant = (variant: LayoutOption): boolean => {
@@ -127,6 +235,8 @@ export const LayoutPicker = ({
       setUpgradeOpen(true);
       return;
     }
+    
+    console.log(`[LayoutPicker] Selecting variant: ${variant.id} for section: ${sectionKey}`);
     setSelected(variant.id);
     onSelect(variant.id);
   };

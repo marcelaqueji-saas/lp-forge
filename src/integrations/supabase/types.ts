@@ -40,6 +40,9 @@ export type Database = {
           action: string
           created_at: string | null
           details: Json | null
+          diff: Json | null
+          entity_id: string | null
+          entity_type: string | null
           id: string
           ip_address: string | null
           target_id: string | null
@@ -50,6 +53,9 @@ export type Database = {
           action: string
           created_at?: string | null
           details?: Json | null
+          diff?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           ip_address?: string | null
           target_id?: string | null
@@ -60,6 +66,9 @@ export type Database = {
           action?: string
           created_at?: string | null
           details?: Json | null
+          diff?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           ip_address?: string | null
           target_id?: string | null
@@ -67,6 +76,83 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      auth_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cookie_consents: {
+        Row: {
+          consent_categories: Json | null
+          consent_given: boolean | null
+          consent_version: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          lp_id: string | null
+          session_id: string
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          consent_categories?: Json | null
+          consent_given?: boolean | null
+          consent_version?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          lp_id?: string | null
+          session_id: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          consent_categories?: Json | null
+          consent_given?: boolean | null
+          consent_version?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          lp_id?: string | null
+          session_id?: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cookie_consents_lp_id_fkey"
+            columns: ["lp_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       landing_pages: {
         Row: {
@@ -110,6 +196,62 @@ export type Database = {
         }
         Relationships: []
       }
+      lp_ab_tests: {
+        Row: {
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          lp_id: string
+          name: string
+          section_key: string
+          started_at: string | null
+          status: string | null
+          traffic_split: number | null
+          updated_at: string | null
+          variant_a_id: string
+          variant_b_id: string
+          winner_variant: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          lp_id: string
+          name: string
+          section_key: string
+          started_at?: string | null
+          status?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          variant_a_id: string
+          variant_b_id: string
+          winner_variant?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          lp_id?: string
+          name?: string
+          section_key?: string
+          started_at?: string | null
+          status?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          variant_a_id?: string
+          variant_b_id?: string
+          winner_variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_ab_tests_lp_id_fkey"
+            columns: ["lp_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lp_content: {
         Row: {
           id: string
@@ -151,24 +293,57 @@ export type Database = {
       lp_events: {
         Row: {
           created_at: string | null
+          device_type: string | null
           event_type: string
           id: string
           lp_id: string
           metadata: Json | null
+          referrer: string | null
+          section: string | null
+          session_id: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          variant_id: string | null
         }
         Insert: {
           created_at?: string | null
+          device_type?: string | null
           event_type: string
           id?: string
           lp_id: string
           metadata?: Json | null
+          referrer?: string | null
+          section?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          variant_id?: string | null
         }
         Update: {
           created_at?: string | null
+          device_type?: string | null
           event_type?: string
           id?: string
           lp_id?: string
           metadata?: Json | null
+          referrer?: string | null
+          section?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -183,30 +358,45 @@ export type Database = {
       lp_leads: {
         Row: {
           created_at: string | null
+          device_type: string | null
           email: string | null
           id: string
           lp_id: string
           nome: string | null
+          referrer: string | null
+          session_id: string | null
           telefone: string | null
+          user_agent: string | null
           utm: Json | null
+          variant_id: string | null
         }
         Insert: {
           created_at?: string | null
+          device_type?: string | null
           email?: string | null
           id?: string
           lp_id: string
           nome?: string | null
+          referrer?: string | null
+          session_id?: string | null
           telefone?: string | null
+          user_agent?: string | null
           utm?: Json | null
+          variant_id?: string | null
         }
         Update: {
           created_at?: string | null
+          device_type?: string | null
           email?: string | null
           id?: string
           lp_id?: string
           nome?: string | null
+          referrer?: string | null
+          session_id?: string | null
           telefone?: string | null
+          user_agent?: string | null
           utm?: Json | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -409,37 +599,117 @@ export type Database = {
       }
       plan_limits: {
         Row: {
+          ab_testing_enabled: boolean | null
+          advanced_integrations_enabled: boolean | null
           allowed_model_categories: string[]
           allowed_separator_categories: string[]
           created_at: string | null
           custom_domain_limit: number
+          export_leads_enabled: boolean | null
+          features: Json | null
           id: string
           max_sites: number
           max_storage_mb: number
           plan: string
+          premium_sections_enabled: boolean | null
           updated_at: string | null
         }
         Insert: {
+          ab_testing_enabled?: boolean | null
+          advanced_integrations_enabled?: boolean | null
           allowed_model_categories?: string[]
           allowed_separator_categories?: string[]
           created_at?: string | null
           custom_domain_limit?: number
+          export_leads_enabled?: boolean | null
+          features?: Json | null
           id?: string
           max_sites?: number
           max_storage_mb?: number
           plan: string
+          premium_sections_enabled?: boolean | null
           updated_at?: string | null
         }
         Update: {
+          ab_testing_enabled?: boolean | null
+          advanced_integrations_enabled?: boolean | null
           allowed_model_categories?: string[]
           allowed_separator_categories?: string[]
           created_at?: string | null
           custom_domain_limit?: number
+          export_leads_enabled?: boolean | null
+          features?: Json | null
           id?: string
           max_sites?: number
           max_storage_mb?: number
           plan?: string
+          premium_sections_enabled?: boolean | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      saas_settings: {
+        Row: {
+          created_at: string
+          home_lp_id: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          home_lp_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          home_lp_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_settings_home_lp_id_fkey"
+            columns: ["home_lp_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      section_model_configs: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          is_featured: boolean
+          sort_order: number
+          updated_at: string
+          visible_for_free: boolean
+          visible_for_premium: boolean
+          visible_for_pro: boolean
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id: string
+          is_featured?: boolean
+          sort_order?: number
+          updated_at?: string
+          visible_for_free?: boolean
+          visible_for_premium?: boolean
+          visible_for_pro?: boolean
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_featured?: boolean
+          sort_order?: number
+          updated_at?: string
+          visible_for_free?: boolean
+          visible_for_premium?: boolean
+          visible_for_pro?: boolean
         }
         Relationships: []
       }
@@ -714,6 +984,18 @@ export type Database = {
         Args: { _email: string; _lp_id: string }
         Returns: boolean
       }
+      get_lp_analytics: {
+        Args: { _end_date?: string; _lp_id: string; _start_date?: string }
+        Returns: {
+          conversion_rate: number
+          device_breakdown: Json
+          top_utm_source: string
+          total_clicks: number
+          total_leads: number
+          total_views: number
+          unique_sessions: number
+        }[]
+      }
       get_lp_event_counts: {
         Args: { _lp_id: string }
         Returns: {
@@ -753,6 +1035,16 @@ export type Database = {
         }
         Returns: string
       }
+      log_auth_event: {
+        Args: {
+          _event_type: string
+          _ip_address?: string
+          _metadata?: Json
+          _user_agent?: string
+          _user_id?: string
+        }
+        Returns: string
+      }
       log_system_event: {
         Args: {
           _level: string
@@ -762,6 +1054,14 @@ export type Database = {
           _source: string
         }
         Returns: string
+      }
+      plan_has_feature: {
+        Args: { _feature: string; _plan: string }
+        Returns: boolean
+      }
+      user_has_feature: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

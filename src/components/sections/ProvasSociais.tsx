@@ -17,6 +17,7 @@ interface ProvasSociaisProps {
   content?: ProvasSociaisContent;
   previewOverride?: ProvasSociaisContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
+  cardStyle?: string;
 }
 
 const defaultContent: ProvasSociaisContent = {
@@ -28,7 +29,7 @@ const defaultContent: ProvasSociaisContent = {
   ]),
 };
 
-export const ProvasSociais = ({ content = {}, previewOverride, variante = 'modelo_a' }: ProvasSociaisProps) => {
+export const ProvasSociais = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: ProvasSociaisProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let depoimentos: Depoimento[] = [];
@@ -57,7 +58,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
     if (!featured) return null;
     
     return (
-      <section className="section-padding bg-gradient-to-br from-primary/5 to-accent/5">
+      <section className="section-padding bg-gradient-to-br from-primary/5 to-accent/5" id="provas_sociais" data-section-key="provas_sociais">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -106,7 +107,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-card/50 to-background">
+      <section className="section-padding bg-gradient-to-b from-card/50 to-background" id="provas_sociais" data-section-key="provas_sociais">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -156,7 +157,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
 
   // Modelo A - Grid de cards
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="provas_sociais" data-section-key="provas_sociais">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -179,7 +180,7 @@ export const ProvasSociais = ({ content = {}, previewOverride, variante = 'model
             <motion.div
               key={index}
               variants={itemVariants}
-              className="glass-card-hover p-6 relative"
+              className={`p-6 relative ${cardStyle || 'premium-card-soft'}`}
             >
               <Quote className="absolute top-4 right-4 w-8 h-8 text-primary/20" />
               <div className="flex items-center gap-1 mb-4">

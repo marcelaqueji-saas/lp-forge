@@ -16,6 +16,7 @@ interface FAQProps {
   content?: FAQContent;
   previewOverride?: FAQContent;
   variante?: 'modelo_a' | 'modelo_b';
+  cardStyle?: string;
 }
 
 const defaultContent: FAQContent = {
@@ -29,7 +30,7 @@ const defaultContent: FAQContent = {
   ]),
 };
 
-export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FAQProps) => {
+export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: FAQProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -59,7 +60,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding bg-gradient-to-b from-background to-card/50">
+      <section className="section-padding bg-gradient-to-b from-background to-card/50" id="faq" data-section-key="faq">
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -82,7 +83,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="glass-card p-6"
+                className={`p-6 ${cardStyle || 'premium-card-soft'}`}
               >
                 <h3 className="font-semibold mb-3 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full gradient-bg flex items-center justify-center text-primary-foreground text-xs shrink-0">
@@ -101,7 +102,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
 
   // Modelo A - Accordion
   return (
-    <section className="section-padding">
+    <section className="section-padding" id="faq" data-section-key="faq">
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -124,7 +125,7 @@ export const FAQ = ({ content = {}, previewOverride, variante = 'modelo_a' }: FA
             <motion.div
               key={index}
               variants={itemVariants}
-              className="glass-card overflow-hidden"
+              className={`overflow-hidden ${cardStyle || 'premium-card-soft'}`}
             >
               <button
                 onClick={() => toggleQuestion(index)}
