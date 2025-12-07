@@ -1,4 +1,4 @@
-project_id = vnywuwuixejhaciovqli
+project_id = "vnywuwuixejhaciovqli"
 
 [functions.verify-captcha]
 verify_jwt = false
