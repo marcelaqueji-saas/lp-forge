@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Wand2, FileText, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getUserFirstLP, createUserFirstLP, createEmptyLP } from '@/lib/userApi';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/useAuth';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
+import logo from '@/assets/logo.svg';
 
 const Onboarding = () => {
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ const Onboarding = () => {
     if (!authLoading) {
       checkUserStatus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);
 
   const checkUserStatus = async () => {
@@ -33,17 +35,16 @@ const Onboarding = () => {
       return;
     }
 
-    // Admin master goes to master panel
+    // Admin master vai direto para o painel master
     if (isAdminMaster) {
       navigate('/master');
       return;
     }
 
-    // Check if user already has LP
+    // Se já tiver LP, manda para o painel
     const existingLP = await getUserFirstLP();
     
     if (existingLP) {
-      // Go directly to dashboard or editor
       navigate('/painel');
       return;
     }
@@ -119,8 +120,12 @@ const Onboarding = () => {
         className="w-full max-w-2xl"
       >
         <div className="text-center mb-8 md:mb-10">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl gradient-bg flex items-center justify-center mx-auto mb-4 md:mb-6">
-            <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-primary-foreground" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/85 backdrop-blur-xl border border-white/85 shadow-[0_10px_30px_rgba(15,23,42,0.18)] flex items-center justify-center mx-auto mb-3">
+            <img
+              src={logo}
+              alt="Logo"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
+            />
           </div>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
             Vamos criar sua página!
@@ -131,7 +136,7 @@ const Onboarding = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {/* Option 1: Edit template */}
+          {/* Opção 1: Editar template pronto */}
           <motion.div
             initial={{ opacity: 0, x: isMobile ? 0 : -20, y: isMobile ? 20 : 0 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -165,7 +170,7 @@ const Onboarding = () => {
             </div>
           </motion.div>
 
-          {/* Option 2: Build from scratch */}
+          {/* Opção 2: Construir do zero */}
           <motion.div
             initial={{ opacity: 0, x: isMobile ? 0 : 20, y: isMobile ? 20 : 0 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -202,7 +207,6 @@ const Onboarding = () => {
         </div>
       </motion.div>
 
-      {/* Upgrade Modal */}
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}

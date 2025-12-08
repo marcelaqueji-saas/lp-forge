@@ -3,8 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { SEOHead } from '@/components/SEOHead';
 import { 
-  getLPById, getAllContent, getSettings, getSectionOrder, 
-  saveSettings, saveSectionContent, LPContent, LPSettings, getUserRoleForLP, DEFAULT_SECTION_ORDER,
+  getLPById, 
+  getAllContent, 
+  getSettings, 
+  getSectionOrder, 
+  saveSettings, 
+  saveSectionContent, 
+  LPContent, 
+  LPSettings, 
+  getUserRoleForLP, 
+  DEFAULT_SECTION_ORDER,
   SECTION_NAMES
 } from '@/lib/lpContentApi';
 import { hasCompletedEditorTour, markOnboardingCompleted } from '@/lib/userApi';
@@ -33,7 +41,7 @@ const MeuSite = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lpData, setLpData] = useState<any>(null);
@@ -41,7 +49,7 @@ const MeuSite = () => {
   const [settings, setSettings] = useState<LPSettings>({});
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
   const [userRole, setUserRole] = useState<string | null>(null);
-  
+
   // Editor state
   const [editMode, setEditMode] = useState(true);
   const [runTour, setRunTour] = useState(false);
@@ -316,6 +324,34 @@ const MeuSite = () => {
 
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
+  // 🔹 NOVO: ordem base (respeitando DB ou padrão) e exclusão de lead_form
+  const baseOrder = (
+    sectionOrder && sectionOrder.length > 0
+      ? sectionOrder
+      : DEFAULT_SECTION_ORDER
+  ).filter((s) => s !== 'lead_form');
+
+  // 🔹 NOVO: ler enabled_sections do settings
+  let enabledSectionsFromSettings: string[] | null = null;
+  const rawEnabled = settings.enabled_sections as string | undefined;
+
+  if (rawEnabled) {
+    try {
+      enabledSectionsFromSettings = JSON.parse(rawEnabled) as string[];
+    } catch (e) {
+      console.warn('[MeuSite] enabled_sections inválido:', rawEnabled);
+      enabledSectionsFromSettings = null;
+    }
+  }
+
+  // 🔹 NOVO: se tiver enabled_sections, filtra; senão, renderiza tudo (LPs antigas)
+  const sectionsToRender = baseOrder.filter((section) => {
+    if (!enabledSectionsFromSettings || enabledSectionsFromSettings.length === 0) {
+      return true;
+    }
+    return enabledSectionsFromSettings.includes(section);
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Editor Header */}
@@ -374,7 +410,7 @@ const MeuSite = () => {
           </div>
         </div>
 
-        {/* Mobile section navigator */}
+        {/* Mobile section navigator - agora usando sectionsToRender */}
         {isMobile && canEdit && (
           <div className="px-3 pb-2 border-t pt-2 bg-card/80">
             <DropdownMenu>
@@ -385,7 +421,7 @@ const MeuSite = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[calc(100vw-24px)]" align="center">
-                {sectionOrder.map((section) => (
+                {sectionsToRender.map((section) => (
                   <DropdownMenuItem 
                     key={section} 
                     onClick={() => scrollToSection(section)}
@@ -404,8 +440,7 @@ const MeuSite = () => {
       <div className={isMobile && canEdit ? "pt-28" : "pt-14 md:pt-16"}>
         <SEOHead settings={settings} />
         
-        {sectionOrder.map((section, index) => {
-const hasVariants = true;
+        {sectionsToRender.map((section, index) => {
           const sectionContent = content[section] || {};
           const premiumConfig = parseVisualConfig(sectionContent);
 
@@ -421,7 +456,7 @@ const hasVariants = true;
                   sectionKey={section}
                   sectionName={getSectionName(section)}
                   isFirst={index === 0}
-                  canChangeLayout={hasVariants}
+                  canChangeLayout={true}
                   currentStyles={{
                     style_bg: sectionContent.style_bg as string,
                     style_text: sectionContent.style_text as string,
@@ -455,7 +490,7 @@ const hasVariants = true;
             size="lg"
             className="h-12 w-12 rounded-full shadow-lg gradient-bg"
             onClick={() => {
-              const firstSection = sectionOrder[0];
+              const firstSection = sectionsToRender[0];
               if (firstSection) {
                 scrollToSection(firstSection);
               }
@@ -467,18 +502,16 @@ const hasVariants = true;
       )}
 
       {activeSection && (
-  <TemplatePicker
-    open={TemplatePickerOpen}
-    onClose={() => setTemplatePickerOpen(false)}
-    sectionName={getSectionName(activeSection)}
-    sectionKey={activeSection}
-    currentVariant={getVariante(activeSection)}
-    onSelect={handleSelectVariant}
-    userPlan="premium"
-  />
-)}
-
-
+        <TemplatePicker
+          open={TemplatePickerOpen}
+          onClose={() => setTemplatePickerOpen(false)}
+          sectionName={getSectionName(activeSection)}
+          sectionKey={activeSection}
+          currentVariant={getVariante(activeSection)}
+          onSelect={handleSelectVariant}
+          userPlan="premium"
+        />
+      )}
 
       {/* Content Editor */}
       {activeSection && lpId && (

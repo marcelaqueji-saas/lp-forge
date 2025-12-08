@@ -10,10 +10,37 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/hooks/useAuth';
+import { trackEvent } from '@/lib/tracking';
+import { cn } from '@/lib/utils';
+import { Lock } from 'lucide-react';
+
+const usePremiumGate = (plan?: string) => {
+  const requirePro = (feature: string) => {
+    if (plan && plan !== 'free') return true;
+
+    try {
+      trackEvent({ event_type: 'premium_gate', metadata: { feature, plan: plan || 'free' } as any });
+    } catch (err) {
+      console.warn('[premium_gate] tracking failed', err);
+    }
+
+    toast({
+      title: 'Quer sua página vendendo mais?',
+      description: 'Desbloqueie ordenação livre para performar como um profissional.',
+    });
+
+    return false;
+  };
+
+  return { requirePro };
+};
 
 const AdminSitePageEditor = () => {
   const { lpId, pageId } = useParams<{ lpId: string; pageId: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { requirePro } = usePremiumGate(profile?.plan);
   const [site, setSite] = useState<Site | null>(null);
   const [page, setPage] = useState<SitePage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +53,7 @@ const AdminSitePageEditor = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sectionContents, setSectionContents] = useState<Record<string, LPContent>>({});
   const [editingContent, setEditingContent] = useState<Record<string, LPContent>>({});
+  const [gatedButton, setGatedButton] = useState<{ index: number; dir: 'up' | 'down' } | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -73,6 +101,24 @@ const AdminSitePageEditor = () => {
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
   const handleReorder = (newOrder: string[]) => {
+    if (!requirePro('ordenar_secao')) {
+      setGatedButton({ index: -1, dir: 'up' });
+      return;
+    }
+    setActiveSections(newOrder);
+  };
+
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    if (!requirePro('ordenar_secao')) {
+      setGatedButton({ index, dir: direction });
+      return;
+    }
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= activeSections.length) return;
+
+    const newOrder = [...activeSections];
+    [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
     setActiveSections(newOrder);
   };
 
@@ -219,8 +265,62 @@ const AdminSitePageEditor = () => {
                         <div className="p-4 flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             {canEdit && (
-                              <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded transition-colors">
-                                <GripVertical className="w-5 h-5 text-muted-foreground" />
+                              <div className="flex items-center gap-2">
+                                <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded transition-colors">
+                                  <GripVertical className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  {(['up', 'down'] as const).map((dir) => {
+                                    const disabled =
+                                      dir === 'up'
+                                        ? index === 0
+                                        : index === activeSections.length - 1;
+                                    const isGated =
+                                      gatedButton &&
+                                      gatedButton.index === index &&
+                                      gatedButton.dir === dir;
+
+                                    return (
+                                      <motion.button
+                                        key={`${dir}-${sectionKey}`}
+                                        type="button"
+                                        className={cn(
+                                          'h-6 w-6 inline-flex items-center justify-center rounded-md border bg-card relative',
+                                          disabled && 'opacity-50 cursor-not-allowed'
+                                        )}
+                                        disabled={disabled}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          moveSection(index, dir);
+                                        }}
+                                        animate={
+                                          isGated
+                                            ? { x: [-6, 6, -4, 4, 0], opacity: [1, 0.6, 1] }
+                                            : { x: 0, opacity: 1 }
+                                        }
+                                        transition={{ duration: 0.2 }}
+                                        onAnimationComplete={() => setGatedButton(null)}
+                                      >
+                                        {dir === 'up' ? (
+                                          <ChevronUp className="w-4 h-4" />
+                                        ) : (
+                                          <ChevronDown className="w-4 h-4" />
+                                        )}
+                                        {isGated && (
+                                          <motion.span
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute inset-0 flex items-center justify-center"
+                                          >
+                                            <Lock className="w-3 h-3 text-primary" />
+                                          </motion.span>
+                                        )}
+                                      </motion.button>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             )}
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">

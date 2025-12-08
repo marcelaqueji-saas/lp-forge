@@ -12,11 +12,49 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { saveSectionContent, saveSettings, SECTION_NAMES, DEFAULT_SECTION_ORDER } from '@/lib/lpContentApi';
+import { 
+  saveSectionContent, 
+  saveSettings, 
+  getSectionOrder, 
+  updateSectionOrder,
+} from '@/lib/lpContentApi';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
 import { PlanTier } from '@/lib/authApi';
+import { trackEvent } from '@/lib/tracking';
 
-// Sections configuration
+const usePremiumGate = (userPlan: PlanTier | undefined) => {
+  const requirePro = (feature: string, lpId?: string, options?: { silent?: boolean }) => {
+    if (userPlan && userPlan !== 'free') return true;
+
+    try {
+      trackEvent({
+        event_type: 'premium_gate',
+        ...(lpId ? { lp_id: lpId } : {}),
+        metadata: {
+          feature,
+          plan: userPlan || 'free',
+        },
+      });
+    } catch (err) {
+      console.warn('[premium_gate] tracking failed', err);
+    }
+
+    if (!options?.silent) {
+      toast({
+        title: 'Quer sua página vendendo mais?',
+        description: 'Desbloqueie ordenação livre para performar como um profissional.',
+        variant: 'default',
+        className: 'border-amber-500 bg-amber-100 text-amber-900 font-medium',
+      });
+    }
+
+    return false;
+  };
+
+  return { requirePro };
+};
+
+
 const AVAILABLE_SECTIONS = [
   { key: 'menu', name: 'Menu', required: true, description: 'Navegação do site' },
   { key: 'hero', name: 'Hero', required: true, description: 'Seção principal de destaque' },
@@ -29,6 +67,7 @@ const AVAILABLE_SECTIONS = [
   { key: 'chamada_final', name: 'Chamada Final', required: false, description: 'CTA final da página' },
   { key: 'rodape', name: 'Rodapé', required: true, description: 'Informações de contato e links' },
 ];
+
 
 // Available variants (fallback when no templates in DB)
 const DEFAULT_VARIANTS: Record<string, Array<{ id: string; name: string; description: string }>> = {
@@ -89,6 +128,7 @@ const LPBuilder = () => {
   const navigate = useNavigate();
   const { user, profile, planLimits, isAdminMaster } = useAuth();
   const isMobile = useIsMobile();
+  const { requirePro } = usePremiumGate((profile?.plan as PlanTier) || 'free');
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -96,6 +136,7 @@ const LPBuilder = () => {
   const [lpData, setLpData] = useState<any>(null);
   const [sections, setSections] = useState<SectionState[]>([]);
   const [dbTemplates, setDbTemplates] = useState<any[]>([]);
+  const [gatedToggleIndex, setGatedToggleIndex] = useState<number | null>(null);
   
   // Upgrade modal
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -142,12 +183,23 @@ const LPBuilder = () => {
 
     setDbTemplates(templates || []);
 
-    // Initialize sections with defaults
-    const initialSections: SectionState[] = AVAILABLE_SECTIONS.map(s => ({
-      key: s.key,
-      enabled: s.required || ['hero', 'beneficios', 'chamada_final', 'rodape'].includes(s.key),
-      variant: 'modelo_a',
-    }));
+    // Load section order from DB (já vem consolidado pelo backend)
+    const dbSectionOrder = await getSectionOrder(lpId);
+
+    // Garante que só usamos seções conhecidas e preenchendo as que faltarem
+    const orderedKeys = [
+      ...dbSectionOrder.filter((key) => AVAILABLE_SECTIONS.some((s) => s.key === key)),
+      ...AVAILABLE_SECTIONS.map((s) => s.key).filter((key) => !dbSectionOrder.includes(key)),
+    ];
+
+    const initialSections: SectionState[] = orderedKeys.map((key) => {
+      const config = AVAILABLE_SECTIONS.find((s) => s.key === key)!;
+      return {
+        key,
+        enabled: config.required || ['hero', 'beneficios', 'chamada_final', 'rodape'].includes(key),
+        variant: 'modelo_a',
+      };
+    });
 
     setSections(initialSections);
     setLoading(false);
@@ -201,30 +253,63 @@ const LPBuilder = () => {
 
   const toggleSection = (key: string) => {
     const section = AVAILABLE_SECTIONS.find(s => s.key === key);
-    if (section?.required) return;
+    if (!section) return;
 
-    setSections(prev => prev.map(s => 
-      s.key === key ? { ...s, enabled: !s.enabled } : s
-    ));
+    // Não permitir desligar obrigatórias
+    if (section.required || key === 'hero') return;
+
+    if (!sections.find(s => s.key === key)?.enabled) {
+      const activeFree = sections.filter(
+        s => s.enabled && s.key !== 'menu' && s.key !== 'rodape'
+      ).length;
+
+      if (activeFree >= 3) {
+        setGatedToggleIndex(sections.findIndex(s => s.key === key));
+        toast({
+          title: 'Limite do plano Free',
+          description: 'Ative até 3 seções. Desbloqueie mais no plano Pro.',
+        });
+        return;
+      }
+    }
+
+    setSections(prev =>
+      prev.map(s =>
+        s.key === key ? { ...s, enabled: !s.enabled } : s
+      )
+    );
   };
 
-  const moveSection = (index: number, direction: 'up' | 'down') => {
+
+  const moveSection = async (index: number, direction: 'up' | 'down') => {
+    // Premium gate para ordenação livre (quando ativar botões de mover)
+    if (!requirePro('section_reorder', lpId)) {
+      return;
+    }
+
     const section = sections[index];
-    if (AVAILABLE_SECTIONS.find(s => s.key === section.key)?.required) {
-      // Don't move required sections (menu stays first, rodape stays last)
-      if (section.key === 'menu' || section.key === 'rodape') return;
+    const config = AVAILABLE_SECTIONS.find(s => s.key === section.key);
+    if (!config) return;
+
+    // trava menu/rodapé em posições extremas
+    if (config.required && (config.key === 'menu' || config.key === 'rodape')) {
+      return;
     }
 
     const newSections = [...sections];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
-    // Don't swap with menu (first) or rodape (last)
     if (targetIndex < 0 || targetIndex >= sections.length) return;
     if (sections[targetIndex].key === 'menu' && direction === 'up') return;
     if (sections[targetIndex].key === 'rodape' && direction === 'down') return;
 
     [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
     setSections(newSections);
+
+    if (lpId) {
+      const orderedKeys = newSections.map(s => s.key);
+      await updateSectionOrder(lpId, orderedKeys);
+    }
   };
 
   const selectVariant = (sectionKey: string, variantId: string, variant: any) => {
@@ -247,7 +332,7 @@ const LPBuilder = () => {
       // Get enabled sections in order
       const enabledSections = sections.filter(s => s.enabled);
       
-      // Save minimal content for each section with order
+      // Save minimal content for each section with order (apenas as ativas)
       for (let i = 0; i < enabledSections.length; i++) {
         const section = enabledSections[i];
         await saveSectionContent(lpId, section.key, {
@@ -267,6 +352,10 @@ const LPBuilder = () => {
       );
 
       await saveSettings(lpId, variantSettings);
+
+      // Persistir a ordem completa das seções (ativas + inativas) no banco,
+      // para a LP pública ler essa mesma ordem como referência.
+      await updateSectionOrder(lpId, sections.map(s => s.key));
 
       toast({ title: 'Estrutura salva!', description: 'Redirecionando para o editor...' });
       navigate(`/meu-site/${lpId}?context=editor&plan=${profile?.plan || 'free'}`);
@@ -368,7 +457,6 @@ const LPBuilder = () => {
                   const config = AVAILABLE_SECTIONS.find(s => s.key === section.key)!;
                   const isFirst = index === 0;
                   const isLast = index === sections.length - 1;
-                  const canMove = !config.required || (config.key !== 'menu' && config.key !== 'rodape');
 
                   return (
                     <div
@@ -380,26 +468,28 @@ const LPBuilder = () => {
                           : "bg-muted/30 border-transparent opacity-60"
                       )}
                     >
-                      {/* Reorder buttons */}
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={isFirst || !canMove || sections[index - 1]?.key === 'menu'}
+                      {/* Drag / ordem (UI pode ser ativada depois) */}
+                      <div className="flex flex-col items-center gap-1 mr-1 text-muted-foreground/70">
+                        <GripVertical className="w-4 h-4" />
+                        {/* Botões de mover – opcionais para quando quiser liberar no layout */}
+                        {/*
+                        <button
+                          type="button"
+                          disabled={isFirst || section.key === 'menu'}
                           onClick={() => moveSection(index, 'up')}
+                          className="disabled:opacity-30"
                         >
-                          <ChevronUp className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={isLast || !canMove || sections[index + 1]?.key === 'rodape'}
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLast || section.key === 'rodape'}
                           onClick={() => moveSection(index, 'down')}
+                          className="disabled:opacity-30"
                         >
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        */}
                       </div>
 
                       {/* Section info */}
@@ -418,25 +508,46 @@ const LPBuilder = () => {
                       </div>
 
                       {/* Toggle */}
-                      <Button
-                        variant={section.enabled ? "default" : "outline"}
-                        size="sm"
+                      <motion.button
+                        type="button"
+                        className={cn(
+                          "relative inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium transition-colors shrink-0",
+                          section.enabled ? "bg-primary text-primary-foreground border-primary" : "bg-transparent border-border text-foreground",
+                          config.required && "opacity-70 cursor-not-allowed"
+                        )}
                         disabled={config.required}
                         onClick={() => toggleSection(section.key)}
-                        className="shrink-0"
+                        animate={
+                          gatedToggleIndex === index
+                            ? { x: [-6, 6, -4, 4, 0] }
+                            : { x: 0 }
+                        }
+                        transition={{ duration: 0.2 }}
+                        onAnimationComplete={() => setGatedToggleIndex(null)}
                       >
                         {section.enabled ? (
                           <>
                             <Eye className="w-4 h-4 mr-1" />
-                            Ativa
+                            <span className="hidden sm:inline">Ativa</span>
                           </>
                         ) : (
                           <>
                             <EyeOff className="w-4 h-4 mr-1" />
-                            Inativa
+                            <span className="hidden sm:inline">Inativa</span>
                           </>
                         )}
-                      </Button>
+                        {gatedToggleIndex === index && (
+                          <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute inset-0 flex items-center justify-center"
+                          >
+                            <Lock className="w-3 h-3 text-primary" />
+                          </motion.span>
+                        )}
+                      </motion.button>
                     </div>
                   );
                 })}

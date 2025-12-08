@@ -8,6 +8,7 @@ import { Loader2, User, Mail, Lock, Sparkles } from 'lucide-react';
 import InteractiveTilesBackground from '@/components/layout/InteractiveTilesBackground';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { validatePassword } from '@/lib/passwordValidation';
+import logo from '@/assets/logo.svg';
 
 const AuthRegister = () => {
   const [nome, setNome] = useState('');
@@ -100,8 +101,13 @@ const AuthRegister = () => {
             {/* Header */}
             <div className="text-center mb-5">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/85 backdrop-blur-xl border border-white/85 shadow-[0_10px_30px_rgba(15,23,42,0.18)] flex items-center justify-center mx-auto mb-3">
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-slate-800" />
-              </div>
+  <img
+    src={logo}
+    alt="Logo"
+    className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
+  />
+</div>
+
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900">
                 Crie sua conta
               </h1>

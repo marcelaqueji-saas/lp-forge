@@ -1,21 +1,20 @@
-import { useRef, useEffect, useState } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRight, Play } from 'lucide-react';
 import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface HeroParallaxContent {
-  badge?: string;
-  titulo?: string;
   destaque?: string;
+  titulo?: string;
   subtitulo?: string;
-  texto_botao_primario?: string;
-  url_botao_primario?: string;
-  texto_botao_secundario?: string;
-  url_botao_secundario?: string;
-  imagem_fundo?: string;
-  imagem_camada_1?: string;
-  imagem_camada_2?: string;
+  cta_label?: string;
+  cta_url?: string;
+  secondary_cta_label?: string;
+  secondary_cta_url?: string;
+  background_image_url?: string;
+  overlay_intensity?: number;
+  background_blur?: number;
+  imagem_fundo?: string; // fallback legado
 }
 
 interface HeroParallaxProps {
@@ -26,258 +25,143 @@ interface HeroParallaxProps {
 }
 
 const defaultContent: HeroParallaxContent = {
-  badge: 'Novo lançamento',
-  titulo: 'Crie Landing Pages',
-  destaque: 'profissionais',
-  subtitulo: 'Editor visual, templates animados e alto poder de conversão.',
-  texto_botao_primario: 'Começar agora grátis',
-  url_botao_primario: '#planos',
-  texto_botao_secundario: 'Ver demonstração',
-  url_botao_secundario: '#demo',
+  destaque: 'Premium',
+  titulo: 'Experiência cinematográfica',
+  subtitulo: 'Hero fullscreen com profundidade e animação suave.',
+  cta_label: 'Começar agora',
+  cta_url: '#planos',
+  secondary_cta_label: 'Ver demonstração',
+  secondary_cta_url: '#demo',
+  overlay_intensity: 0.65,
+  background_blur: 0,
 };
 
-const VARIANT_ID = 'hero-parallax';
+const VARIANT_ID = 'HeroParallax';
 
-export const HeroParallax = ({
+const HeroParallax = ({
   lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
 }: HeroParallaxProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isClient, setIsClient] = useState(false);
-  const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const finalContent = {
+    ...defaultContent,
+    ...content,
+    ...previewOverride,
+  };
+
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const trackedRef = useRef(false);
+  const targetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    offset: ['start start', 'end start'],
-  });
-
-  const y1 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), { stiffness: 100, damping: 30 });
-  const y2 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -200]), { stiffness: 100, damping: 30 });
-  const y3 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -50]), { stiffness: 100, damping: 30 });
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
-
-  // Magnetic button effect
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (disableAnimations) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    mouseX.set(x * 0.15);
-    mouseY.set(y * 0.15);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-
-  const handleSectionView = () => {
     if (!lpId) return;
-    trackSectionView(lpId, 'hero', VARIANT_ID);
-  };
-
-  const handlePrimaryClick = () => {
-    if (lpId) {
-      trackCTAClick(lpId, 'hero', 'primary', VARIANT_ID);
-    }
-  };
-
-  const handleSecondaryClick = () => {
-    if (lpId) {
-      trackCTAClick(lpId, 'hero', 'secondary', VARIANT_ID);
-    }
-  };
-
-  // Static fallback para SSR / animações desativadas
-  if (!isClient || disableAnimations) {
-    return (
-      <motion.section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-background via-background/95 to-background"
-        id="hero"
-        data-section-key="hero"
-        onViewportEnter={handleSectionView}
-        viewport={{ once: true, amount: 0.4 }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          {finalContent.badge && (
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
-              {finalContent.badge}
-            </span>
-          )}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            {finalContent.titulo}{' '}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {finalContent.destaque}
-            </span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            {finalContent.subtitulo}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              asChild
-              className="text-base h-14 px-8"
-              onClick={handlePrimaryClick}
-            >
-              <a href={finalContent.url_botao_primario}>
-                {finalContent.texto_botao_primario}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="text-base h-14 px-8"
-              onClick={handleSecondaryClick}
-            >
-              <a href={finalContent.url_botao_secundario}>{finalContent.texto_botao_secundario}</a>
-            </Button>
-          </div>
-        </div>
-      </motion.section>
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !trackedRef.current) {
+          trackSectionView(lpId, 'hero', VARIANT_ID);
+          trackedRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
     );
-  }
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [lpId]);
+
+  const handlePrimary = () => {
+    if (lpId) trackCTAClick(lpId, 'hero', 'primary', VARIANT_ID);
+  };
+
+  const handleSecondary = () => {
+    if (lpId) trackCTAClick(lpId, 'hero', 'secondary', VARIANT_ID);
+  };
+
+  const { scrollYProgress } = useScroll({ target: targetRef, offset: ['start start', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
+
+  const backgroundImage =
+    finalContent.background_image_url || finalContent.imagem_fundo || '';
+  const overlay = Math.min(Math.max(finalContent.overlay_intensity ?? 0.65, 0), 1);
+  const blur = Math.max(finalContent.background_blur ?? 0, 0);
 
   return (
-    <motion.section
-      ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen overflow-hidden bg-background"
       id="hero"
       data-section-key="hero"
-      onViewportEnter={handleSectionView}
-      viewport={{ once: true, amount: 0.4 }}
     >
-      {/* Parallax layers */}
-      <motion.div
-        style={{ y: y1 }}
-        className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background"
-      />
-
-      <motion.div
-        style={{ y: y2, opacity }}
-        className="absolute inset-0"
-      >
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-      </motion.div>
-
-      <motion.div
-        style={{ y: y3 }}
-        className="absolute inset-0"
-      >
-        {/* Floating elements */}
-        <motion.div
-          animate={{ y: [0, -20, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full"
-        />
-        <motion.div
-          animate={{ y: [0, 20, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-          className="absolute top-1/3 right-1/4 w-3 h-3 bg-accent rounded-full"
-        />
-        <motion.div
-          animate={{ y: [0, -15, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-primary/50 rounded-full"
-        />
-      </motion.div>
-
-      {/* Content */}
-      <motion.div
-        style={{ scale, opacity }}
-        className="relative z-10 text-center px-4 max-w-4xl mx-auto"
-      >
-        {finalContent.badge && (
-          <motion.span
-            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
-          >
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            {finalContent.badge}
-          </motion.span>
-        )}
-
-        <motion.h1
-          initial={{ opacity: 0, y: 40, filter: 'blur(20px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
-        >
-          {finalContent.titulo}{' '}
-          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {finalContent.destaque}
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
-        >
-          {finalContent.subtitulo}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
+      <div ref={targetRef} className="absolute inset-0">
+        {backgroundImage ? (
           <motion.div
-            style={{ x: mouseX, y: mouseY }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
+            style={{ y }}
+            className="absolute inset-0 will-change-transform"
           >
-            <Button
-              size="lg"
-              asChild
-              className="text-base h-14 px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
-              onClick={handlePrimaryClick}
-            >
-              <a href={finalContent.url_botao_primario}>
-                {finalContent.texto_botao_primario}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </a>
-            </Button>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: blur ? `blur(${blur}px)` : undefined,
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: `rgba(0,0,0,${overlay})` }}
+            />
           </motion.div>
-          <Button
-            size="lg"
-            variant="outline"
-            asChild
-            className="text-base h-14 px-8"
-            onClick={handleSecondaryClick}
-          >
-            <a href={finalContent.url_botao_secundario}>{finalContent.texto_botao_secundario}</a>
-          </Button>
-        </motion.div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+        )}
+      </div>
 
-        {/* Trust badge */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="mt-8 text-sm text-muted-foreground"
-        >
-          ✓ Sem cartão de crédito • Comece em segundos
-        </motion.p>
-      </motion.div>
-    </motion.section>
+      <div className="relative z-10 flex items-center min-h-screen">
+        <div className="section-container w-full">
+          <motion.div
+            initial={disableAnimations ? false : { opacity: 0, y: 24 }}
+            animate={disableAnimations ? {} : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl bg-card/80 border border-white/15 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-2xl shadow-black/25"
+          >
+            {finalContent.destaque && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold mb-4">
+                {finalContent.destaque}
+              </span>
+            )}
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow mb-4">
+              {finalContent.titulo}
+            </h1>
+
+            <p className="text-lg md:text-xl text-white/80 max-w-3xl mb-8">
+              {finalContent.subtitulo}
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={finalContent.cta_url}
+                onClick={handlePrimary}
+                className="btn-primary gap-2"
+              >
+                {finalContent.cta_label}
+                <ArrowRight className="w-5 h-5" />
+              </a>
+              <a
+                href={finalContent.secondary_cta_url}
+                onClick={handleSecondary}
+                className="btn-secondary gap-2 text-white border-white/40 hover:border-white"
+              >
+                <Play className="w-5 h-5" />
+                {finalContent.secondary_cta_label}
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 };
 

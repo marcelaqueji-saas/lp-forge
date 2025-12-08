@@ -1,7 +1,7 @@
 import { SEOHead } from '@/components/SEOHead';
 import { MenuSection } from '@/components/sections/MenuSection';
 import { Rodape } from '@/components/sections/Rodape';
-import { HeroParallax } from '@/components/sections/premium/HeroParallax';
+import HeroParallax from '@/components/sections/premium/HeroParallax';
 import { Cards3DShowcase } from '@/components/sections/premium/Cards3DShowcase';
 import { FeaturesFloat } from '@/components/sections/premium/FeaturesFloat';
 import { TestimonialCinematic } from '@/components/sections/premium/TestimonialCinematic';

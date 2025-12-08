@@ -29,16 +29,21 @@ export type EventType =
   | 'form_abandon'
   | 'section_view'
   | 'video_play'
-  | 'file_download';
+  | 'file_download'
+  | 'premium_gate';
 
 export interface TrackingEvent {
-  lp_id: string;
   event_type: EventType;
+  lp_id?: string; // antes obrigatório → agora opcional
   section?: string;
-  // metadata vem solto das seções, então aqui deixamos qualquer coisa
   metadata?: Record<string, unknown>;
   variant_id?: string;
+
+  // Premium Gate additions
+  feature?: string;
+  plan?: string;
 }
+
 
 export interface TrackingConfig {
   ga4_id?: string;

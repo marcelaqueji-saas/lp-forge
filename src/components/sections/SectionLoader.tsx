@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, ComponentType, memo } from 'react';
+import React, { Suspense, lazy, ComponentType, memo, useEffect, useState } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { getSectionModel, SectionKey, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
 import { LPContent } from '@/lib/lpContentApi';
@@ -11,6 +11,8 @@ import {
 } from '@/lib/premiumPresets';
 
 import type { PlanTier } from '@/lib/authApi';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 
 // Wrappers de efeitos premium (animação / cursor / etc)
 import {
@@ -31,6 +33,8 @@ import { FAQ } from './FAQ';
 import { ChamadaFinal } from './ChamadaFinal';
 import { Rodape } from './Rodape';
 import { MenuSection } from './MenuSection';
+import HeroCenter from './HeroCenter';
+import HeroSplitBasic from './HeroSplitBasic';
 
 // Premium components (lazy loaded)
 const HeroParallax = lazy(() => import('./premium/HeroParallax'));
@@ -40,7 +44,61 @@ const FeaturesFloat = lazy(() => import('./premium/FeaturesFloat'));
 const TestimonialCinematic = lazy(() => import('./premium/TestimonialCinematic'));
 const CTAFinal = lazy(() => import('./premium/CTAFinal'));
 
+type SectionTemplateRow = Tables<'section_templates'>;
 
+const SECTION_COMPONENT_REGISTRY: Record<
+  SectionKey,
+  Record<string, ComponentType<any>> & { default?: ComponentType<any> }
+> = {
+  hero: {
+    default: Hero,
+    Hero,
+    HeroCenter,
+    HeroSplitBasic,
+    HeroParallax,
+    HeroSplit,
+  },
+  beneficios: {
+    default: Beneficios,
+    Beneficios,
+    Cards3DShowcase,
+    FeaturesFloat,
+  },
+  provas_sociais: {
+    default: ProvasSociais,
+    ProvasSociais,
+    TestimonialCinematic,
+  },
+  como_funciona: {
+    default: ComoFunciona,
+    ComoFunciona,
+  },
+  para_quem_e: {
+    default: ParaQuemE,
+    ParaQuemE,
+  },
+  planos: {
+    default: Planos,
+    Planos,
+  },
+  faq: {
+    default: FAQ,
+    FAQ,
+  },
+  chamada_final: {
+    default: ChamadaFinal,
+    ChamadaFinal,
+    CTAFinal,
+  },
+  rodape: {
+    default: Rodape,
+    Rodape,
+  },
+  menu: {
+    default: MenuSection,
+    MenuSection,
+  },
+};
 
 export const SECTION_COMPONENTS: Record<string, ComponentType<any>> = {
   // Fallbacks por seção
@@ -489,6 +547,7 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     userPlan = 'free',
     context = 'public',
   }) => {
+    const [templateMeta, setTemplateMeta] = useState<SectionTemplateRow | null>(null);
     // 1. Resolve variant
     const variant = resolveVariant(sectionKey, content, settings);
 
@@ -505,12 +564,54 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     // - public: filtra pelo plano (free limpa efeitos premium)
     const visualConfig = baseVisualConfig;
 
+    useEffect(() => {
+      let active = true;
+      setTemplateMeta(null);
+
+      const loadTemplate = async () => {
+        const { data, error } = await supabase
+          .from('section_templates')
+          .select('id, section, variant_id, componente_front')
+          .eq('section', sectionKey)
+          .eq('variant_id', variant)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (error) {
+          console.warn(
+            `[SectionLoader] Failed to load template for ${sectionKey}/${variant}`,
+            error.message
+          );
+          return;
+        }
+
+        if (data && data.length > 0 && active) {
+          setTemplateMeta(data[0] as SectionTemplateRow);
+        }
+      };
+
+      loadTemplate();
+
+      return () => {
+        active = false;
+      };
+    }, [sectionKey, variant]);
+
+
+    const registryForSection = SECTION_COMPONENT_REGISTRY[sectionKey];
 
     // 4. Resolve componente
     let Component: ComponentType<any> | null = null;
     let componentKey = '';
 
-    if (SECTION_COMPONENTS[variant]) {
+    if (
+      templateMeta?.componente_front &&
+      registryForSection &&
+      registryForSection[templateMeta.componente_front]
+    ) {
+      Component = registryForSection[templateMeta.componente_front];
+      componentKey = templateMeta.componente_front;
+    } else if (SECTION_COMPONENTS[variant]) {
       Component = SECTION_COMPONENTS[variant];
       componentKey = variant;
     } else if (sectionModel?.component && SECTION_COMPONENTS[sectionModel.component]) {

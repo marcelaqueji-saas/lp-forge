@@ -5,10 +5,10 @@ import {
   getAllContent, 
   getSettings, 
   getSectionOrder, 
+  resolveSectionOrder,
   LandingPage, 
   LPContent, 
   LPSettings, 
-  DEFAULT_SECTION_ORDER 
 } from '@/lib/lpContentApi';
 import { initGA4, initMetaPixel } from '@/lib/analytics';
 import { captureUTMParams } from '@/lib/utm';
@@ -25,7 +25,7 @@ const LandingPageBySlug = () => {
   const [lp, setLp] = useState<LandingPage | null>(null);
   const [content, setContent] = useState<Record<string, LPContent>>({});
   const [settings, setSettings] = useState<LPSettings>({});
-  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
+  const [sectionOrder, setSectionOrder] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -103,12 +103,39 @@ const LandingPageBySlug = () => {
     );
   }
 
-  const sectionsToRender = sectionOrder.filter((s) => s !== 'lead_form');
+  // Ordem final de seções (sempre alinhada ao DEFAULT_SECTION_ORDER via resolver)
+  const baseOrder = resolveSectionOrder(sectionOrder).filter(
+    (s) => s !== 'lead_form'
+  );
+
+  // Ler seções ativas salvas pelo builder (enabled_sections em lp_settings)
+  let enabledSections: string[] | null = null;
+  const rawEnabled = settings.enabled_sections as string | undefined;
+
+  if (rawEnabled) {
+    try {
+      enabledSections = JSON.parse(rawEnabled) as string[];
+    } catch (e) {
+      console.warn(
+        '[LandingPageBySlug] enabled_sections inválido em settings:',
+        rawEnabled
+      );
+      enabledSections = null;
+    }
+  }
+
+  // Se tiver enabled_sections, filtra; se não tiver (LP antiga), renderiza tudo
+  const sectionsToRender = baseOrder.filter((section) => {
+    if (!enabledSections || enabledSections.length === 0) {
+      return true;
+    }
+    return enabledSections.includes(section);
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead settings={settings} />
-      
+
       {sectionsToRender.map((section) => {
         if (section === 'planos') {
           return (

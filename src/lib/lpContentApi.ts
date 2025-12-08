@@ -85,6 +85,55 @@ export const DEFAULT_SECTION_ORDER = [
 ];
 
 // ====================================================================
+// ORDEM DE SEÇÃO – RESOLVER CENTRAL
+// ====================================================================
+
+/**
+ * Garante uma ordem final consistente a partir da ordem vinda do banco,
+ * sempre respeitando a ordem padrão como referência.
+ */
+export const resolveSectionOrder = (dbSections?: string[] | null): string[] => {
+  // Se não tem nada no banco, usa a ordem padrão
+  if (!dbSections || dbSections.length === 0) {
+    return [...DEFAULT_SECTION_ORDER];
+  }
+
+  const uniqueDbSections: string[] = [];
+
+  // Garante unicidade mantendo a ordem retornada do banco
+  for (const section of dbSections) {
+    if (!uniqueDbSections.includes(section)) {
+      uniqueDbSections.push(section);
+    }
+  }
+
+  // Filtra só seções conhecidas pela ordem padrão
+  const aligned: string[] = [];
+  for (const section of uniqueDbSections) {
+    if (DEFAULT_SECTION_ORDER.includes(section)) {
+      aligned.push(section);
+    }
+  }
+
+  // Adiciona seções padrão que ainda não apareceram no banco
+  for (const section of DEFAULT_SECTION_ORDER) {
+    if (!aligned.includes(section)) {
+      aligned.push(section);
+    }
+  }
+
+  // Se aparecer alguma seção "nova" (não mapeada em DEFAULT_SECTION_ORDER),
+  // podemos opcionalmente empurrar para o final. Aqui mantemos o que vier do banco.
+  for (const section of uniqueDbSections) {
+    if (!aligned.includes(section)) {
+      aligned.push(section);
+    }
+  }
+
+  return aligned;
+};
+
+// ====================================================================
 // LP CRUD
 // ====================================================================
 
@@ -205,6 +254,7 @@ export const getAllLPsWithRoles = async (): Promise<(LandingPage & { userRole: L
   const lps = await getAllLPs();
   const result: (LandingPage & { userRole: LPRole })[] = [];
 
+  // Pode ser otimizado via RPC, mas já está funcional
   for (const lp of lps) {
     const role = await getUserRoleForLP(lp.id);
     if (role) {
@@ -250,6 +300,7 @@ export const updateLPDomain = async (lpId: string, dominio: string | null): Prom
 
 // Delete LP (and related data)
 export const deleteLP = async (lpId: string): Promise<boolean> => {
+  // A ordem aqui respeita FKs comuns (leads → events/webhooks_logs via cascade)
   await supabase.from('lp_leads').delete().eq('lp_id', lpId);
   await supabase.from('lp_settings').delete().eq('lp_id', lpId);
   await supabase.from('lp_content').delete().eq('lp_id', lpId);
@@ -347,7 +398,7 @@ export const getSectionContent = async (lpId: string, section: string): Promise<
   return content;
 };
 
-// Get all content for an LP (ordered by section_order)
+// Get all content for an LP (ordered by section_order, mas agrupado por seção)
 export const getAllContent = async (lpId: string): Promise<Record<string, LPContent>> => {
   const { data, error } = await supabase
     .from('lp_content')
@@ -371,32 +422,34 @@ export const getAllContent = async (lpId: string): Promise<Record<string, LPCont
   return content;
 };
 
-// Get section order for an LP
+// Get section order for an LP, usando o resolver central
 export const getSectionOrder = async (lpId: string): Promise<string[]> => {
   const { data, error } = await supabase
     .from('lp_content')
     .select('section, section_order')
     .eq('lp_id', lpId)
+    // ignora linhas sem section_order definido
+    .not('section_order', 'is', null)
     .order('section_order', { ascending: true });
 
   if (error) {
     console.error('Error fetching section order:', error);
-    return Object.keys(SECTION_NAMES);
+    return [...DEFAULT_SECTION_ORDER];
   }
 
-  const sectionsSet = new Set<string>();
-  data?.forEach(item => sectionsSet.add(item.section));
-  
-  const orderedSections = Array.from(sectionsSet);
-  
-  // Garante que todas as seções conhecidas entrem na ordem final
-  Object.keys(SECTION_NAMES).forEach(section => {
-    if (!orderedSections.includes(section)) {
-      orderedSections.push(section);
-    }
-  });
+  if (!data || data.length === 0) {
+    // Sem nada no banco → ordem padrão
+    return [...DEFAULT_SECTION_ORDER];
+  }
 
-  return orderedSections;
+  const dbSections: string[] = [];
+  for (const item of data) {
+    if (!dbSections.includes(item.section)) {
+      dbSections.push(item.section);
+    }
+  }
+
+  return resolveSectionOrder(dbSections);
 };
 
 // Update section order
@@ -430,6 +483,44 @@ export const saveSectionContent = async (
 ): Promise<boolean> => {
   const entries = Object.entries(content).filter(([, value]) => value !== undefined);
 
+  // Definir um section_order efetivo consistente
+  let effectiveOrder = sectionOrder;
+
+  try {
+    if (effectiveOrder === undefined) {
+      // Tenta reaproveitar o section_order já existente dessa seção
+      const { data: existing, error: existingError } = await supabase
+        .from('lp_content')
+        .select('section_order')
+        .eq('lp_id', lpId)
+        .eq('section', section)
+        .not('section_order', 'is', null)
+        .order('section_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (!existingError && existing?.section_order != null) {
+        effectiveOrder = existing.section_order as number;
+      } else {
+        // Se não existir, usar DEFAULT_SECTION_ORDER como referência
+        const defaultIndex = DEFAULT_SECTION_ORDER.indexOf(section);
+        if (defaultIndex >= 0) {
+          effectiveOrder = defaultIndex + 1;
+        } else {
+          // fallback: empurra para o final
+          effectiveOrder = DEFAULT_SECTION_ORDER.length + 1;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error resolving section order for saveSectionContent:', err);
+    // Mesmo com erro na descoberta, mantemos algum valor coerente
+    if (effectiveOrder === undefined) {
+      const defaultIndex = DEFAULT_SECTION_ORDER.indexOf(section);
+      effectiveOrder = defaultIndex >= 0 ? defaultIndex + 1 : DEFAULT_SECTION_ORDER.length + 1;
+    }
+  }
+
   for (const [key, value] of entries) {
     const { error } = await supabase
       .from('lp_content')
@@ -439,7 +530,7 @@ export const saveSectionContent = async (
           section,
           key,
           value: value || '',
-          section_order: sectionOrder ?? 0,
+          section_order: effectiveOrder,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'lp_id,section,key' }
