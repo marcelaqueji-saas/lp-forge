@@ -8,7 +8,7 @@ import { TestimonialCinematic } from '@/components/sections/premium/TestimonialC
 import { CTAFinal } from '@/components/sections/premium/CTAFinal';
 import { SectionSeparator } from '@/components/sections/premium/SectionSeparator';
 
-// Static content for the SaaS LP institutional site
+// Static content for the nobron institutional site
 const heroContent = {
   badge: 'Lançamento 2024',
   titulo: 'Crie Landing Pages e Sites',
@@ -99,7 +99,7 @@ const footerContent = {
   ]),
 };
 
-const SiteSaasLP = () => {
+const Sitenobron = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
@@ -154,4 +154,4 @@ const SiteSaasLP = () => {
   );
 };
 
-export default SiteSaasLP;
+export default Sitenobron;

@@ -1,6 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Sparkles } from 'lucide-react';
-import { trackEvent } from '@/lib/analytics';
+import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface Plano {
   nome: string;
@@ -16,10 +17,14 @@ interface PlanosContent {
   planos_json?: string;
 }
 
+type PlanosVariant = 'modelo_a' | 'modelo_b';
+
 interface PlanosProps {
+  /** ID da LP para tracking; se não vier, só renderiza visualmente */
+  lpId?: string;
   content?: PlanosContent;
   previewOverride?: PlanosContent;
-  variante?: 'modelo_a' | 'modelo_b';
+  variante?: PlanosVariant;
   cardStyle?: string;
 }
 
@@ -32,26 +37,49 @@ const defaultContent: PlanosContent = {
       preco: 'R$ 49',
       descricao: 'Para quem está começando',
       destaque: false,
-      itens_json: JSON.stringify(['1 landing page', 'Domínio personalizado', 'SSL grátis', 'Analytics básico']),
+      itens_json: JSON.stringify([
+        '1 landing page',
+        'Domínio personalizado',
+        'SSL grátis',
+        'Analytics básico',
+      ]),
     },
     {
       nome: 'Pro',
       preco: 'R$ 99',
       descricao: 'Para profissionais',
       destaque: true,
-      itens_json: JSON.stringify(['5 landing pages', 'Domínios ilimitados', 'A/B Testing', 'Analytics avançado', 'Suporte prioritário']),
+      itens_json: JSON.stringify([
+        '5 landing pages',
+        'Domínios ilimitados',
+        'A/B Testing',
+        'Analytics avançado',
+        'Suporte prioritário',
+      ]),
     },
     {
       nome: 'Enterprise',
       preco: 'R$ 299',
       descricao: 'Para grandes equipes',
       destaque: false,
-      itens_json: JSON.stringify(['Landing pages ilimitadas', 'White label', 'API access', 'Manager dedicado', 'SLA garantido']),
+      itens_json: JSON.stringify([
+        'Landing pages ilimitadas',
+        'White label',
+        'API access',
+        'Manager dedicado',
+        'SLA garantido',
+      ]),
     },
   ]),
 };
 
-export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: PlanosProps) => {
+export const Planos = ({
+  lpId,
+  content = {},
+  previewOverride,
+  variante = 'modelo_a',
+  cardStyle = '',
+}: PlanosProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let planos: Plano[] = [];
@@ -61,8 +89,39 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', c
     planos = [];
   }
 
+  // Ref para rastrear visualização da seção
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!lpId) return; // sem lpId = sem tracking (ex: preview)
+    if (hasTrackedViewRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, 'planos', variante);
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lpId, variante]);
+
   const handlePlanClick = (planName: string) => {
-    trackEvent('click_plan', { plan: planName });
+    if (lpId) {
+      // usamos o nome do plano como "variantId" pra diferenciar nos eventos
+      trackCTAClick(lpId, 'planos', 'primary', planName);
+    }
   };
 
   const containerVariants = {
@@ -80,7 +139,12 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', c
 
   if (variante === 'modelo_b') {
     return (
-      <section id="planos" data-section-key="planos" className="section-padding">
+      <section
+        id="planos"
+        data-section-key="planos"
+        className="section-padding"
+        ref={sectionRef}
+      >
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -112,34 +176,59 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', c
                 <motion.div
                   key={index}
                   variants={itemVariants}
-                  className={`flex-1 max-w-sm ${plano.destaque ? 'lg:-mt-4 lg:mb-4' : ''}`}
+                  className={`flex-1 max-w-sm ${
+                    plano.destaque ? 'lg:-mt-4 lg:mb-4' : ''
+                  }`}
                 >
                   <div
                     className={`h-full rounded-2xl p-8 ${
                       plano.destaque
                         ? 'gradient-bg text-primary-foreground shadow-glow-lg'
-                        : cardStyle || 'premium-card-soft border-2 border-transparent hover:border-primary/30 transition-colors'
+                        : cardStyle ||
+                          'premium-card-soft border-2 border-transparent hover:border-primary/30 transition-colors'
                     }`}
                   >
                     {plano.destaque && (
                       <div className="flex items-center gap-2 mb-4">
                         <Sparkles className="w-4 h-4" />
-                        <span className="text-sm font-medium">Mais popular</span>
+                        <span className="text-sm font-medium">
+                          Mais popular
+                        </span>
                       </div>
                     )}
                     <h3 className="text-2xl font-bold mb-2">{plano.nome}</h3>
-                    <p className={`text-sm mb-4 ${plano.destaque ? 'opacity-80' : 'text-muted-foreground'}`}>
+                    <p
+                      className={`text-sm mb-4 ${
+                        plano.destaque ? 'opacity-80' : 'text-muted-foreground'
+                      }`}
+                    >
                       {plano.descricao}
                     </p>
                     <div className="mb-6">
-                      <span className="text-4xl font-bold">{plano.preco}</span>
-                      <span className={`${plano.destaque ? 'opacity-80' : 'text-muted-foreground'}`}>/mês</span>
+                      <span className="text-4xl font-bold">
+                        {plano.preco}
+                      </span>
+                      <span
+                        className={
+                          plano.destaque ? 'opacity-80' : 'text-muted-foreground'
+                        }
+                      >
+                        /mês
+                      </span>
                     </div>
                     <ul className="space-y-3 mb-8">
                       {itens.map((item, i) => (
                         <li key={i} className="flex items-center gap-3">
-                          <Check className={`w-5 h-5 ${plano.destaque ? '' : 'text-success'}`} />
-                          <span className={plano.destaque ? 'opacity-90' : ''}>{item}</span>
+                          <Check
+                            className={`w-5 h-5 ${
+                              plano.destaque ? '' : 'text-success'
+                            }`}
+                          />
+                          <span
+                            className={plano.destaque ? 'opacity-90' : ''}
+                          >
+                            {item}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -165,7 +254,12 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', c
 
   // Modelo A - Grid horizontal
   return (
-    <section id="planos" className="section-padding bg-card/50">
+    <section
+      id="planos"
+      className="section-padding bg-card/50"
+      data-section-key="planos"
+      ref={sectionRef}
+    >
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -214,9 +308,13 @@ export const Planos = ({ content = {}, previewOverride, variante = 'modelo_a', c
                     </div>
                   )}
                   <h3 className="text-xl font-bold mb-2">{plano.nome}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{plano.descricao}</p>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    {plano.descricao}
+                  </p>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold">{plano.preco}</span>
+                    <span className="text-4xl font-bold">
+                      {plano.preco}
+                    </span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <ul className="space-y-3 mb-8">

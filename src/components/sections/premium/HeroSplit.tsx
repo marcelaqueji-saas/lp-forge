@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface SplitItem {
   titulo: string;
@@ -18,6 +19,7 @@ interface HeroSplitContent {
 }
 
 interface HeroSplitProps {
+  lpId?: string;
   content?: HeroSplitContent;
   previewOverride?: HeroSplitContent;
   disableAnimations?: boolean;
@@ -36,7 +38,10 @@ const defaultContent: HeroSplitContent = {
   url_botao: '#planos',
 };
 
+const VARIANT_ID = 'hero-split';
+
 export const HeroSplit = ({
+  lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
@@ -45,9 +50,25 @@ export const HeroSplit = ({
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const items = finalContent.itens || defaultItems;
 
+  const handleSectionView = () => {
+    if (!lpId) return;
+    trackSectionView(lpId, 'hero', VARIANT_ID);
+  };
+
+  const handlePrimaryClick = () => {
+    if (!lpId) return;
+    trackCTAClick(lpId, 'hero', 'primary', VARIANT_ID);
+  };
+
   if (disableAnimations) {
     return (
-      <section className="min-h-screen flex items-center justify-center bg-background">
+      <motion.section
+        className="min-h-screen flex items-center justify-center bg-background"
+        id="hero"
+        data-section-key="hero"
+        onViewportEnter={handleSectionView}
+        viewport={{ once: true, amount: 0.4 }}
+      >
         <div className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-4 gap-4">
             {items.map((item, index) => (
@@ -64,7 +85,7 @@ export const HeroSplit = ({
             ))}
           </div>
           <div className="text-center mt-12">
-            <Button size="lg" asChild>
+            <Button size="lg" asChild onClick={handlePrimaryClick}>
               <a href={finalContent.url_botao}>
                 {finalContent.texto_botao}
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -72,12 +93,18 @@ export const HeroSplit = ({
             </Button>
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   return (
-    <section className="min-h-screen flex flex-col overflow-hidden bg-background">
+    <motion.section
+      className="min-h-screen flex flex-col overflow-hidden bg-background"
+      id="hero"
+      data-section-key="hero"
+      onViewportEnter={handleSectionView}
+      viewport={{ once: true, amount: 0.4 }}
+    >
       <div className="flex-1 flex flex-col md:flex-row">
         {items.map((item, index) => (
           <motion.div
@@ -115,7 +142,10 @@ export const HeroSplit = ({
                 initial={false}
                 animate={{
                   fontSize: activeIndex === index ? '3rem' : '2rem',
-                  writingMode: activeIndex === index || activeIndex === null ? 'horizontal-tb' : 'vertical-rl',
+                  writingMode:
+                    activeIndex === index || activeIndex === null
+                      ? 'horizontal-tb'
+                      : 'vertical-rl',
                 }}
                 transition={{ duration: 0.3 }}
                 style={{ color: item.cor }}
@@ -150,6 +180,7 @@ export const HeroSplit = ({
                       asChild
                       style={{ backgroundColor: item.cor }}
                       className="text-white hover:opacity-90"
+                      onClick={handlePrimaryClick}
                     >
                       <a href={finalContent.url_botao}>
                         {finalContent.texto_botao}
@@ -173,7 +204,7 @@ export const HeroSplit = ({
           </motion.div>
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 };
 

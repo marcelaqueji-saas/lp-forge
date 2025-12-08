@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Globe, MousePointer, Palette, Gauge, Shield, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { trackSectionView } from '@/lib/tracking';
 
 interface FeatureItem {
   titulo: string;
@@ -15,9 +16,11 @@ interface FeaturesFloatContent {
 }
 
 interface FeaturesFloatProps {
+  lpId?: string;
   content?: FeaturesFloatContent;
   previewOverride?: FeaturesFloatContent;
   disableAnimations?: boolean;
+  cardStyle?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -43,9 +46,11 @@ const defaultContent: FeaturesFloatContent = {
 };
 
 export const FeaturesFloat = ({
+  lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
+  cardStyle,
 }: FeaturesFloatProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const items = finalContent.itens || defaultItems;
@@ -64,9 +69,22 @@ export const FeaturesFloat = ({
     visible: { opacity: 1, y: 0 },
   };
 
+  const handleViewportEnter = () => {
+    if (lpId) {
+      // seção "beneficios" com variante premium
+      trackSectionView(lpId, 'beneficios', 'beneficios-features_float');
+    }
+  };
+
   if (disableAnimations) {
     return (
-      <section className="py-20 bg-background">
+      <motion.section
+        className="py-20 bg-background"
+        id="beneficios"
+        data-section-key="beneficios"
+        onViewportEnter={handleViewportEnter}
+        viewport={{ once: true, amount: 0.3 }}
+      >
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{finalContent.titulo}</h2>
@@ -78,7 +96,10 @@ export const FeaturesFloat = ({
               return (
                 <div
                   key={index}
-                  className="group relative p-6 rounded-2xl bg-card border hover:border-primary/50 transition-all"
+                  className={cn(
+                    'group relative p-6 rounded-2xl transition-all',
+                    cardStyle || 'bg-card border hover:border-primary/50'
+                  )}
                 >
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                     <IconComponent className="w-6 h-6 text-primary" />
@@ -90,12 +111,18 @@ export const FeaturesFloat = ({
             })}
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   return (
-    <section className="py-20 bg-background overflow-hidden">
+    <motion.section
+      className="py-20 bg-background overflow-hidden"
+      id="beneficios"
+      data-section-key="beneficios"
+      onViewportEnter={handleViewportEnter}
+      viewport={{ once: true, amount: 0.3 }}
+    >
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -134,13 +161,17 @@ export const FeaturesFloat = ({
                     ease: 'easeInOut',
                     delay: floatDelay,
                   }}
-                  className="p-6 rounded-2xl bg-card border hover:border-primary/50 transition-all hover:shadow-lg"
+                  className={cn(
+                    'p-6 rounded-2xl hover:shadow-lg transition-all',
+                    cardStyle || 'bg-card border hover:border-primary/50'
+                  )}
                 >
                   <motion.div
                     className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4"
                     whileHover={{
                       scale: 1.1,
-                      background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)',
+                      background:
+                        'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)',
                     }}
                   >
                     <IconComponent className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
@@ -167,7 +198,7 @@ export const FeaturesFloat = ({
           })}
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

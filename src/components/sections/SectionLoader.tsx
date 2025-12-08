@@ -2,13 +2,21 @@ import React, { Suspense, lazy, ComponentType, memo } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { getSectionModel, SectionKey, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
 import { LPContent } from '@/lib/lpContentApi';
-import { 
-  parseVisualConfig, 
-  getVisualClasses, 
+import {
+  parseVisualConfig,
+  getVisualClasses,
   getCardClasses,
   prefersReducedMotion,
-  PremiumVisualConfig 
+  PremiumVisualConfig,
 } from '@/lib/premiumPresets';
+
+import type { PlanTier } from '@/lib/authApi';
+
+// Wrappers de efeitos premium (animação / cursor / etc)
+import {
+  AnimateOnScroll,
+  CursorEffectWrapper,
+} from '@/components/premium/PremiumEffects';
 
 // ============================================================
 // BASE SECTION COMPONENTS (always loaded)
@@ -32,149 +40,119 @@ const FeaturesFloat = lazy(() => import('./premium/FeaturesFloat'));
 const TestimonialCinematic = lazy(() => import('./premium/TestimonialCinematic'));
 const CTAFinal = lazy(() => import('./premium/CTAFinal'));
 
-// ============================================================
-// COMPONENT REGISTRY - Maps model IDs and component names to React components
-// ============================================================
+
 
 export const SECTION_COMPONENTS: Record<string, ComponentType<any>> = {
-  // Menu
-  'MenuSection': MenuSection,
-  'menu-modelo_a': MenuSection,
-  'menu-modelo_b': MenuSection,
-  
-  // Hero - Base
-  'Hero': Hero,
-  'hero-basic': Hero,
-  'hero-modelo_a': Hero,
-  'hero-modelo_b': Hero,
-  'hero-modelo_c': Hero,
-  'hero-side-image': Hero,
-  'HeroSideImage': Hero,
-  'hero-dashboard': Hero,
-  'HeroDashboard': Hero,
-  'hero-cards': Hero,
-  'HeroCards': Hero,
-  'hero-cinematic-video': Hero,
-  'HeroCinematicVideo': Hero,
-  'hero-parallax-glass': Hero,
-  'HeroParallaxGlass': Hero,
-  // Hero - Premium
-  'hero-parallax': HeroParallax,
-  'HeroParallax': HeroParallax,
-  'hero-split': HeroSplit,
-  'HeroSplit': HeroSplit,
-  
-  // Como Funciona
-  'ComoFunciona': ComoFunciona,
-  'steps-basic': ComoFunciona,
-  'como_funciona-modelo_a': ComoFunciona,
-  'como_funciona-modelo_b': ComoFunciona,
-  'steps-icons': ComoFunciona,
-  'StepsIcons': ComoFunciona,
-  'steps-image-left': ComoFunciona,
-  'StepsImageLeft': ComoFunciona,
-  'steps-vertical-timeline': ComoFunciona,
-  'StepsVerticalTimeline': ComoFunciona,
-  
-  // Para Quem É
-  'ParaQuemE': ParaQuemE,
-  'target-basic': ParaQuemE,
-  'para_quem_e-modelo_a': ParaQuemE,
-  'para_quem_e-modelo_b': ParaQuemE,
-  'target-grid': ParaQuemE,
-  'TargetGrid': ParaQuemE,
-  'target-cards': ParaQuemE,
-  'TargetCards': ParaQuemE,
-  'target-avatars': ParaQuemE,
-  'TargetAvatars': ParaQuemE,
-  'target-lit-line': ParaQuemE,
-  'TargetLitLine': ParaQuemE,
-  
-  // Benefícios
-  'Beneficios': Beneficios,
-  'benefits-basic': Beneficios,
-  'beneficios-modelo_a': Beneficios,
-  'beneficios-modelo_b': Beneficios,
-  'beneficios-modelo_c': Beneficios,
-  'benefits-carousel': Beneficios,
-  'BenefitsCarousel': Beneficios,
-  'benefits-bento-grid': Beneficios,
-  'BenefitsBentoGrid': Beneficios,
-  'beneficios-showcase_3d': Cards3DShowcase,
-  'beneficios-features_float': FeaturesFloat,
-  'benefits-pictures': Beneficios,
-  'BenefitsPictures': Beneficios,
-  'benefits-motion-icons': Beneficios,
-  'BenefitsMotionIcons': Beneficios,
-  // Premium
-  'Cards3DShowcase': Cards3DShowcase,
-  'FeaturesFloat': FeaturesFloat,
-  
-  // Provas Sociais
-  'ProvasSociais': ProvasSociais,
-  'testimonials-basic': ProvasSociais,
-  'provas_sociais-modelo_a': ProvasSociais,
-  'provas_sociais-modelo_b': ProvasSociais,
-  'provas_sociais-modelo_c': ProvasSociais,
-  'testimonials-slider': ProvasSociais,
-  'TestimonialsSlider': ProvasSociais,
-  'testimonials-cards': ProvasSociais,
-  'TestimonialsCards': ProvasSociais,
-  'testimonials-profile-feed': ProvasSociais,
-  'TestimonialsProfileFeed': ProvasSociais,
-  'testimonials-video-grid': ProvasSociais,
-  'TestimonialsVideoGrid': ProvasSociais,
-  // Premium
-  'testimonial-cinematic': TestimonialCinematic,
-  'testimonial_cinematic': TestimonialCinematic,
-  'TestimonialCinematic': TestimonialCinematic,
-  
-  // Planos
-  'Planos': Planos,
-  'pricing-basic': Planos,
-  'planos-modelo_a': Planos,
-  'planos-modelo_b': Planos,
-  'pricing-feature-grid': Planos,
-  'PricingFeatureGrid': Planos,
-  'pricing-tabs': Planos,
-  'PricingTabs': Planos,
-  
-  // FAQ
-  'FAQ': FAQ,
-  'faq-accordion': FAQ,
-  'faq-modelo_a': FAQ,
-  'faq-modelo_b': FAQ,
-  'faq-cards': FAQ,
-  'FAQCards': FAQ,
-  'faq-sections': FAQ,
-  'FAQSections': FAQ,
-  
-  // Chamada Final
-  'ChamadaFinal': ChamadaFinal,
-  'cta-basic': ChamadaFinal,
-  'chamada_final-modelo_a': ChamadaFinal,
-  'chamada_final-modelo_b': ChamadaFinal,
-  'chamada_final-modelo_c': ChamadaFinal,
-  'cta-showcase': ChamadaFinal,
-  'CTAShowcase': ChamadaFinal,
-  'cta-banner-glass': ChamadaFinal,
-  'CTABannerGlass': ChamadaFinal,
-  // Premium
-  'cta_final_animated': CTAFinal,
-  'CTAFinal': CTAFinal,
-  
-  // Rodapé
-  'Rodape': Rodape,
-  'footer-basic': Rodape,
-  'rodape-modelo_a': Rodape,
-  'rodape-modelo_b': Rodape,
-  'footer-columns': Rodape,
-  'FooterColumns': Rodape,
-};
+  // Fallbacks por seção
+  Hero,
+  Beneficios,
+  ProvasSociais,
+  ComoFunciona,
+  ChamadaFinal,
+  FAQ,
+  Rodape,
+  MenuSection,
 
-// ============================================================
-// FALLBACK COMPONENTS BY SECTION
-// ============================================================
+  // Base templates mapeados
+  'hero-basic': Hero,
+  'benefits-basic': Beneficios,
+  'testimonials-basic': ProvasSociais,
+  'steps-basic': ComoFunciona,
+  'cta-basic': ChamadaFinal,
+  'faq-basic': FAQ,
+  'footer-basic': Rodape,
+  'menu-basic': MenuSection,
+
+      // =====================================
+  // HERO – novos templates do banco
+  // (usando exatamente os variant_id do section_templates)
+  // =====================================
+  'hero_center': Hero,
+  'hero_benefits_intro': Hero,
+  'hero_split_basic': Hero,
+  'hero_headline_rotator': Hero,
+  'hero_parallax_vision': HeroParallax,
+  'hero_cinematic_video': Hero,
+  'hero_social_proof': Hero,
+  'hero_gallery_slider': Hero,
+  'hero_metrics_highlights': Hero,
+
+
+  // =====================================
+  // BENEFÍCIOS – novos templates
+  // =====================================
+  'features_minimal': Beneficios,
+  FeaturesMinimal: Beneficios,
+
+  'benefits_detailed': Beneficios,
+  BenefitsDetailed: Beneficios,
+
+  'benefits_icons_motion': Beneficios,
+  BenefitsIconsMotion: Beneficios,
+
+  'feature_cards_3x3': Beneficios,
+  FeatureCards3x3: Beneficios,
+
+  'cards_3d_premium': Cards3DShowcase,
+  Cards3DPremium: Cards3DShowcase,
+
+  // =====================================
+  // PROVAS SOCIAIS
+  // =====================================
+  'testimonial_static': ProvasSociais,
+  TestimonialStatic: ProvasSociais,
+
+  'testimonials_slider': ProvasSociais,
+  TestimonialsSlider: ProvasSociais,
+
+  'avatars_flow_review': ProvasSociais,
+  AvatarsFlowReview: ProvasSociais,
+
+  // já existia, só garante:
+  'testimonial_cinematic': TestimonialCinematic,
+  'testimonial-cinematic': TestimonialCinematic,
+  TestimonialCinematic: TestimonialCinematic,
+
+  // =====================================
+  // COMO FUNCIONA
+  // =====================================
+  'steps_simple': ComoFunciona,
+  StepsSimple: ComoFunciona,
+
+  'timeline_horizontal': ComoFunciona,
+  TimelineHorizontal: ComoFunciona,
+
+  'icons_steps_motion': ComoFunciona,
+  IconsStepsMotion: ComoFunciona,
+
+  'steps_3d_premium': ComoFunciona,
+  Steps3DPremium: ComoFunciona,
+
+  // =====================================
+  // CHAMADA FINAL / CTA
+  // =====================================
+  'cta_minimal': ChamadaFinal,
+  CTAMinimal: ChamadaFinal,
+
+  'cta_social': ChamadaFinal,
+  CTASocial: ChamadaFinal,
+
+  'cta_cinematic': CTAFinal,
+  CTACinematic: CTAFinal,
+
+  // =====================================
+  // FAQ
+  // =====================================
+  'faq_basic': FAQ,
+  FAQBasic: FAQ,
+
+  'faq_animated': FAQ,
+  FAQAnimated: FAQ,
+
+  'faq_search': FAQ,
+  FAQSearch: FAQ,
+
+};
 
 const SECTION_FALLBACK: Record<SectionKey, ComponentType<any>> = {
   menu: MenuSection,
@@ -200,21 +178,17 @@ const SectionFallback = ({ sectionName }: { sectionName: string }) => (
   </div>
 );
 
-const SectionError = ({ 
-  sectionName, 
-  error 
-}: { 
-  sectionName: string; 
+const SectionError = ({
+  sectionName,
+  error,
+}: {
+  sectionName: string;
   error?: string;
 }) => (
   <div className="py-12 text-center bg-destructive/5 border border-destructive/20 rounded-lg mx-4 my-4">
     <AlertCircle className="w-6 h-6 text-destructive mx-auto mb-2" />
-    <p className="text-destructive font-medium text-sm">
-      Erro ao carregar {sectionName}
-    </p>
-    {error && (
-      <p className="text-muted-foreground text-xs mt-1">{error}</p>
-    )}
+    <p className="text-destructive font-medium text-sm">Erro ao carregar {sectionName}</p>
+    {error && <p className="text-muted-foreground text-xs mt-1">{error}</p>}
   </div>
 );
 
@@ -247,8 +221,8 @@ class SectionErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <SectionError 
-          sectionName={this.props.sectionName} 
+        <SectionError
+          sectionName={this.props.sectionName}
           error={this.state.error?.message}
         />
       );
@@ -261,59 +235,55 @@ class SectionErrorBoundary extends React.Component<
 // VARIANT RESOLUTION UTILITIES
 // ============================================================
 
-/**
- * Resolves the variant ID from multiple sources:
- * 1. content.variant (new system)
- * 2. settings[sectionKey_variante] (legacy system)
- * 3. First model of the section (fallback)
- */
 export function resolveVariant(
   sectionKey: SectionKey,
   content?: LPContent,
   settings?: Record<string, string | undefined>
 ): string {
-  // 1. Check content.variant first (new system)
   const variantFromContent = content?.variant as string | undefined;
   if (variantFromContent) return variantFromContent;
 
-  // 2. Check settings (legacy system)
   const variantFromSettings = settings?.[`${sectionKey}_variante`];
   if (variantFromSettings) return variantFromSettings;
 
-  // 3. Return first model of section as fallback
   const models = SECTION_MODELS_BY_SECTION[sectionKey];
   if (models && models.length > 0) {
     return models[0].id;
   }
 
-  // 4. Ultimate fallback
   return 'modelo_a';
 }
 
-/**
- * Maps variant IDs to legacy format for components that still use modelo_a/b/c
- */
 export function mapVariantToLegacy(variant: string): string {
-  // If already legacy format
   if (variant.startsWith('modelo_')) {
     return variant;
   }
-  
-  // Extract from section-modelo_X format
+
   const match = variant.match(/modelo_[a-z]$/);
   if (match) {
     return match[0];
   }
-  
-  // Map new IDs to legacy
+
   const legacyMap: Record<string, string> = {
-    // Hero
+        // Hero
     'hero-basic': 'modelo_a',
     'hero-side-image': 'modelo_a',
     'hero-dashboard': 'modelo_b',
     'hero-cards': 'modelo_b',
     'hero-cinematic-video': 'modelo_c',
     'hero-parallax-glass': 'modelo_c',
+
+    // ✅ IDs que estão na TABELA section_templates
+    'hero_center': 'modelo_b',
+    'hero_split_basic': 'modelo_a',
+    'hero_benefits_intro': 'modelo_b',
+    'hero_gallery_slider': 'modelo_b',
+    'hero_metrics': 'modelo_b',
+    'hero_social': 'modelo_b',
+    'hero_video_cinematic': 'modelo_c',
+    'hero_rotating_headline': 'modelo_b',
+    'hero_parallax': 'modelo_c',
+
     // Como Funciona
     'steps-basic': 'modelo_a',
     'steps-icons': 'modelo_a',
@@ -379,17 +349,21 @@ export function mapVariantToLegacy(variant: string): string {
   return legacyMap[variant] || 'modelo_a';
 }
 
-/**
- * Check if a component is lazy-loaded (premium)
- */
 function isLazyComponent(componentKey: string): boolean {
   const lazyComponents = [
-    'HeroParallax', 'hero-parallax',
-    'HeroSplit', 'hero-split',
-    'Cards3DShowcase', 'beneficios-showcase_3d',
-    'FeaturesFloat', 'beneficios-features_float',
-    'TestimonialCinematic', 'testimonial-cinematic', 'testimonial_cinematic',
-    'CTAFinal', 'cta_final_animated',
+    'HeroParallax',
+    'hero-parallax',
+    'HeroSplit',
+    'hero-split',
+    'Cards3DShowcase',
+    'beneficios-showcase_3d',
+    'FeaturesFloat',
+    'beneficios-features_float',
+    'TestimonialCinematic',
+    'testimonial-cinematic',
+    'testimonial_cinematic',
+    'CTAFinal',
+    'cta_final_animated',
   ];
   return lazyComponents.includes(componentKey);
 }
@@ -403,19 +377,25 @@ const PremiumSeparator: React.FC<{
   position: 'before' | 'after';
 }> = ({ type, position }) => {
   const isTop = position === 'before';
-  
+
   switch (type) {
     case 'line':
       return (
-        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent`} />
+        <div
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent`}
+        />
       );
     case 'gradient':
       return (
-        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0`} />
+        <div
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0`}
+        />
       );
     case 'glow':
       return (
-        <div className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 blur-sm`} />
+        <div
+          className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 blur-sm`}
+        />
       );
     case 'wave':
       return (
@@ -438,7 +418,11 @@ const PremiumSeparator: React.FC<{
           preserveAspectRatio="none"
           className={`absolute ${isTop ? 'top-0' : 'bottom-0'} left-0 w-full h-16 ${isTop ? 'rotate-180' : ''}`}
         >
-          <polygon points="0,10 100,0 100,10" fill="currentColor" className="text-background" />
+          <polygon
+            points="0,10 100,0 100,10"
+            fill="currentColor"
+            className="text-background"
+          />
         </svg>
       );
     case 'curve':
@@ -466,145 +450,222 @@ const PremiumSeparator: React.FC<{
 
 interface SectionLoaderProps {
   sectionKey: SectionKey;
+  lpId?: string;
   content?: LPContent;
   previewOverride?: LPContent;
   settings?: Record<string, string | undefined>;
   disableAnimations?: boolean;
+
+  userPlan?: PlanTier;
+  context?: 'editor' | 'public';
 }
 
-/**
- * Build inline styles from content.style_* properties
- */
 function buildSectionStyles(content?: LPContent): React.CSSProperties {
   const styles: React.CSSProperties = {};
-  
+
   if (!content) return styles;
-  
-  // Background color or gradient
+
   if (content.style_gradient) {
     styles.background = content.style_gradient as string;
   } else if (content.style_bg) {
     styles.backgroundColor = content.style_bg as string;
   }
-  
-  // Text color
+
   if (content.style_text) {
     styles.color = content.style_text as string;
   }
-  
+
   return styles;
 }
 
-export const SectionLoader: React.FC<SectionLoaderProps> = memo(({
-  sectionKey,
-  content = {},
-  previewOverride,
-  settings = {},
-  disableAnimations = false,
-}) => {
-  // 1. Resolve the variant to use
-  const variant = resolveVariant(sectionKey, content, settings);
-  
-  // 2. Get the section model for this variant
-  const sectionModel = getSectionModel(sectionKey, variant);
-  
-  // 3. Parse premium visual config from content
-  const visualConfig = parseVisualConfig(content as Record<string, any>);
-  const reducedMotion = prefersReducedMotion();
-  
-  // 4. Determine which component to render
-  let Component: ComponentType<any> | null = null;
-  let componentKey = '';
-  
-  // Try to find component by variant ID first
-  if (SECTION_COMPONENTS[variant]) {
-    Component = SECTION_COMPONENTS[variant];
-    componentKey = variant;
-  }
-  // Then try the model's component name
-  else if (sectionModel?.component && SECTION_COMPONENTS[sectionModel.component]) {
-    Component = SECTION_COMPONENTS[sectionModel.component];
-    componentKey = sectionModel.component;
-  }
-  // Fallback to section's default component
-  else {
-    Component = SECTION_FALLBACK[sectionKey];
-    componentKey = sectionKey;
-    
-    if (!Component) {
-      console.warn(`[SectionLoader] No component found for section: ${sectionKey}, variant: ${variant}`);
-      return <SectionError sectionName={sectionKey} error={`Componente não encontrado: ${variant}`} />;
+export const SectionLoader: React.FC<SectionLoaderProps> = memo(
+  ({
+    sectionKey,
+    lpId,
+    content = {} as LPContent,
+    previewOverride,
+    settings = {},
+    disableAnimations = false,
+    userPlan = 'free',
+    context = 'public',
+  }) => {
+    // 1. Resolve variant
+    const variant = resolveVariant(sectionKey, content, settings);
+
+    // 2. Model
+    const sectionModel = getSectionModel(sectionKey, variant);
+
+    // 3. Visual config base
+    const baseVisualConfig = parseVisualConfig(content as Record<string, any>);
+
+    const reducedMotion = prefersReducedMotion();
+
+    // 🔒 Aqui entra a trava de plano:
+    // - editor: vê tudo (preview)
+    // - public: filtra pelo plano (free limpa efeitos premium)
+    const visualConfig = baseVisualConfig;
+
+
+    // 4. Resolve componente
+    let Component: ComponentType<any> | null = null;
+    let componentKey = '';
+
+    if (SECTION_COMPONENTS[variant]) {
+      Component = SECTION_COMPONENTS[variant];
+      componentKey = variant;
+    } else if (sectionModel?.component && SECTION_COMPONENTS[sectionModel.component]) {
+      Component = SECTION_COMPONENTS[sectionModel.component];
+      componentKey = sectionModel.component;
+    } else {
+      Component = SECTION_FALLBACK[sectionKey];
+      componentKey = sectionKey;
+
+      if (!Component) {
+        console.warn(
+          `[SectionLoader] No component found for section: ${sectionKey}, variant: ${variant}`
+        );
+        return (
+          <SectionError
+            sectionName={sectionKey}
+            error={`Componente não encontrado: ${variant}`}
+          />
+        );
+      }
+
+      console.warn(
+        `[SectionLoader] Using fallback component for: ${sectionKey}, variant: ${variant}`
+      );
     }
-    
-    console.warn(`[SectionLoader] Using fallback component for: ${sectionKey}, variant: ${variant}`);
+
+    const legacyVariant = mapVariantToLegacy(variant);
+
+    const sectionStyles = buildSectionStyles(content);
+
+    const visualClasses = getVisualClasses(
+      visualConfig,
+      reducedMotion || disableAnimations
+    );
+
+    const cardClasses = getCardClasses(visualConfig.card_style);
+
+    const componentProps = {
+      lpId,
+      content,
+      previewOverride,
+      variante: legacyVariant,
+      disableAnimations: disableAnimations || reducedMotion,
+      buttonStyle: visualConfig.button_style,
+      cardStyle: cardClasses,
+    };
+// --- Quick Hero Variant Mapper (Free version ready) ---
+if (sectionKey === 'hero') {
+  switch (variant) {
+    case 'hero_center':
+      componentProps.variante = 'modelo_b'; // central com mockup
+      break;
+    case 'hero_split_basic':
+      componentProps.variante = 'modelo_a'; // split imagem
+      break;
+    case 'hero_benefits_intro':
+      componentProps.variante = 'modelo_b'; // conversão inicial
+      break;
+    case 'hero-basic':
+    default:
+      componentProps.variante = 'modelo_a'; // padrão
+      break;
   }
+}
 
-  // 5. Prepare props for the component
-  const legacyVariant = mapVariantToLegacy(variant);
-  
-  // 6. Build inline styles from content
-  const sectionStyles = buildSectionStyles(content);
-  
-  // 7. Get premium visual classes
-  const visualClasses = getVisualClasses(visualConfig, reducedMotion || disableAnimations);
-  
-  // 8. Get card style classes
-  const cardClasses = getCardClasses(visualConfig.card_style);
-  
-  const componentProps = {
-    content: content,
-    previewOverride: previewOverride,
-    variante: legacyVariant,
-    disableAnimations: disableAnimations || reducedMotion,
-    buttonStyle: visualConfig.button_style,
-    cardStyle: cardClasses,
-  };
+    const isLazy = isLazyComponent(componentKey);
 
-  // Render with appropriate wrapper
-  const isLazy = isLazyComponent(componentKey);
+    const hasSeparatorBefore =
+      visualConfig.separator_before && visualConfig.separator_before !== 'none';
+    const hasSeparatorAfter =
+      visualConfig.separator_after && visualConfig.separator_after !== 'none';
 
-  // Check if we need separators
-  const hasSeparatorBefore = visualConfig.separator_before && visualConfig.separator_before !== 'none';
-  const hasSeparatorAfter = visualConfig.separator_after && visualConfig.separator_after !== 'none';
+    const hasCustomStyles =
+      Object.keys(sectionStyles).length > 0 ||
+      visualClasses.length > 0 ||
+      hasSeparatorBefore ||
+      hasSeparatorAfter;
 
-  // Wrap in styled div if custom styles exist
-  const hasCustomStyles = Object.keys(sectionStyles).length > 0 || visualClasses.length > 0 || hasSeparatorBefore || hasSeparatorAfter;
+    const enableAnimation =
+      !!visualConfig.animation_preset &&
+      visualConfig.animation_preset !== 'none' &&
+      !reducedMotion &&
+      !disableAnimations;
 
-  const renderComponent = () => <Component {...componentProps} />;
+    const enableCursorEffect =
+      !!visualConfig.cursor_effect &&
+      visualConfig.cursor_effect !== 'none' &&
+      !reducedMotion;
 
-  const wrappedContent = hasCustomStyles ? (
-    <div 
-      style={sectionStyles} 
-      className={`relative ${visualClasses}`}
-    >
-      {hasSeparatorBefore && (
-        <PremiumSeparator type={visualConfig.separator_before as any} position="before" />
-      )}
-      {renderComponent()}
-      {hasSeparatorAfter && (
-        <PremiumSeparator type={visualConfig.separator_after as any} position="after" />
-      )}
-    </div>
-  ) : (
-    renderComponent()
-  );
+    const renderComponent = () => <Component {...componentProps} />;
 
-  if (isLazy) {
+    let node: React.ReactNode = renderComponent();
+
+    if (hasCustomStyles) {
+      node = (
+        <div style={sectionStyles} className={`relative ${visualClasses}`}>
+          {hasSeparatorBefore && visualConfig.separator_before && (
+            <PremiumSeparator
+              type={visualConfig.separator_before as any}
+              position="before"
+            />
+          )}
+          {node}
+          {hasSeparatorAfter && visualConfig.separator_after && (
+            <PremiumSeparator
+              type={visualConfig.separator_after as any}
+              position="after"
+            />
+          )}
+        </div>
+      );
+    }
+
+    if (enableCursorEffect) {
+      node = (
+        <CursorEffectWrapper
+          effect={visualConfig.cursor_effect as any}
+          disabled={reducedMotion || disableAnimations}
+          className="block"
+        >
+          {node}
+        </CursorEffectWrapper>
+      );
+    }
+
+    if (enableAnimation) {
+      node = (
+        <AnimateOnScroll
+          animation={visualConfig.animation_preset as any}
+          disabled={disableAnimations || reducedMotion}
+        >
+          {node}
+        </AnimateOnScroll>
+      );
+    }
+
+    const finalContent = node;
+
+    if (isLazy) {
+      return (
+        <SectionErrorBoundary sectionName={sectionKey}>
+          <Suspense fallback={<SectionFallback sectionName={sectionKey} />}>
+            {finalContent}
+          </Suspense>
+        </SectionErrorBoundary>
+      );
+    }
+
     return (
       <SectionErrorBoundary sectionName={sectionKey}>
-        <Suspense fallback={<SectionFallback sectionName={sectionKey} />}>
-          {wrappedContent}
-        </Suspense>
+        {finalContent}
       </SectionErrorBoundary>
     );
   }
-  
-  return (
-    <SectionErrorBoundary sectionName={sectionKey}>
-      {wrappedContent}
-    </SectionErrorBoundary>
-  );
-});
+);
 
 SectionLoader.displayName = 'SectionLoader';
 

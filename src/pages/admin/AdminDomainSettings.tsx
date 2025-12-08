@@ -23,6 +23,11 @@ const AdminDomainSettings = () => {
   const [domain, setDomain] = useState('');
   const [verificationToken, setVerificationToken] = useState('');
 
+  const generateToken = () => {
+    // Token de verificação padrão do noBRon
+    return `nobron-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -60,7 +65,7 @@ const AdminDomainSettings = () => {
       setSettings(settingsData);
       setDomain(lpData.dominio || '');
       
-      // Generate verification token if not exists
+      // Usa token existente ou gera um novo padrão noBRon
       const token = (lpData as any).dominio_verificacao_token || generateToken();
       setVerificationToken(token);
       
@@ -69,10 +74,6 @@ const AdminDomainSettings = () => {
 
     loadData();
   }, [id, navigate]);
-
-  const generateToken = () => {
-    return `saas-lp-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-  };
 
   const validateDomain = (domain: string): boolean => {
     const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
@@ -302,7 +303,7 @@ const AdminDomainSettings = () => {
                       <Copy className="w-3 h-3" />
                     </button>
                   </div>
-                  <code className="text-sm break-all">_lovable → {verificationToken}</code>
+                  <code className="text-sm break-all">_nobron → {verificationToken}</code>
                 </div>
               </div>
 

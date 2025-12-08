@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Loader2, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import {
+  Send,
+  Loader2,
+  AlertCircle,
+  ShieldCheck,
+  CheckCircle2,
+} from 'lucide-react';
 import { saveLead, verifyCaptcha } from '@/lib/lpContentApi';
 import { getUTMParams } from '@/lib/utm';
-import { trackEvent } from '@/lib/analytics';
+import { trackLeadSubmit, trackSectionView } from '@/lib/tracking';
 import { toast } from '@/hooks/use-toast';
 
 interface LeadFormProps {
@@ -25,7 +31,9 @@ const checkClientRateLimit = (): boolean => {
   try {
     const data = JSON.parse(stored);
     const now = Date.now();
-    const validSubmissions = data.filter((time: number) => now - time < RATE_LIMIT_WINDOW);
+    const validSubmissions = data.filter(
+      (time: number) => now - time < RATE_LIMIT_WINDOW
+    );
     return validSubmissions.length < MAX_SUBMISSIONS;
   } catch {
     return true;
@@ -35,16 +43,18 @@ const checkClientRateLimit = (): boolean => {
 const recordSubmission = () => {
   const stored = localStorage.getItem(RATE_LIMIT_KEY);
   const now = Date.now();
-  
+
   let data: number[] = [];
   if (stored) {
     try {
-      data = JSON.parse(stored).filter((time: number) => now - time < RATE_LIMIT_WINDOW);
+      data = JSON.parse(stored).filter(
+        (time: number) => now - time < RATE_LIMIT_WINDOW
+      );
     } catch {
       data = [];
     }
   }
-  
+
   data.push(now);
   localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
 };
@@ -56,20 +66,53 @@ const generateMathChallenge = () => {
   return { a, b, answer: a + b };
 };
 
-export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: LeadFormProps) => {
+export const LeadForm = ({
+  lpId,
+  onSuccess,
+  captchaProvider,
+  captchaSiteKey,
+}: LeadFormProps) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [loading, setLoading] = useState(false);
   const [honeypot, setHoneypot] = useState(''); // Anti-spam honeypot
   const [formError, setFormError] = useState('');
-  
+
   // Simple math captcha
   const [mathChallenge, setMathChallenge] = useState(generateMathChallenge);
   const [mathAnswer, setMathAnswer] = useState('');
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  
+
   const isCaptchaEnabled = captchaProvider === 'hcaptcha' && captchaSiteKey;
+
+  // Ref para rastrear visualização da seção (section_view)
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!lpId) return;
+    if (hasTrackedViewRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, 'lead_form');
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (formRef.current) {
+      observer.observe(formRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lpId]);
 
   // hCaptcha via iframe (external script approach)
   useEffect(() => {
@@ -124,12 +167,17 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
 
     // Client-side rate limiting
     if (!checkClientRateLimit()) {
-      setFormError('Você enviou muitas solicitações. Aguarde alguns minutos.');
+      setFormError(
+        'Você enviou muitas solicitações. Aguarde alguns minutos.'
+      );
       return;
     }
-    
+
     if (!email) {
-      toast({ title: 'Por favor, preencha o email', variant: 'destructive' });
+      toast({
+        title: 'Por favor, preencha o email',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -160,7 +208,9 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
           captchaToken = hcaptchaResponse;
           const captchaValid = await verifyCaptcha(lpId, captchaToken);
           if (!captchaValid) {
-            setFormError('Verificação de segurança inválida. Tente novamente.');
+            setFormError(
+              'Verificação de segurança inválida. Tente novamente.'
+            );
             (window as any).hcaptcha?.reset?.();
             setLoading(false);
             return;
@@ -169,12 +219,26 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
       }
 
       const utm = getUTMParams();
-      const result = await saveLead(lpId, { nome: nome.trim(), email: email.trim(), telefone: telefone.trim() }, utm);
+      const result = await saveLead(
+        lpId,
+        {
+          nome: nome.trim(),
+          email: email.trim(),
+          telefone: telefone.trim(),
+        },
+        utm
+      );
 
       if (result.success) {
         recordSubmission();
-        trackEvent('lead_captured', { lpId, email_domain: email.split('@')[1] });
-        toast({ title: 'Obrigado!', description: 'Entraremos em contato em breve.' });
+
+        // ✅ Tracking novo: lead_submit first-party
+        trackLeadSubmit(lpId, 'lead_form');
+
+        toast({
+          title: 'Obrigado!',
+          description: 'Entraremos em contato em breve.',
+        });
         setNome('');
         setEmail('');
         setTelefone('');
@@ -184,12 +248,22 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
         (window as any).hcaptcha?.reset?.();
         onSuccess?.();
       } else if (result.error === 'rate_limit') {
-        setFormError('Você já se cadastrou recentemente. Aguarde alguns minutos.');
+        setFormError(
+          'Você já se cadastrou recentemente. Aguarde alguns minutos.'
+        );
       } else {
-        toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+        toast({
+          title: 'Erro ao enviar',
+          description: 'Tente novamente.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+      toast({
+        title: 'Erro ao enviar',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -197,6 +271,7 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
 
   return (
     <motion.form
+      ref={formRef}
       onSubmit={handleSubmit}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -216,7 +291,7 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
         autoComplete="off"
         aria-hidden="true"
       />
-      
+
       <div>
         <input
           type="text"
@@ -227,7 +302,7 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
           maxLength={100}
         />
       </div>
-      
+
       <div>
         <input
           type="email"
@@ -242,7 +317,7 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
           maxLength={255}
         />
       </div>
-      
+
       <div>
         <input
           type="tel"
@@ -262,13 +337,13 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
         <div className="space-y-3">
           {/* hCaptcha widget container */}
           {captchaSiteKey && (
-            <div 
-              className="h-captcha flex justify-center" 
+            <div
+              className="h-captcha flex justify-center"
               data-sitekey={captchaSiteKey}
               data-theme="light"
             />
           )}
-          
+
           {/* Fallback math captcha */}
           {!captchaVerified && (
             <div className="p-3 rounded-lg bg-muted/50 space-y-2">
@@ -297,7 +372,7 @@ export const LeadForm = ({ lpId, onSuccess, captchaProvider, captchaSiteKey }: L
               </div>
             </div>
           )}
-          
+
           {captchaVerified && (
             <div className="flex items-center gap-2 text-sm text-success p-2 rounded-lg bg-success/10">
               <CheckCircle2 className="w-4 h-4" />

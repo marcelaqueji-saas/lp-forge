@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { useState, useRef, type ComponentType } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles, Zap, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { trackSectionView } from '@/lib/tracking';
 
 interface Card3DItem {
   titulo: string;
@@ -17,6 +18,7 @@ interface Cards3DShowcaseContent {
 }
 
 interface Cards3DShowcaseProps {
+  lpId?: string;
   content?: Cards3DShowcaseContent;
   previewOverride?: Cards3DShowcaseContent;
   disableAnimations?: boolean;
@@ -34,24 +36,23 @@ const defaultContent: Cards3DShowcaseContent = {
   cards: defaultCards,
 };
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, ComponentType<any>> = {
   sparkles: Sparkles,
   zap: Zap,
   edit: Edit3,
 };
 
 export const Cards3DShowcase = ({
+  lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
 }: Cards3DShowcaseProps) => {
   const [activeIndex, setActiveIndex] = useState(1);
+  const [hasTrackedView, setHasTrackedView] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const cards = finalContent.cards || defaultCards;
-
-  const rotateY = useMotionValue(0);
-  const smoothRotateY = useSpring(rotateY, { stiffness: 100, damping: 20 });
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev === 0 ? cards.length - 1 : prev - 1));
@@ -61,9 +62,24 @@ export const Cards3DShowcase = ({
     setActiveIndex((prev) => (prev === cards.length - 1 ? 0 : prev + 1));
   };
 
+  const handleViewportEnter = () => {
+    if (!hasTrackedView && lpId) {
+      // section = 'beneficios', variant_id = 'beneficios-showcase_3d'
+      trackSectionView(lpId, 'beneficios', 'beneficios-showcase_3d');
+      setHasTrackedView(true);
+    }
+  };
+
+  // Versão sem animações (modo acessibilidade)
   if (disableAnimations) {
     return (
-      <section className="py-20 bg-muted/30">
+      <motion.section
+        className="py-20 bg-muted/30"
+        id="beneficios"
+        data-section-key="beneficios"
+        onViewportEnter={handleViewportEnter}
+        viewport={{ once: true, amount: 0.3 }}
+      >
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{finalContent.titulo}</h2>
@@ -84,12 +100,18 @@ export const Cards3DShowcase = ({
             })}
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   return (
-    <section className="py-20 bg-muted/30 overflow-hidden">
+    <motion.section
+      className="py-20 bg-muted/30 overflow-hidden"
+      id="beneficios"
+      data-section-key="beneficios"
+      onViewportEnter={handleViewportEnter}
+      viewport={{ once: true, amount: 0.3 }}
+    >
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -182,7 +204,7 @@ export const Cards3DShowcase = ({
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

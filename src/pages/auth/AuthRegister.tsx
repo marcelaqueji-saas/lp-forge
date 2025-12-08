@@ -63,8 +63,8 @@ const AuthRegister = () => {
       }
 
       if (data.user) {
-        localStorage.removeItem('saaslp_onboarding_completed');
-        localStorage.removeItem('saaslp_editor_tour_completed');
+        localStorage.removeItem('nobron_onboarding_completed');
+        localStorage.removeItem('nobron_editor_tour_completed');
 
         toast({
           title: 'Conta criada com sucesso!',

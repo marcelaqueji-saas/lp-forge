@@ -1,5 +1,20 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock, Star, Heart, Award, TrendingUp, Users } from 'lucide-react';
+import {
+  Check,
+  Sparkles,
+  Shield,
+  Zap,
+  Globe,
+  BarChart3,
+  Clock,
+  Star,
+  Heart,
+  Award,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import { trackSectionView } from '@/lib/tracking';
 
 interface Beneficio {
   titulo: string;
@@ -14,6 +29,8 @@ interface BeneficiosContent {
 }
 
 interface BeneficiosProps {
+  /** ID da LP para tracking; se não vier, só renderiza visualmente */
+  lpId?: string;
   content?: BeneficiosContent;
   previewOverride?: BeneficiosContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
@@ -25,12 +42,36 @@ const defaultContent: BeneficiosContent = {
   titulo: 'Por que escolher nossa plataforma?',
   subtitulo: 'Tudo que você precisa para criar páginas de alta conversão',
   beneficios_json: JSON.stringify([
-    { titulo: 'Alta conversão', descricao: 'Templates otimizados para maximizar suas conversões.', icone: 'Sparkles' },
-    { titulo: 'Seguro e confiável', descricao: 'Seus dados protegidos com criptografia de ponta.', icone: 'Shield' },
-    { titulo: 'Super rápido', descricao: 'Páginas carregam em menos de 2 segundos.', icone: 'Zap' },
-    { titulo: 'SEO otimizado', descricao: 'Melhor posicionamento nos buscadores.', icone: 'Globe' },
-    { titulo: 'Analytics integrado', descricao: 'Acompanhe métricas em tempo real.', icone: 'BarChart3' },
-    { titulo: 'Suporte 24/7', descricao: 'Estamos sempre prontos para ajudar.', icone: 'Clock' },
+    {
+      titulo: 'Alta conversão',
+      descricao: 'Templates otimizados para maximizar suas conversões.',
+      icone: 'Sparkles',
+    },
+    {
+      titulo: 'Seguro e confiável',
+      descricao: 'Seus dados protegidos com criptografia de ponta.',
+      icone: 'Shield',
+    },
+    {
+      titulo: 'Super rápido',
+      descricao: 'Páginas carregam em menos de 2 segundos.',
+      icone: 'Zap',
+    },
+    {
+      titulo: 'SEO otimizado',
+      descricao: 'Melhor posicionamento nos buscadores.',
+      icone: 'Globe',
+    },
+    {
+      titulo: 'Analytics integrado',
+      descricao: 'Acompanhe métricas em tempo real.',
+      icone: 'BarChart3',
+    },
+    {
+      titulo: 'Suporte 24/7',
+      descricao: 'Estamos sempre prontos para ajudar.',
+      icone: 'Clock',
+    },
   ]),
 };
 
@@ -49,12 +90,20 @@ const iconMap: Record<string, typeof Check> = {
   Users,
 };
 
-export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a', cardStyle = '' }: BeneficiosProps) => {
+export const Beneficios = ({
+  lpId,
+  content = {},
+  previewOverride,
+  variante = 'modelo_a',
+  cardStyle = '',
+}: BeneficiosProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let beneficios: Beneficio[] = [];
   try {
-    beneficios = finalContent.beneficios_json ? JSON.parse(finalContent.beneficios_json) : [];
+    beneficios = finalContent.beneficios_json
+      ? JSON.parse(finalContent.beneficios_json)
+      : [];
   } catch {
     beneficios = [];
   }
@@ -72,10 +121,43 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
     visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
   };
 
+  // ref para rastrear visualização da seção
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!lpId) return; // sem lpId = sem tracking (ex: editor/preview)
+    if (hasTrackedViewRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, 'beneficios', variante);
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lpId, variante]);
+
   // Modelo C - Two columns with large icons
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding" id="beneficios" data-section-key="beneficios">
+      <section
+        ref={sectionRef}
+        className="section-padding"
+        id="beneficios"
+        data-section-key="beneficios"
+      >
         <div className="section-container">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -84,8 +166,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-              <p className="section-subtitle">{finalContent.subtitulo}</p>
+              <h2 className="section-title mb-4">
+                {finalContent.titulo}
+              </h2>
+              <p className="section-subtitle">
+                {finalContent.subtitulo}
+              </p>
             </motion.div>
 
             <motion.div
@@ -96,17 +182,22 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
               className="grid grid-cols-2 gap-4"
             >
               {beneficios.slice(0, 4).map((beneficio, index) => {
-                const Icon = iconMap[beneficio.icone || 'Check'] || Check;
+                const Icon =
+                  iconMap[beneficio.icone || 'Check'] || Check;
                 return (
                   <motion.div
                     key={index}
                     variants={itemVariants}
-                    className={`p-5 text-center ${cardStyle || 'premium-card-soft'}`}
+                    className={`p-5 text-center ${
+                      cardStyle || 'premium-card-soft'
+                    }`}
                   >
                     <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-3">
                       <Icon className="w-7 h-7 text-primary-foreground" />
                     </div>
-                    <h3 className="font-semibold text-sm">{beneficio.titulo}</h3>
+                    <h3 className="font-semibold text-sm">
+                      {beneficio.titulo}
+                    </h3>
                   </motion.div>
                 );
               })}
@@ -119,7 +210,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden" id="beneficios" data-section-key="beneficios">
+      <section
+        ref={sectionRef}
+        className="section-padding relative overflow-hidden"
+        id="beneficios"
+        data-section-key="beneficios"
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="section-container relative">
           <motion.div
@@ -129,8 +225,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-            <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
+            <h2 className="section-title mb-4">
+              {finalContent.titulo}
+            </h2>
+            <p className="section-subtitle mx-auto">
+              {finalContent.subtitulo}
+            </p>
           </motion.div>
 
           <motion.div
@@ -141,7 +241,8 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
             className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
           >
             {beneficios.map((beneficio, index) => {
-              const Icon = iconMap[beneficio.icone || 'Check'] || Check;
+              const Icon =
+                iconMap[beneficio.icone || 'Check'] || Check;
               return (
                 <motion.div
                   key={index}
@@ -152,8 +253,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
                     <Icon className="w-5 h-5 text-primary-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">{beneficio.titulo}</h3>
-                    <p className="text-muted-foreground text-sm">{beneficio.descricao}</p>
+                    <h3 className="font-semibold mb-1">
+                      {beneficio.titulo}
+                    </h3>
+                    <p className="text-muted-foreground text-sm">
+                      {beneficio.descricao}
+                    </p>
                   </div>
                 </motion.div>
               );
@@ -166,7 +271,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
 
   // Modelo A - Grid de cards
   return (
-    <section className="section-padding bg-card/50" id="beneficios" data-section-key="beneficios">
+    <section
+      ref={sectionRef}
+      className="section-padding bg-card/50"
+      id="beneficios"
+      data-section-key="beneficios"
+    >
       <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -175,8 +285,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-          <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
+          <h2 className="section-title mb-4">
+            {finalContent.titulo}
+          </h2>
+          <p className="section-subtitle mx-auto">
+            {finalContent.subtitulo}
+          </p>
         </motion.div>
 
         <motion.div
@@ -186,8 +300,9 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
           viewport={{ once: true }}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-            {beneficios.map((beneficio, index) => {
-            const Icon = iconMap[beneficio.icone || 'Check'] || Check;
+          {beneficios.map((beneficio, index) => {
+            const Icon =
+              iconMap[beneficio.icone || 'Check'] || Check;
             return (
               <motion.div
                 key={index}
@@ -197,8 +312,12 @@ export const Beneficios = ({ content = {}, previewOverride, variante = 'modelo_a
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{beneficio.titulo}</h3>
-                <p className="text-muted-foreground">{beneficio.descricao}</p>
+                <h3 className="text-lg font-semibold mb-2">
+                  {beneficio.titulo}
+                </h3>
+                <p className="text-muted-foreground">
+                  {beneficio.descricao}
+                </p>
               </motion.div>
             );
           })}

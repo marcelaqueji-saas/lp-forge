@@ -17,7 +17,7 @@ import NotFound from "./pages/NotFound";
 import Health from "./pages/Health";
 import LandingPageBySlug from "./pages/LandingPageBySlug";
 import SitePublic from "./pages/SitePublic";
-import SiteSaasLP from "./pages/SiteSaasLP";
+import Sitenobron from "./pages/Sitenobron";
 
 // Auth pages
 import AuthRegister from "./pages/auth/AuthRegister";
@@ -89,7 +89,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/health" element={<Health />} />
             <Route path="/healthz" element={<Health />} />
-            <Route path="/saaslp" element={<SiteSaasLP />} />
+            <Route path="/nobron" element={<Sitenobron />} />
             <Route path="/lp/:slug" element={<LandingPageBySlug />} />
             <Route path="/site/:siteSlug" element={<SitePublic />} />
             <Route path="/site/:siteSlug/:pageSlug" element={<SitePublic />} />

@@ -1,5 +1,20 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, MousePointer, Rocket, Star, Target, CheckCircle, Settings, Users, Lightbulb, Clock, Award, Heart } from 'lucide-react';
+import {
+  Zap,
+  MousePointer,
+  Rocket,
+  Star,
+  Target,
+  CheckCircle,
+  Settings,
+  Users,
+  Lightbulb,
+  Clock,
+  Award,
+  Heart,
+} from 'lucide-react';
+import { trackSectionView } from '@/lib/tracking';
 
 interface Passo {
   titulo: string;
@@ -14,6 +29,8 @@ interface ComoFuncionaContent {
 }
 
 interface ComoFuncionaProps {
+  /** ID da LP para tracking; se não vier, só renderiza visualmente */
+  lpId?: string;
   content?: ComoFuncionaContent;
   previewOverride?: ComoFuncionaContent;
   variante?: 'modelo_a' | 'modelo_b';
@@ -25,9 +42,24 @@ const defaultContent: ComoFuncionaContent = {
   titulo: 'Como funciona',
   subtitulo: 'Três passos simples para criar sua landing page perfeita',
   passos_json: JSON.stringify([
-    { titulo: 'Escolha um template', descricao: 'Selecione entre dezenas de templates profissionais prontos para usar.', icone: 'MousePointer' },
-    { titulo: 'Personalize', descricao: 'Edite textos, cores e imagens com nosso editor visual intuitivo.', icone: 'Zap' },
-    { titulo: 'Publique', descricao: 'Com um clique, sua página está no ar e pronta para converter.', icone: 'Rocket' },
+    {
+      titulo: 'Escolha um template',
+      descricao:
+        'Selecione entre dezenas de templates profissionais prontos para usar.',
+      icone: 'MousePointer',
+    },
+    {
+      titulo: 'Personalize',
+      descricao:
+        'Edite textos, cores e imagens com nosso editor visual intuitivo.',
+      icone: 'Zap',
+    },
+    {
+      titulo: 'Publique',
+      descricao:
+        'Com um clique, sua página está no ar e pronta para converter.',
+      icone: 'Rocket',
+    },
   ]),
 };
 
@@ -46,12 +78,21 @@ const iconMap: Record<string, typeof Zap> = {
   Heart,
 };
 
-export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo_a', disableAnimations = false, cardStyle = '' }: ComoFuncionaProps) => {
+export const ComoFunciona = ({
+  lpId,
+  content = {},
+  previewOverride,
+  variante = 'modelo_a',
+  disableAnimations = false,
+  cardStyle = '',
+}: ComoFuncionaProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
   let passos: Passo[] = [];
   try {
-    passos = finalContent.passos_json ? JSON.parse(finalContent.passos_json) : [];
+    passos = finalContent.passos_json
+      ? JSON.parse(finalContent.passos_json)
+      : [];
   } catch {
     passos = [];
   }
@@ -69,25 +110,62 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
 
+  // tracking: seção "como_funciona"
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!lpId) return; // preview/editor sem lpId = sem tracking
+    if (hasTrackedViewRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, 'como_funciona', variante);
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lpId, variante]);
+
   if (variante === 'modelo_b') {
     return (
-      <section id="como_funciona" data-section-key="como_funciona" className="section-padding bg-card/50">
+      <section
+        id="como_funciona"
+        data-section-key="como_funciona"
+        className="section-padding bg-card/50"
+        ref={sectionRef}
+      >
         <div className="section-container">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={disableAnimations ? undefined : { opacity: 0, y: 30 }}
+            whileInView={disableAnimations ? undefined : { opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={disableAnimations ? undefined : { duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-            <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
+            <h2 className="section-title mb-4">
+              {finalContent.titulo}
+            </h2>
+            <p className="section-subtitle mx-auto">
+              {finalContent.subtitulo}
+            </p>
           </motion.div>
 
           <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
+            variants={disableAnimations ? undefined : containerVariants}
+            initial={disableAnimations ? undefined : 'hidden'}
+            whileInView={disableAnimations ? undefined : 'visible'}
             viewport={{ once: true }}
             className="relative"
           >
@@ -102,13 +180,27 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
                 return (
                   <motion.div
                     key={index}
-                    variants={itemVariants}
-                    className={`md:flex items-center gap-8 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} md:mb-12`}
+                    variants={disableAnimations ? undefined : itemVariants}
+                    className={`md:flex items-center gap-8 ${
+                      isEven ? 'md:flex-row' : 'md:flex-row-reverse'
+                    } md:mb-12`}
                   >
-                    <div className={`flex-1 ${isEven ? 'md:text-right' : 'md:text-left'}`}>
-                      <div className={`glass-card p-6 inline-block ${isEven ? 'md:ml-auto' : 'md:mr-auto'}`}>
-                        <h3 className="text-xl font-semibold mb-2">{passo.titulo}</h3>
-                        <p className="text-muted-foreground">{passo.descricao}</p>
+                    <div
+                      className={`flex-1 ${
+                        isEven ? 'md:text-right' : 'md:text-left'
+                      }`}
+                    >
+                      <div
+                        className={`glass-card p-6 inline-block ${
+                          isEven ? 'md:ml-auto' : 'md:mr-auto'
+                        }`}
+                      >
+                        <h3 className="text-xl font-semibold mb-2">
+                          {passo.titulo}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          {passo.descricao}
+                        </p>
                       </div>
                     </div>
 
@@ -134,23 +226,32 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
 
   // Modelo A - Cards horizontais
   return (
-    <section id="como_funciona" data-section-key="como_funciona" className="section-padding">
+    <section
+      id="como_funciona"
+      data-section-key="como_funciona"
+      className="section-padding"
+      ref={sectionRef}
+    >
       <div className="section-container">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={disableAnimations ? undefined : { opacity: 0, y: 30 }}
+          whileInView={disableAnimations ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={disableAnimations ? undefined : { duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-          <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
+          <h2 className="section-title mb-4">
+            {finalContent.titulo}
+          </h2>
+          <p className="section-subtitle mx-auto">
+            {finalContent.subtitulo}
+          </p>
         </motion.div>
 
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          variants={disableAnimations ? undefined : containerVariants}
+          initial={disableAnimations ? undefined : 'hidden'}
+          whileInView={disableAnimations ? undefined : 'visible'}
           viewport={{ once: true }}
           className="grid md:grid-cols-3 gap-8"
         >
@@ -159,15 +260,21 @@ export const ComoFunciona = ({ content = {}, previewOverride, variante = 'modelo
             return (
               <motion.div
                 key={index}
-                variants={itemVariants}
+                variants={disableAnimations ? undefined : itemVariants}
                 className="glass-card-hover p-8 text-center group"
               >
                 <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center text-primary-foreground mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <Icon className="w-8 h-8" />
                 </div>
-                <div className="text-sm font-medium text-primary mb-2">Passo {index + 1}</div>
-                <h3 className="text-xl font-semibold mb-3">{passo.titulo}</h3>
-                <p className="text-muted-foreground">{passo.descricao}</p>
+                <div className="text-sm font-medium text-primary mb-2">
+                  Passo {index + 1}
+                </div>
+                <h3 className="text-xl font-semibold mb-3">
+                  {passo.titulo}
+                </h3>
+                <p className="text-muted-foreground">
+                  {passo.descricao}
+                </p>
               </motion.div>
             );
           })}

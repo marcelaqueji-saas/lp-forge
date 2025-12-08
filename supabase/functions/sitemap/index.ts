@@ -93,7 +93,7 @@ serve(async (req) => {
       <priority>1.0</priority>
     </url>
     <url>
-      <loc>${baseUrl}/saaslp</loc>
+      <loc>${baseUrl}/nobron</loc>
       <changefreq>weekly</changefreq>
       <priority>0.9</priority>
     </url>${urls}

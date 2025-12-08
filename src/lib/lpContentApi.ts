@@ -44,6 +44,50 @@ export interface LPEventCounts {
   lead_submit: number;
 }
 
+// Section names mapping
+export const SECTION_NAMES: Record<string, string> = {
+  menu: 'Menu',
+  hero: 'Topo / Hero',
+  como_funciona: 'Como funciona',
+  para_quem_e: 'Para quem é',
+  beneficios: 'Benefícios',
+  provas_sociais: 'Provas sociais',
+  planos: 'Planos',
+  faq: 'FAQ',
+  chamada_final: 'Chamada final',
+  rodape: 'Rodapé',
+};
+
+export const SECTIONS_WITH_VARIANTS = [
+  'menu',
+  'hero',
+  'como_funciona',
+  'para_quem_e',
+  'beneficios',
+  'provas_sociais',
+  'planos',
+  'faq',
+  'chamada_final',
+  'rodape',
+];
+
+export const DEFAULT_SECTION_ORDER = [
+  'menu',
+  'hero',
+  'como_funciona',
+  'para_quem_e',
+  'beneficios',
+  'provas_sociais',
+  'planos',
+  'faq',
+  'chamada_final',
+  'rodape',
+];
+
+// ====================================================================
+// LP CRUD
+// ====================================================================
+
 // Get default LP
 export const getDefaultLP = async (): Promise<LandingPage | null> => {
   const { data, error } = await supabase
@@ -126,24 +170,6 @@ export const getAllLPs = async (): Promise<LandingPage[]> => {
   return data || [];
 };
 
-// Get all LPs with user role info
-export const getAllLPsWithRoles = async (): Promise<(LandingPage & { userRole: LPRole })[]> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return [];
-
-  const lps = await getAllLPs();
-  const result: (LandingPage & { userRole: LPRole })[] = [];
-
-  for (const lp of lps) {
-    const role = await getUserRoleForLP(lp.id);
-    if (role) {
-      result.push({ ...lp, userRole: role });
-    }
-  }
-
-  return result;
-};
-
 // Get user role for a specific LP
 export const getUserRoleForLP = async (lpId: string): Promise<LPRole | null> => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -171,6 +197,83 @@ export const getUserRoleForLP = async (lpId: string): Promise<LPRole | null> => 
   return (roleData?.role as LPRole) || null;
 };
 
+// Get all LPs with user role info
+export const getAllLPsWithRoles = async (): Promise<(LandingPage & { userRole: LPRole })[]> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return [];
+
+  const lps = await getAllLPs();
+  const result: (LandingPage & { userRole: LPRole })[] = [];
+
+  for (const lp of lps) {
+    const role = await getUserRoleForLP(lp.id);
+    if (role) {
+      result.push({ ...lp, userRole: role });
+    }
+  }
+
+  return result;
+};
+
+// Update LP publication status
+export const updateLPStatus = async (lpId: string, publicado: boolean): Promise<boolean> => {
+  const { error } = await supabase
+    .from('landing_pages')
+    .update({ publicado })
+    .eq('id', lpId);
+
+  if (error) {
+    console.error('Error updating LP status:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// Update LP domain
+export const updateLPDomain = async (lpId: string, dominio: string | null): Promise<boolean> => {
+  const { error } = await supabase
+    .from('landing_pages')
+    .update({ 
+      dominio, 
+      dominio_verificado: false 
+    })
+    .eq('id', lpId);
+
+  if (error) {
+    console.error('Error updating LP domain:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// Delete LP (and related data)
+export const deleteLP = async (lpId: string): Promise<boolean> => {
+  await supabase.from('lp_leads').delete().eq('lp_id', lpId);
+  await supabase.from('lp_settings').delete().eq('lp_id', lpId);
+  await supabase.from('lp_content').delete().eq('lp_id', lpId);
+  await supabase.from('lp_user_roles').delete().eq('lp_id', lpId);
+  await supabase.from('lp_webhooks').delete().eq('lp_id', lpId);
+  await supabase.from('lp_events').delete().eq('lp_id', lpId);
+  
+  const { error } = await supabase
+    .from('landing_pages')
+    .delete()
+    .eq('id', lpId);
+
+  if (error) {
+    console.error('Error deleting LP:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// ====================================================================
+// ROLES
+// ====================================================================
+
 // Get all users with roles for an LP
 export const getLPUserRoles = async (lpId: string): Promise<LPUserRole[]> => {
   const { data, error } = await supabase
@@ -190,11 +293,10 @@ export const getLPUserRoles = async (lpId: string): Promise<LPUserRole[]> => {
 export const addUserRoleToLP = async (lpId: string, userId: string, role: LPRole): Promise<boolean> => {
   const { error } = await supabase
     .from('lp_user_roles')
-    .upsert({
-      lp_id: lpId,
-      user_id: userId,
-      role
-    }, { onConflict: 'lp_id,user_id' });
+    .upsert(
+      { lp_id: lpId, user_id: userId, role },
+      { onConflict: 'lp_id,user_id' }
+    );
 
   if (error) {
     console.error('Error adding user role:', error);
@@ -220,7 +322,11 @@ export const removeUserRoleFromLP = async (lpId: string, userId: string): Promis
   return true;
 };
 
-// Get content for a section
+// ====================================================================
+// CONTENT
+// ====================================================================
+
+// Get content for a specific section
 export const getSectionContent = async (lpId: string, section: string): Promise<LPContent> => {
   const { data, error } = await supabase
     .from('lp_content')
@@ -283,6 +389,7 @@ export const getSectionOrder = async (lpId: string): Promise<string[]> => {
   
   const orderedSections = Array.from(sectionsSet);
   
+  // Garante que todas as seções conhecidas entrem na ordem final
   Object.keys(SECTION_NAMES).forEach(section => {
     if (!orderedSections.includes(section)) {
       orderedSections.push(section);
@@ -347,6 +454,10 @@ export const saveSectionContent = async (
   return true;
 };
 
+// ====================================================================
+// SETTINGS
+// ====================================================================
+
 // Get all settings for an LP
 export const getSettings = async (lpId: string): Promise<LPSettings> => {
   const { data, error } = await supabase
@@ -410,6 +521,10 @@ export const saveSettings = async (lpId: string, settings: LPSettings): Promise<
   return true;
 };
 
+// ====================================================================
+// LEADS
+// ====================================================================
+
 // Check rate limit before saving lead
 export const checkLeadRateLimit = async (lpId: string, email: string): Promise<boolean> => {
   const { data, error } = await supabase
@@ -421,6 +536,28 @@ export const checkLeadRateLimit = async (lpId: string, email: string): Promise<b
   }
 
   return data as boolean;
+};
+
+// Track event (used inside saveLead)
+export const trackLPEvent = async (
+  lpId: string,
+  eventType: 'view' | 'cta_click' | 'lead_submit',
+  metadata?: Record<string, any>
+): Promise<boolean> => {
+  const { error } = await supabase
+    .from('lp_events')
+    .insert({
+      lp_id: lpId,
+      event_type: eventType,
+      metadata: metadata || null,
+    });
+
+  if (error) {
+    console.error('Error tracking event:', error);
+    return false;
+  }
+
+  return true;
 };
 
 // Save a lead and trigger webhooks
@@ -436,13 +573,17 @@ export const saveLead = async (
     }
   }
 
-  const { data: insertedLead, error } = await supabase.from('lp_leads').insert({
-    lp_id: lpId,
-    nome: lead.nome || null,
-    email: lead.email || null,
-    telefone: lead.telefone || null,
-    utm: utm || null,
-  }).select().single();
+  const { data: insertedLead, error } = await supabase
+    .from('lp_leads')
+    .insert({
+      lp_id: lpId,
+      nome: lead.nome || null,
+      email: lead.email || null,
+      telefone: lead.telefone || null,
+      utm: utm || null,
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error('Error saving lead:', error);
@@ -519,6 +660,38 @@ export const getLeads = async (lpId: string) => {
   return data || [];
 };
 
+// Export leads to CSV
+export const exportLeadsToCSV = (leads: any[]): string => {
+  const headers = [
+    'Nome',
+    'Email',
+    'Telefone',
+    'Data',
+    'UTM Source',
+    'UTM Medium',
+    'UTM Campaign',
+    'UTM Content',
+    'UTM Term',
+  ];
+  
+  const rows = leads.map(lead => {
+    const utm = lead.utm || {};
+    return [
+      lead.nome || '',
+      lead.email || '',
+      lead.telefone || '',
+      new Date(lead.created_at).toLocaleString('pt-BR'),
+      utm.utm_source || '',
+      utm.utm_medium || '',
+      utm.utm_campaign || '',
+      utm.utm_content || '',
+      utm.utm_term || '',
+    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\n');
+};
+
 // ====================================================================
 // WEBHOOKS
 // ====================================================================
@@ -538,7 +711,11 @@ export const getWebhooks = async (lpId: string): Promise<LPWebhook[]> => {
   return (data || []) as LPWebhook[];
 };
 
-export const createWebhook = async (lpId: string, url: string, tipo: 'generic' | 'hubspot' | 'pipedrive' = 'generic'): Promise<LPWebhook | null> => {
+export const createWebhook = async (
+  lpId: string,
+  url: string,
+  tipo: 'generic' | 'hubspot' | 'pipedrive' = 'generic'
+): Promise<LPWebhook | null> => {
   const { data, error } = await supabase
     .from('lp_webhooks')
     .insert({ lp_id: lpId, url, tipo })
@@ -553,7 +730,10 @@ export const createWebhook = async (lpId: string, url: string, tipo: 'generic' |
   return data as LPWebhook;
 };
 
-export const updateWebhook = async (id: string, updates: Partial<Pick<LPWebhook, 'url' | 'tipo' | 'ativo'>>): Promise<boolean> => {
+export const updateWebhook = async (
+  id: string,
+  updates: Partial<Pick<LPWebhook, 'url' | 'tipo' | 'ativo'>>
+): Promise<boolean> => {
   const { error } = await supabase
     .from('lp_webhooks')
     .update(updates)
@@ -585,23 +765,6 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 // EVENTS / METRICS
 // ====================================================================
 
-export const trackLPEvent = async (lpId: string, eventType: 'view' | 'cta_click' | 'lead_submit', metadata?: Record<string, any>): Promise<boolean> => {
-  const { error } = await supabase
-    .from('lp_events')
-    .insert({
-      lp_id: lpId,
-      event_type: eventType,
-      metadata: metadata || null,
-    });
-
-  if (error) {
-    console.error('Error tracking event:', error);
-    return false;
-  }
-
-  return true;
-};
-
 export const getEventCounts = async (lpId: string): Promise<LPEventCounts> => {
   const { data, error } = await supabase
     .rpc('get_lp_event_counts', { _lp_id: lpId });
@@ -621,45 +784,304 @@ export const getEventCounts = async (lpId: string): Promise<LPEventCounts> => {
   return counts;
 };
 
-// Section names mapping
-export const SECTION_NAMES: Record<string, string> = {
-  menu: 'Menu',
-  hero: 'Topo / Hero',
-  como_funciona: 'Como funciona',
-  para_quem_e: 'Para quem é',
-  beneficios: 'Benefícios',
-  provas_sociais: 'Provas sociais',
-  planos: 'Planos',
-  faq: 'FAQ',
-  chamada_final: 'Chamada final',
-  rodape: 'Rodapé',
+// ====================================================================
+// MEDIA (STORAGE)
+// ====================================================================
+
+export const uploadMedia = async (lpId: string, file: File): Promise<string | null> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const filePath = `${lpId}/${fileName}`;
+
+  const { error } = await supabase.storage
+    .from('lp-media')
+    .upload(filePath, file);
+
+  if (error) {
+    console.error('Error uploading media:', error);
+    return null;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('lp-media')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
 };
 
-export const SECTIONS_WITH_VARIANTS = [
-  'menu',
-  'hero',
-  'como_funciona',
-  'para_quem_e',
-  'beneficios',
-  'provas_sociais',
-  'planos',
-  'faq',
-  'chamada_final',
-  'rodape',
-];
+export const getMediaFiles = async (lpId: string): Promise<{ name: string; url: string }[]> => {
+  const { data, error } = await supabase.storage
+    .from('lp-media')
+    .list(lpId);
 
-export const DEFAULT_SECTION_ORDER = [
-  'menu',
-  'hero',
-  'como_funciona',
-  'para_quem_e',
-  'beneficios',
-  'provas_sociais',
-  'planos',
-  'faq',
-  'chamada_final',
-  'rodape',
-];
+  if (error) {
+    console.error('Error listing media:', error);
+    return [];
+  }
+
+  return (data || []).map(file => ({
+    name: file.name,
+    url: supabase.storage.from('lp-media').getPublicUrl(`${lpId}/${file.name}`).data.publicUrl,
+  }));
+};
+
+export const deleteMedia = async (lpId: string, fileName: string): Promise<boolean> => {
+  const { error } = await supabase.storage
+    .from('lp-media')
+    .remove([`${lpId}/${fileName}`]);
+
+  if (error) {
+    console.error('Error deleting media:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// ====================================================================
+// TEMPLATES (BASE)
+// ====================================================================
+
+const TEMPLATE_CONVERSAO_DIRETA = {
+  content: {
+    hero: {
+      badge: 'Oferta por tempo limitado',
+      titulo: 'Transforme seus resultados com',
+      destaque: 'nossa solução',
+      subtitulo:
+        'Descubra como milhares de clientes já alcançaram seus objetivos com nossa plataforma completa.',
+      texto_botao_primario: 'Começar agora',
+      url_botao_primario: '#planos',
+      texto_botao_secundario: 'Ver como funciona',
+      url_botao_secundario: '#como-funciona',
+    },
+    beneficios: {
+      titulo: 'Por que escolher nossa solução?',
+      subtitulo: 'Recursos poderosos que fazem a diferença',
+      beneficios_json: JSON.stringify([
+        {
+          titulo: 'Fácil de usar',
+          descricao: 'Interface intuitiva que qualquer pessoa pode usar',
+          icone: 'Zap',
+        },
+        {
+          titulo: 'Resultados rápidos',
+          descricao: 'Veja melhorias em poucos dias de uso',
+          icone: 'TrendingUp',
+        },
+        {
+          titulo: 'Suporte 24/7',
+          descricao: 'Nossa equipe está sempre pronta para ajudar',
+          icone: 'HeadphonesIcon',
+        },
+        {
+          titulo: 'Garantia total',
+          descricao: '30 dias de garantia ou seu dinheiro de volta',
+          icone: 'Shield',
+        },
+      ]),
+    },
+    provas_sociais: {
+      titulo: 'O que nossos clientes dizem',
+      depoimentos_json: JSON.stringify([
+        {
+          nome: 'Maria Silva',
+          cargo: 'CEO, TechCorp',
+          texto: 'Incrível! Nossos resultados triplicaram em apenas 3 meses.',
+        },
+        {
+          nome: 'João Santos',
+          cargo: 'Diretor de Marketing',
+          texto: 'A melhor decisão que tomamos foi contratar esta solução.',
+        },
+        {
+          nome: 'Ana Costa',
+          cargo: 'Empreendedora',
+          texto: 'Simples, eficiente e com ótimo custo-benefício.',
+        },
+      ]),
+    },
+    planos: {
+      titulo: 'Escolha o plano ideal para você',
+      subtitulo: 'Preços acessíveis para todos os tamanhos de negócio',
+      planos_json: JSON.stringify([
+        {
+          nome: 'Básico',
+          preco: 'R$ 97/mês',
+          descricao: 'Perfeito para começar',
+          destaque: false,
+          itens: ['Até 1.000 contatos', 'Suporte por email', '1 usuário'],
+        },
+        {
+          nome: 'Profissional',
+          preco: 'R$ 197/mês',
+          descricao: 'Mais popular',
+          destaque: true,
+          itens: [
+            'Até 10.000 contatos',
+            'Suporte prioritário',
+            '5 usuários',
+            'Relatórios avançados',
+          ],
+        },
+        {
+          nome: 'Enterprise',
+          preco: 'R$ 497/mês',
+          descricao: 'Para grandes empresas',
+          destaque: false,
+          itens: [
+            'Contatos ilimitados',
+            'Suporte 24/7',
+            'Usuários ilimitados',
+            'API completa',
+          ],
+        },
+      ]),
+    },
+    faq: {
+      titulo: 'Perguntas frequentes',
+      perguntas_json: JSON.stringify([
+        {
+          pergunta: 'Como funciona o período de teste?',
+          resposta: 'Você tem 14 dias para testar gratuitamente todas as funcionalidades.',
+        },
+        {
+          pergunta: 'Posso cancelar a qualquer momento?',
+          resposta: 'Sim, você pode cancelar sua assinatura quando quiser, sem multas.',
+        },
+        {
+          pergunta: 'Vocês oferecem suporte?',
+          resposta:
+            'Sim, oferecemos suporte por email, chat e telefone dependendo do seu plano.',
+        },
+        {
+          pergunta: 'Meus dados estão seguros?',
+          resposta:
+            'Absolutamente. Usamos criptografia de ponta e seguimos as melhores práticas de segurança.',
+        },
+        {
+          pergunta: 'Posso mudar de plano depois?',
+          resposta: 'Sim, você pode fazer upgrade ou downgrade a qualquer momento.',
+        },
+      ]),
+    },
+    chamada_final: {
+      titulo: 'Pronto para transformar seus resultados?',
+      subtitulo: 'Junte-se a milhares de clientes satisfeitos. Comece hoje mesmo!',
+      texto_botao: 'Começar agora',
+      url_botao: '#planos',
+    },
+    rodape: {
+      copyright: '© 2024 Sua Empresa. Todos os direitos reservados.',
+      links_json: JSON.stringify([
+        { label: 'Termos de Uso', url: '/termos' },
+        { label: 'Privacidade', url: '/privacidade' },
+        { label: 'Contato', url: '/contato' },
+      ]),
+    },
+  },
+  settings: {
+    hero_variante: 'modelo_a',
+    beneficios_variante: 'modelo_a',
+    provas_sociais_variante: 'modelo_a',
+    planos_variante: 'modelo_a',
+    faq_variante: 'modelo_a',
+    chamada_final_variante: 'modelo_a',
+  },
+};
+
+const TEMPLATE_LEAD_MAGNET = {
+  content: {
+    hero: {
+      badge: 'Download gratuito',
+      titulo: 'Baixe nosso eBook exclusivo:',
+      destaque: 'Guia Completo',
+      subtitulo:
+        'Descubra os segredos que os especialistas usam para alcançar resultados extraordinários.',
+      texto_botao_primario: 'Baixar eBook grátis',
+      url_botao_primario: '#lead-form',
+      texto_botao_secundario: 'Saiba mais',
+      url_botao_secundario: '#como-funciona',
+    },
+    como_funciona: {
+      titulo: 'Como funciona',
+      subtitulo: 'Em 3 passos simples você terá acesso ao conteúdo',
+      passos_json: JSON.stringify([
+        {
+          titulo: 'Preencha o formulário',
+          descricao: 'Insira seu nome e email para receber o material',
+          icone: 'FileText',
+        },
+        {
+          titulo: 'Confirme seu email',
+          descricao: 'Verifique sua caixa de entrada e clique no link',
+          icone: 'Mail',
+        },
+        {
+          titulo: 'Acesse o conteúdo',
+          descricao: 'Baixe imediatamente o eBook completo',
+          icone: 'Download',
+        },
+      ]),
+    },
+    para_quem_e: {
+      titulo: 'Para quem é este material?',
+      subtitulo: 'Este eBook foi criado especialmente para:',
+      perfis_json: JSON.stringify([
+        {
+          titulo: 'Empreendedores',
+          descricao: 'Que querem escalar seus negócios',
+          icone: 'Rocket',
+        },
+        {
+          titulo: 'Profissionais',
+          descricao: 'Buscando crescimento na carreira',
+          icone: 'Briefcase',
+        },
+        {
+          titulo: 'Estudantes',
+          descricao: 'Interessados em aprender novas habilidades',
+          icone: 'GraduationCap',
+        },
+      ]),
+    },
+    provas_sociais: {
+      titulo: 'O que dizem sobre o material',
+      depoimentos_json: JSON.stringify([
+        {
+          nome: 'Pedro Lima',
+          cargo: 'Empresário',
+          texto: 'Conteúdo incrível! Mudou minha visão sobre o mercado.',
+        },
+        {
+          nome: 'Carla Mendes',
+          cargo: 'Consultora',
+          texto: 'Material completo e muito bem organizado. Recomendo!',
+        },
+      ]),
+    },
+    chamada_final: {
+      titulo: 'Não perca esta oportunidade!',
+      subtitulo: 'Baixe agora o eBook gratuito e transforme seus resultados.',
+      texto_botao: 'Quero meu eBook grátis',
+      url_botao: '#lead-form',
+    },
+    rodape: {
+      copyright: '© 2024 Sua Empresa. Todos os direitos reservados.',
+      links_json: JSON.stringify([
+        { label: 'Termos de Uso', url: '/termos' },
+        { label: 'Privacidade', url: '/privacidade' },
+      ]),
+    },
+  },
+  settings: {
+    hero_variante: 'modelo_b',
+    como_funciona_variante: 'modelo_a',
+    para_quem_e_variante: 'modelo_a',
+    provas_sociais_variante: 'modelo_b',
+    chamada_final_variante: 'modelo_a',
+  },
+};
 
 // Create LP from template
 export const createLPFromTemplate = async (
@@ -715,7 +1137,11 @@ export const createLPFromTemplate = async (
 };
 
 // Duplicate LP with all content and settings
-export const duplicateLP = async (sourceLpId: string, newName: string, newSlug: string): Promise<LandingPage | null> => {
+export const duplicateLP = async (
+  sourceLpId: string,
+  newName: string,
+  newSlug: string
+): Promise<LandingPage | null> => {
   const sourceLP = await getLPById(sourceLpId);
   if (!sourceLP) return null;
 
@@ -774,274 +1200,6 @@ export const duplicateLP = async (sourceLpId: string, newName: string, newSlug: 
   return newLP;
 };
 
-// Update LP publication status
-export const updateLPStatus = async (lpId: string, publicado: boolean): Promise<boolean> => {
-  const { error } = await supabase
-    .from('landing_pages')
-    .update({ publicado })
-    .eq('id', lpId);
-
-  if (error) {
-    console.error('Error updating LP status:', error);
-    return false;
-  }
-
-  return true;
-};
-
-// Update LP domain
-export const updateLPDomain = async (lpId: string, dominio: string | null): Promise<boolean> => {
-  const { error } = await supabase
-    .from('landing_pages')
-    .update({ 
-      dominio, 
-      dominio_verificado: false 
-    })
-    .eq('id', lpId);
-
-  if (error) {
-    console.error('Error updating LP domain:', error);
-    return false;
-  }
-
-  return true;
-};
-
-// Delete LP
-export const deleteLP = async (lpId: string): Promise<boolean> => {
-  await supabase.from('lp_leads').delete().eq('lp_id', lpId);
-  await supabase.from('lp_settings').delete().eq('lp_id', lpId);
-  await supabase.from('lp_content').delete().eq('lp_id', lpId);
-  await supabase.from('lp_user_roles').delete().eq('lp_id', lpId);
-  await supabase.from('lp_webhooks').delete().eq('lp_id', lpId);
-  await supabase.from('lp_events').delete().eq('lp_id', lpId);
-  
-  const { error } = await supabase
-    .from('landing_pages')
-    .delete()
-    .eq('id', lpId);
-
-  if (error) {
-    console.error('Error deleting LP:', error);
-    return false;
-  }
-
-  return true;
-};
-
-// Upload media file
-export const uploadMedia = async (lpId: string, file: File): Promise<string | null> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-  const filePath = `${lpId}/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from('lp-media')
-    .upload(filePath, file);
-
-  if (error) {
-    console.error('Error uploading media:', error);
-    return null;
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from('lp-media')
-    .getPublicUrl(filePath);
-
-  return publicUrl;
-};
-
-// Get media files for LP
-export const getMediaFiles = async (lpId: string): Promise<{ name: string; url: string }[]> => {
-  const { data, error } = await supabase.storage
-    .from('lp-media')
-    .list(lpId);
-
-  if (error) {
-    console.error('Error listing media:', error);
-    return [];
-  }
-
-  return (data || []).map(file => ({
-    name: file.name,
-    url: supabase.storage.from('lp-media').getPublicUrl(`${lpId}/${file.name}`).data.publicUrl
-  }));
-};
-
-// Delete media file
-export const deleteMedia = async (lpId: string, fileName: string): Promise<boolean> => {
-  const { error } = await supabase.storage
-    .from('lp-media')
-    .remove([`${lpId}/${fileName}`]);
-
-  if (error) {
-    console.error('Error deleting media:', error);
-    return false;
-  }
-
-  return true;
-};
-
-// Export leads to CSV
-export const exportLeadsToCSV = (leads: any[]): string => {
-  const headers = ['Nome', 'Email', 'Telefone', 'Data', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term'];
-  
-  const rows = leads.map(lead => {
-    const utm = lead.utm || {};
-    return [
-      lead.nome || '',
-      lead.email || '',
-      lead.telefone || '',
-      new Date(lead.created_at).toLocaleString('pt-BR'),
-      utm.utm_source || '',
-      utm.utm_medium || '',
-      utm.utm_campaign || '',
-      utm.utm_content || '',
-      utm.utm_term || '',
-    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
-  });
-
-  return [headers.join(','), ...rows].join('\n');
-};
-
-// ====================================================================
-// TEMPLATES
-// ====================================================================
-
-const TEMPLATE_CONVERSAO_DIRETA = {
-  content: {
-    hero: {
-      badge: 'Oferta por tempo limitado',
-      titulo: 'Transforme seus resultados com',
-      destaque: 'nossa solução',
-      subtitulo: 'Descubra como milhares de clientes já alcançaram seus objetivos com nossa plataforma completa.',
-      texto_botao_primario: 'Começar agora',
-      url_botao_primario: '#planos',
-      texto_botao_secundario: 'Ver como funciona',
-      url_botao_secundario: '#como-funciona',
-    },
-    beneficios: {
-      titulo: 'Por que escolher nossa solução?',
-      subtitulo: 'Recursos poderosos que fazem a diferença',
-      beneficios_json: JSON.stringify([
-        { titulo: 'Fácil de usar', descricao: 'Interface intuitiva que qualquer pessoa pode usar', icone: 'Zap' },
-        { titulo: 'Resultados rápidos', descricao: 'Veja melhorias em poucos dias de uso', icone: 'TrendingUp' },
-        { titulo: 'Suporte 24/7', descricao: 'Nossa equipe está sempre pronta para ajudar', icone: 'HeadphonesIcon' },
-        { titulo: 'Garantia total', descricao: '30 dias de garantia ou seu dinheiro de volta', icone: 'Shield' },
-      ]),
-    },
-    provas_sociais: {
-      titulo: 'O que nossos clientes dizem',
-      depoimentos_json: JSON.stringify([
-        { nome: 'Maria Silva', cargo: 'CEO, TechCorp', texto: 'Incrível! Nossos resultados triplicaram em apenas 3 meses.' },
-        { nome: 'João Santos', cargo: 'Diretor de Marketing', texto: 'A melhor decisão que tomamos foi contratar esta solução.' },
-        { nome: 'Ana Costa', cargo: 'Empreendedora', texto: 'Simples, eficiente e com ótimo custo-benefício.' },
-      ]),
-    },
-    planos: {
-      titulo: 'Escolha o plano ideal para você',
-      subtitulo: 'Preços acessíveis para todos os tamanhos de negócio',
-      planos_json: JSON.stringify([
-        { nome: 'Básico', preco: 'R$ 97/mês', descricao: 'Perfeito para começar', destaque: false, itens: ['Até 1.000 contatos', 'Suporte por email', '1 usuário'] },
-        { nome: 'Profissional', preco: 'R$ 197/mês', descricao: 'Mais popular', destaque: true, itens: ['Até 10.000 contatos', 'Suporte prioritário', '5 usuários', 'Relatórios avançados'] },
-        { nome: 'Enterprise', preco: 'R$ 497/mês', descricao: 'Para grandes empresas', destaque: false, itens: ['Contatos ilimitados', 'Suporte 24/7', 'Usuários ilimitados', 'API completa'] },
-      ]),
-    },
-    faq: {
-      titulo: 'Perguntas frequentes',
-      perguntas_json: JSON.stringify([
-        { pergunta: 'Como funciona o período de teste?', resposta: 'Você tem 14 dias para testar gratuitamente todas as funcionalidades.' },
-        { pergunta: 'Posso cancelar a qualquer momento?', resposta: 'Sim, você pode cancelar sua assinatura quando quiser, sem multas.' },
-        { pergunta: 'Vocês oferecem suporte?', resposta: 'Sim, oferecemos suporte por email, chat e telefone dependendo do seu plano.' },
-        { pergunta: 'Meus dados estão seguros?', resposta: 'Absolutamente. Usamos criptografia de ponta e seguimos as melhores práticas de segurança.' },
-        { pergunta: 'Posso mudar de plano depois?', resposta: 'Sim, você pode fazer upgrade ou downgrade a qualquer momento.' },
-      ]),
-    },
-    chamada_final: {
-      titulo: 'Pronto para transformar seus resultados?',
-      subtitulo: 'Junte-se a milhares de clientes satisfeitos. Comece hoje mesmo!',
-      texto_botao: 'Começar agora',
-      url_botao: '#planos',
-    },
-    rodape: {
-      copyright: '© 2024 Sua Empresa. Todos os direitos reservados.',
-      links_json: JSON.stringify([
-        { label: 'Termos de Uso', url: '/termos' },
-        { label: 'Privacidade', url: '/privacidade' },
-        { label: 'Contato', url: '/contato' },
-      ]),
-    },
-  },
-  settings: {
-    hero_variante: 'modelo_a',
-    beneficios_variante: 'modelo_a',
-    provas_sociais_variante: 'modelo_a',
-    planos_variante: 'modelo_a',
-    faq_variante: 'modelo_a',
-    chamada_final_variante: 'modelo_a',
-  },
-};
-
-const TEMPLATE_LEAD_MAGNET = {
-  content: {
-    hero: {
-      badge: 'Download gratuito',
-      titulo: 'Baixe nosso eBook exclusivo:',
-      destaque: 'Guia Completo',
-      subtitulo: 'Descubra os segredos que os especialistas usam para alcançar resultados extraordinários.',
-      texto_botao_primario: 'Baixar eBook grátis',
-      url_botao_primario: '#lead-form',
-      texto_botao_secundario: 'Saiba mais',
-      url_botao_secundario: '#como-funciona',
-    },
-    como_funciona: {
-      titulo: 'Como funciona',
-      subtitulo: 'Em 3 passos simples você terá acesso ao conteúdo',
-      passos_json: JSON.stringify([
-        { titulo: 'Preencha o formulário', descricao: 'Insira seu nome e email para receber o material', icone: 'FileText' },
-        { titulo: 'Confirme seu email', descricao: 'Verifique sua caixa de entrada e clique no link', icone: 'Mail' },
-        { titulo: 'Acesse o conteúdo', descricao: 'Baixe imediatamente o eBook completo', icone: 'Download' },
-      ]),
-    },
-    para_quem_e: {
-      titulo: 'Para quem é este material?',
-      subtitulo: 'Este eBook foi criado especialmente para:',
-      perfis_json: JSON.stringify([
-        { titulo: 'Empreendedores', descricao: 'Que querem escalar seus negócios', icone: 'Rocket' },
-        { titulo: 'Profissionais', descricao: 'Buscando crescimento na carreira', icone: 'Briefcase' },
-        { titulo: 'Estudantes', descricao: 'Interessados em aprender novas habilidades', icone: 'GraduationCap' },
-      ]),
-    },
-    provas_sociais: {
-      titulo: 'O que dizem sobre o material',
-      depoimentos_json: JSON.stringify([
-        { nome: 'Pedro Lima', cargo: 'Empresário', texto: 'Conteúdo incrível! Mudou minha visão sobre o mercado.' },
-        { nome: 'Carla Mendes', cargo: 'Consultora', texto: 'Material completo e muito bem organizado. Recomendo!' },
-      ]),
-    },
-    chamada_final: {
-      titulo: 'Não perca esta oportunidade!',
-      subtitulo: 'Baixe agora o eBook gratuito e transforme seus resultados.',
-      texto_botao: 'Quero meu eBook grátis',
-      url_botao: '#lead-form',
-    },
-    rodape: {
-      copyright: '© 2024 Sua Empresa. Todos os direitos reservados.',
-      links_json: JSON.stringify([
-        { label: 'Termos de Uso', url: '/termos' },
-        { label: 'Privacidade', url: '/privacidade' },
-      ]),
-    },
-  },
-  settings: {
-    hero_variante: 'modelo_b',
-    como_funciona_variante: 'modelo_a',
-    para_quem_e_variante: 'modelo_a',
-    provas_sociais_variante: 'modelo_b',
-    chamada_final_variante: 'modelo_a',
-  },
-};
-
 // ====================================================================
 // CAPTCHA VERIFICATION
 // ====================================================================
@@ -1068,7 +1226,9 @@ export const verifyCaptcha = async (lpId: string, captchaToken: string): Promise
 // DOMAIN & BACKUP FUNCTIONS
 // ====================================================================
 
-export const verifyDomain = async (lpId: string): Promise<{ success: boolean; verified?: boolean; message?: string }> => {
+export const verifyDomain = async (
+  lpId: string
+): Promise<{ success: boolean; verified?: boolean; message?: string }> => {
   try {
     const { data, error } = await supabase.functions.invoke('verify-domain', {
       body: { lp_id: lpId },
@@ -1080,7 +1240,9 @@ export const verifyDomain = async (lpId: string): Promise<{ success: boolean; ve
   }
 };
 
-export const exportBackup = async (lpId: string): Promise<{ success: boolean; download_url?: string; error?: string }> => {
+export const exportBackup = async (
+  lpId: string
+): Promise<{ success: boolean; download_url?: string; error?: string }> => {
   try {
     const { data, error } = await supabase.functions.invoke('export-backup', {
       body: { lp_id: lpId },
@@ -1093,13 +1255,24 @@ export const exportBackup = async (lpId: string): Promise<{ success: boolean; do
 };
 
 export const getSystemLogs = async (lpId?: string, limit = 50) => {
-  let query = supabase.from('system_logs').select('*').order('created_at', { ascending: false }).limit(limit);
+  let query = supabase
+    .from('system_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
   if (lpId) query = query.eq('lp_id', lpId);
+
   const { data } = await query;
   return data || [];
 };
 
 export const getUptimeChecks = async (limit = 50) => {
-  const { data } = await supabase.from('uptime_checks').select('*').order('checked_at', { ascending: false }).limit(limit);
+  const { data } = await supabase
+    .from('uptime_checks')
+    .select('*')
+    .order('checked_at', { ascending: false })
+    .limit(limit);
+
   return data || [];
 };

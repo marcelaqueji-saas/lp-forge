@@ -269,7 +269,8 @@ const LPBuilder = () => {
       await saveSettings(lpId, variantSettings);
 
       toast({ title: 'Estrutura salva!', description: 'Redirecionando para o editor...' });
-      navigate(`/meu-site/${lpId}`);
+      navigate(`/meu-site/${lpId}?context=editor&plan=${profile?.plan || 'free'}`);
+
     } catch (error) {
       console.error('Error saving builder:', error);
       toast({ title: 'Erro ao salvar', variant: 'destructive' });

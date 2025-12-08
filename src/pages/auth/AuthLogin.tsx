@@ -40,7 +40,7 @@ const AuthLogin = () => {
 
   const handlePostLogin = async () => {
     const onboardingCompleted =
-      localStorage.getItem('saaslp_onboarding_completed') === 'true';
+      localStorage.getItem('nobron_onboarding_completed') === 'true';
 
     if (onboardingCompleted) {
       navigate('/painel');

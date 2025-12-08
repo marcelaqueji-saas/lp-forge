@@ -5,19 +5,27 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { getStoredUTMParams, captureUTMParams, UTMParams } from './utm';
-import { getDefaultGA4Id, getDefaultMetaPixelId, getDefaultTikTokPixelId } from './config';
+import {
+  getStoredUTMParams,
+  captureUTMParams,
+  UTMParams,
+} from './utm';
+import {
+  getDefaultGA4Id,
+  getDefaultMetaPixelId,
+  getDefaultTikTokPixelId,
+} from './config';
 
 // =====================================================
 // TIPOS
 // =====================================================
 
-export type EventType = 
-  | 'view' 
-  | 'scroll' 
-  | 'cta_click' 
-  | 'lead_submit' 
-  | 'form_start' 
+export type EventType =
+  | 'view'
+  | 'scroll'
+  | 'cta_click'
+  | 'lead_submit'
+  | 'form_start'
   | 'form_abandon'
   | 'section_view'
   | 'video_play'
@@ -27,6 +35,7 @@ export interface TrackingEvent {
   lp_id: string;
   event_type: EventType;
   section?: string;
+  // metadata vem solto das seções, então aqui deixamos qualquer coisa
   metadata?: Record<string, unknown>;
   variant_id?: string;
 }
@@ -58,14 +67,20 @@ const generateSessionId = (): string => {
 
 const getDeviceType = (): 'mobile' | 'tablet' | 'desktop' => {
   if (typeof window === 'undefined') return 'desktop';
-  
+
   const ua = navigator.userAgent.toLowerCase();
   const width = window.innerWidth;
-  
-  if (/mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua) || width < 768) {
+
+  if (
+    /mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua) ||
+    width < 768
+  ) {
     return 'mobile';
   }
-  if (/tablet|ipad|playbook|silk/i.test(ua) || (width >= 768 && width < 1024)) {
+  if (
+    /tablet|ipad|playbook|silk/i.test(ua) ||
+    (width >= 768 && width < 1024)
+  ) {
     return 'tablet';
   }
   return 'desktop';
@@ -78,7 +93,7 @@ export const getSessionData = (): SessionData => {
       device_type: 'desktop',
       user_agent: '',
       referrer: '',
-      utm: {},
+      utm: {} as UTMParams,
     };
   }
 
@@ -121,7 +136,7 @@ export interface ConsentState {
 
 export const getConsentState = (): ConsentState | null => {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const stored = localStorage.getItem(CONSENT_KEY);
     if (stored) {
@@ -134,20 +149,22 @@ export const getConsentState = (): ConsentState | null => {
   } catch (e) {
     console.error('[Tracking] Error reading consent:', e);
   }
-  
+
   return null;
 };
 
-export const setConsentState = (categories: ConsentState['categories']): void => {
+export const setConsentState = (
+  categories: ConsentState['categories']
+): void => {
   if (typeof window === 'undefined') return;
-  
+
   const consent: ConsentState = {
     given: true,
     categories,
     version: CONSENT_VERSION,
     timestamp: Date.now(),
   };
-  
+
   localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
 };
 
@@ -166,27 +183,56 @@ export const hasMarketingConsent = (): boolean => {
 // FIRST-PARTY TRACKING
 // =====================================================
 
+const ESSENTIAL_EVENTS: EventType[] = ['view', 'lead_submit'];
+
 // Queue para batch de eventos
 let eventQueue: Array<TrackingEvent & SessionData> = [];
-let flushTimeout: NodeJS.Timeout | null = null;
+let flushTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const FLUSH_INTERVAL = 2000; // 2 segundos
 const MAX_QUEUE_SIZE = 10;
 
+/**
+ * Normaliza metadata para tipos permitidos pelo Supabase/JSON:
+ * string | number | boolean | null
+ */
+const normalizeMetadata = (
+  metadata?: Record<string, unknown>
+): Record<string, string | number | boolean | null> | null => {
+  if (!metadata) return null;
+
+  const normalized: Record<string, string | number | boolean | null> = {};
+
+  for (const [key, value] of Object.entries(metadata)) {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      value === null
+    ) {
+      normalized[key] = value as string | number | boolean | null;
+    } else {
+      normalized[key] = JSON.stringify(value);
+    }
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : null;
+};
+
 const flushEvents = async (): Promise<void> => {
   if (eventQueue.length === 0) return;
-  
+
   const eventsToSend = [...eventQueue];
   eventQueue = [];
-  
+
   try {
     // Enviar em batch
     const { error } = await supabase.from('lp_events').insert(
-      eventsToSend.map(event => ({
+      eventsToSend.map((event) => ({
         lp_id: event.lp_id,
         event_type: event.event_type,
         section: event.section || null,
-        metadata: (event.metadata as Record<string, string | number | boolean | null>) || null,
+        metadata: normalizeMetadata(event.metadata),
         session_id: event.session_id || null,
         device_type: event.device_type || null,
         user_agent: event.user_agent || null,
@@ -199,7 +245,7 @@ const flushEvents = async (): Promise<void> => {
         variant_id: event.variant_id || null,
       }))
     );
-    
+
     if (error) {
       console.error('[Tracking] Error sending events:', error);
       // Re-adicionar eventos à queue em caso de erro
@@ -213,10 +259,10 @@ const flushEvents = async (): Promise<void> => {
 
 const scheduleFlush = (): void => {
   if (flushTimeout) return;
-  
+
   flushTimeout = setTimeout(() => {
     flushTimeout = null;
-    flushEvents();
+    void flushEvents();
   }, FLUSH_INTERVAL);
 };
 
@@ -225,30 +271,31 @@ const scheduleFlush = (): void => {
  * Respeita o consentimento de cookies para eventos não-essenciais
  */
 export const trackEvent = (event: TrackingEvent): void => {
-  // Eventos essenciais (view, lead_submit) são sempre registrados
-  const essentialEvents: EventType[] = ['view', 'lead_submit'];
-  const isEssential = essentialEvents.includes(event.event_type);
-  
+  const isEssential = ESSENTIAL_EVENTS.includes(event.event_type);
+
   // Para eventos não-essenciais, verificar consentimento
   if (!isEssential && !hasAnalyticsConsent()) {
-    console.log('[Tracking] Skipping non-essential event (no consent):', event.event_type);
+    console.log(
+      '[Tracking] Skipping non-essential event (no consent):',
+      event.event_type
+    );
     return;
   }
-  
+
   const session = getSessionData();
-  
+
   eventQueue.push({
     ...event,
     ...session,
   });
-  
+
   // Flush imediato se atingir tamanho máximo
   if (eventQueue.length >= MAX_QUEUE_SIZE) {
     if (flushTimeout) {
       clearTimeout(flushTimeout);
       flushTimeout = null;
     }
-    flushEvents();
+    void flushEvents();
   } else {
     scheduleFlush();
   }
@@ -258,23 +305,8 @@ export const trackEvent = (event: TrackingEvent): void => {
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (eventQueue.length > 0) {
-      // Usar sendBeacon para garantir envio
-      const events = eventQueue.map(event => ({
-        lp_id: event.lp_id,
-        event_type: event.event_type,
-        section: event.section,
-        metadata: event.metadata || null,
-        session_id: event.session_id,
-        device_type: event.device_type,
-        user_agent: event.user_agent,
-        referrer: event.referrer,
-        utm_source: event.utm.utm_source,
-        utm_medium: event.utm.utm_medium,
-        utm_campaign: event.utm.utm_campaign,
-      }));
-      
-      // sendBeacon não funciona bem com Supabase client, então fazemos best-effort
-      flushEvents();
+      // Melhor esforço; não dá pra usar await aqui
+      void flushEvents();
     }
   });
 }
@@ -285,9 +317,9 @@ if (typeof window !== 'undefined') {
 
 declare global {
   interface Window {
-    gtag?: (...args: unknown[]) => void;
-    dataLayer?: unknown[];
-    fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: any[]) => void;
+    dataLayer?: any[];
+    fbq?: (...args: any[]) => void;
     ttq?: {
       track: (event: string, data?: Record<string, unknown>) => void;
       page: () => void;
@@ -302,25 +334,25 @@ declare global {
 export const initGA4 = (measurementId?: string): void => {
   const id = measurementId || getDefaultGA4Id();
   if (!id || typeof window === 'undefined') return;
-  
+
   // Verificar consentimento
   if (!hasMarketingConsent()) {
     console.log('[Tracking] Skipping GA4 init (no marketing consent)');
     return;
   }
-  
+
   // Prevenir duplicação
   if (document.getElementById('ga4-script')) return;
-  
+
   const script = document.createElement('script');
   script.id = 'ga4-script';
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
   document.head.appendChild(script);
-  
+
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function() {
-    window.dataLayer!.push(arguments);
+  window.gtag = function (...args: any[]) {
+    window.dataLayer!.push(args);
   };
   window.gtag('js', new Date());
   window.gtag('config', id, { anonymize_ip: true });
@@ -333,14 +365,14 @@ export const initGA4 = (measurementId?: string): void => {
 export const initMetaPixel = (pixelId?: string): void => {
   const id = pixelId || getDefaultMetaPixelId();
   if (!id || typeof window === 'undefined') return;
-  
+
   if (!hasMarketingConsent()) {
     console.log('[Tracking] Skipping Meta Pixel init (no marketing consent)');
     return;
   }
-  
+
   if (window.fbq) return;
-  
+
   const script = document.createElement('script');
   script.innerHTML = `
     !function(f,b,e,v,n,t,s)
@@ -364,14 +396,14 @@ export const initMetaPixel = (pixelId?: string): void => {
 export const initTikTokPixel = (pixelId?: string): void => {
   const id = pixelId || getDefaultTikTokPixelId();
   if (!id || typeof window === 'undefined') return;
-  
+
   if (!hasMarketingConsent()) {
     console.log('[Tracking] Skipping TikTok Pixel init (no marketing consent)');
     return;
   }
-  
+
   if (window.ttq) return;
-  
+
   const script = document.createElement('script');
   script.innerHTML = `
     !function (w, d, t) {
@@ -387,22 +419,22 @@ export const initTikTokPixel = (pixelId?: string): void => {
  * Envia evento para todas as plataformas configuradas
  */
 export const trackToThirdParty = (
-  eventName: string, 
+  eventName: string,
   payload?: Record<string, unknown>,
-  config?: TrackingConfig
+  _config?: TrackingConfig
 ): void => {
   if (!hasMarketingConsent()) return;
-  
+
   // GA4
   if (window.gtag) {
     window.gtag('event', eventName, payload);
   }
-  
+
   // Meta Pixel
   if (window.fbq) {
     window.fbq('track', eventName, payload);
   }
-  
+
   // TikTok Pixel
   if (window.ttq) {
     window.ttq.track(eventName, payload);
@@ -413,45 +445,111 @@ export const trackToThirdParty = (
 // CONVENIENCE FUNCTIONS
 // =====================================================
 
-export const trackPageView = (lpId: string, section?: string): void => {
+export const trackPageView = (
+  lpId: string,
+  section?: string
+): void => {
   trackEvent({ lp_id: lpId, event_type: 'view', section });
-  trackToThirdParty('PageView');
+  trackToThirdParty('PageView', { lp_id: lpId, section });
 };
 
-export const trackCTAClick = (lpId: string, section: string, ctaType: 'primary' | 'secondary', variantId?: string): void => {
-  trackEvent({ 
-    lp_id: lpId, 
-    event_type: 'cta_click', 
+export const trackCTAClick = (
+  lpId: string,
+  section: string,
+  ctaType: 'primary' | 'secondary',
+  variantId?: string
+): void => {
+  trackEvent({
+    lp_id: lpId,
+    event_type: 'cta_click',
     section,
     variant_id: variantId,
-    metadata: { cta_type: ctaType }
+    metadata: { cta_type: ctaType },
   });
-  trackToThirdParty('ClickButton', { section, cta_type: ctaType });
-};
-
-export const trackLeadSubmit = (lpId: string, section: string, variantId?: string): void => {
-  trackEvent({ 
-    lp_id: lpId, 
-    event_type: 'lead_submit', 
+  trackToThirdParty('ClickButton', {
+    lp_id: lpId,
     section,
-    variant_id: variantId
+    cta_type: ctaType,
+    variant_id: variantId,
   });
-  trackToThirdParty('Lead', { section });
 };
 
-export const trackSectionView = (lpId: string, section: string, variantId?: string): void => {
-  trackEvent({ 
-    lp_id: lpId, 
-    event_type: 'section_view', 
+export const trackLeadSubmit = (
+  lpId: string,
+  section: string,
+  variantId?: string
+): void => {
+  trackEvent({
+    lp_id: lpId,
+    event_type: 'lead_submit',
     section,
-    variant_id: variantId
+    variant_id: variantId,
   });
+  trackToThirdParty('Lead', { lp_id: lpId, section, variant_id: variantId });
 };
 
-export const trackScroll = (lpId: string, percentage: number): void => {
-  trackEvent({ 
-    lp_id: lpId, 
+// 🔹 Overloads para trackSectionView
+
+export function trackSectionView(
+  lpId: string,
+  section: string,
+  variantId?: string
+): void;
+
+export function trackSectionView(
+  section: string,
+  metadata?: Record<string, unknown>
+): void;
+
+// Implementação
+export function trackSectionView(
+  arg1: string,
+  arg2?: string | Record<string, unknown>,
+  arg3?: string
+): void {
+  // Caso 1: trackSectionView(lpId, section, variantId?)
+  if (typeof arg2 === 'string') {
+    const lpId = arg1;
+    const section = arg2;
+    const variantId = arg3;
+
+    trackEvent({
+      lp_id: lpId,
+      event_type: 'section_view',
+      section,
+      variant_id: variantId,
+    });
+
+    trackToThirdParty('section_view', {
+      lp_id: lpId,
+      section,
+      variant_id: variantId,
+    });
+
+    return;
+  }
+
+  // Caso 2: trackSectionView(section, metadata?)
+  const section = arg1;
+  const metadata = (arg2 as Record<string, unknown> | undefined) ?? undefined;
+
+  console.warn(
+    '[Tracking] trackSectionView chamado sem lpId; evento não será salvo em lp_events.'
+  );
+
+  trackToThirdParty('section_view', {
+    section,
+    ...(metadata || {}),
+  });
+}
+
+export const trackScroll = (
+  lpId: string,
+  percentage: number
+): void => {
+  trackEvent({
+    lp_id: lpId,
     event_type: 'scroll',
-    metadata: { scroll_percentage: percentage }
+    metadata: { scroll_percentage: percentage },
   });
 };

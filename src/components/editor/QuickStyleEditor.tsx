@@ -52,15 +52,25 @@ export const QuickStyleEditor = ({
   disabled = false,
 }: QuickStyleEditorProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'bg' | 'text' | 'gradient'>('bg');
+  const [activeTab, setActiveTab] =
+    useState<'bg' | 'text' | 'gradient'>('bg');
 
-  const hasCustomStyles = 
-    !!currentStyles.style_bg || 
-    !!currentStyles.style_text || 
+  const hasCustomStyles =
+    !!currentStyles.style_bg ||
+    !!currentStyles.style_text ||
     !!currentStyles.style_gradient;
 
-  const handleColorChange = (type: 'bg' | 'text' | 'gradient', value: string) => {
-    const key = type === 'bg' ? 'style_bg' : type === 'text' ? 'style_text' : 'style_gradient';
+  const handleColorChange = (
+    type: 'bg' | 'text' | 'gradient',
+    value: string
+  ) => {
+    const key =
+      type === 'bg'
+        ? 'style_bg'
+        : type === 'text'
+        ? 'style_text'
+        : 'style_gradient';
+
     onStyleChange({ [key]: value });
   };
 
@@ -73,31 +83,36 @@ export const QuickStyleEditor = ({
     setIsOpen(false);
   };
 
-  const getCurrentValue = (type: 'bg' | 'text' | 'gradient') => {
-    if (type === 'bg') return currentStyles.style_bg || '';
-    if (type === 'text') return currentStyles.style_text || '';
-    return currentStyles.style_gradient || '';
-  };
+  const getCurrentValue = (type: 'bg' | 'text' | 'gradient') =>
+    type === 'bg'
+      ? currentStyles.style_bg || ''
+      : type === 'text'
+      ? currentStyles.style_text || ''
+      : currentStyles.style_gradient || '';
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="secondary"
-          size="sm"
           disabled={disabled}
+          size="sm"
           className={cn(
-            "h-7 text-xs gap-1",
-            hasCustomStyles && "bg-primary/10 border-primary/30"
+            "h-7 text-xs gap-1 px-2",
+            "bg-white/80 backdrop-blur-lg border border-white/40",
+            "text-slate-900 shadow-sm hover:bg-white",
+            "transition-all duration-200",
+            hasCustomStyles && "border-primary/70 shadow-md"
           )}
         >
           <Palette className="w-3 h-3" />
           Cores
-          {hasCustomStyles && <span className="text-primary">•</span>}
+          {hasCustomStyles && (
+            <span className="text-primary ml-0.5">•</span>
+          )}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-72 p-0" align="end">
+      <PopoverContent className="w-72 p-0 bg-card/70 backdrop-blur-xl border-white/30" align="end">
         <div className="p-3 border-b flex items-center justify-between">
           <span className="font-medium text-sm">Editor rápido de cores</span>
           <Button
@@ -112,58 +127,46 @@ export const QuickStyleEditor = ({
 
         {/* Tabs */}
         <div className="flex border-b">
-          <button
-            onClick={() => setActiveTab('bg')}
-            className={cn(
-              "flex-1 py-2 text-xs font-medium transition-colors",
-              activeTab === 'bg' 
-                ? "border-b-2 border-primary text-primary" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Fundo
-          </button>
-          <button
-            onClick={() => setActiveTab('text')}
-            className={cn(
-              "flex-1 py-2 text-xs font-medium transition-colors",
-              activeTab === 'text' 
-                ? "border-b-2 border-primary text-primary" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Texto
-          </button>
-          {supportsGradient && (
-            <button
-              onClick={() => setActiveTab('gradient')}
-              className={cn(
-                "flex-1 py-2 text-xs font-medium transition-colors",
-                activeTab === 'gradient' 
-                  ? "border-b-2 border-primary text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Gradiente
-            </button>
-          )}
+          {(['bg', 'text', supportsGradient ? 'gradient' : null] as const)
+            .filter(Boolean)
+            .map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab!)}
+                className={cn(
+                  "flex-1 py-2 text-xs font-medium transition-colors",
+                  activeTab === tab
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab === 'bg'
+                  ? 'Fundo'
+                  : tab === 'text'
+                  ? 'Texto'
+                  : 'Gradiente'}
+              </button>
+            ))}
         </div>
 
         <div className="p-3 space-y-3">
-          {/* Color/Gradient Input */}
           {activeTab !== 'gradient' ? (
             <>
               <div className="flex gap-2">
                 <input
                   type="color"
                   value={getCurrentValue(activeTab) || '#ffffff'}
-                  onChange={(e) => handleColorChange(activeTab, e.target.value)}
-                  className="w-10 h-10 rounded cursor-pointer border-0 shrink-0"
+                  onChange={(e) =>
+                    handleColorChange(activeTab, e.target.value)
+                  }
+                  className="w-10 h-10 rounded cursor-pointer border"
                 />
                 <Input
                   type="text"
                   value={getCurrentValue(activeTab)}
-                  onChange={(e) => handleColorChange(activeTab, e.target.value)}
+                  onChange={(e) =>
+                    handleColorChange(activeTab, e.target.value)
+                  }
                   placeholder={activeTab === 'bg' ? '#FFFFFF' : '#000000'}
                   className="flex-1 font-mono text-sm h-10"
                 />
@@ -171,16 +174,19 @@ export const QuickStyleEditor = ({
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-2 block">
-                  Cores predefinidas
+                  Cores rápidas
                 </Label>
                 <div className="grid grid-cols-8 gap-1">
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
-                      onClick={() => handleColorChange(activeTab, color)}
+                      onClick={() =>
+                        handleColorChange(activeTab, color)
+                      }
                       className={cn(
                         "w-6 h-6 rounded border transition-all hover:scale-110",
-                        getCurrentValue(activeTab) === color && "ring-2 ring-primary ring-offset-1"
+                        getCurrentValue(activeTab) === color &&
+                          "ring-2 ring-primary ring-offset-1"
                       )}
                       style={{ backgroundColor: color }}
                     />
@@ -192,24 +198,28 @@ export const QuickStyleEditor = ({
             <>
               <Input
                 type="text"
-                value={getCurrentValue('gradient')}
-                onChange={(e) => handleColorChange('gradient', e.target.value)}
                 placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                value={getCurrentValue('gradient')}
+                onChange={(e) =>
+                  handleColorChange('gradient', e.target.value)
+                }
                 className="font-mono text-xs h-10"
               />
-
               <div>
                 <Label className="text-xs text-muted-foreground mb-2 block">
-                  Gradientes predefinidos
+                  Gradientes rápidos
                 </Label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {GRADIENT_PRESETS.map((gradient, index) => (
+                  {GRADIENT_PRESETS.map((gradient, i) => (
                     <button
-                      key={index}
-                      onClick={() => handleColorChange('gradient', gradient)}
+                      key={i}
+                      onClick={() =>
+                        handleColorChange('gradient', gradient)
+                      }
                       className={cn(
                         "h-8 rounded border transition-all hover:scale-105",
-                        getCurrentValue('gradient') === gradient && "ring-2 ring-primary ring-offset-1"
+                        getCurrentValue('gradient') === gradient &&
+                          "ring-2 ring-primary ring-offset-1"
                       )}
                       style={{ background: gradient }}
                     />
@@ -219,7 +229,7 @@ export const QuickStyleEditor = ({
             </>
           )}
 
-          {/* Reset button */}
+          {/* Reset */}
           {hasCustomStyles && (
             <Button
               variant="outline"

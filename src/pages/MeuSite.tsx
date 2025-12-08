@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Eye, Loader2, ExternalLink, Edit3, ChevronDown } from 'lucide-react';
 import { SectionOverlay } from '@/components/editor/SectionOverlay';
-import { LayoutPicker, SECTION_VARIANTS } from '@/components/editor/LayoutPicker';
+import { TemplatePicker } from '@/components/editor/TemplatePicker';
 import { ContentEditor } from '@/components/editor/ContentEditor';
 import { EditorTour } from '@/components/editor/EditorTour';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -45,7 +45,7 @@ const MeuSite = () => {
   // Editor state
   const [editMode, setEditMode] = useState(true);
   const [runTour, setRunTour] = useState(false);
-  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  const [TemplatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [contentEditorOpen, setContentEditorOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -130,7 +130,7 @@ const MeuSite = () => {
 
   const handleChangeLayout = (sectionKey: string) => {
     setActiveSection(sectionKey);
-    setLayoutPickerOpen(true);
+    setTemplatePickerOpen(true);
   };
 
   const handleEditContent = (sectionKey: string) => {
@@ -170,7 +170,7 @@ const MeuSite = () => {
       }));
 
       toast({ title: 'Layout atualizado!' });
-      setLayoutPickerOpen(false);
+      setTemplatePickerOpen(false);
       
       console.log(`[MeuSite] Variant changed: ${activeSection} → ${variantId}`);
     } catch (error) {
@@ -405,7 +405,7 @@ const MeuSite = () => {
         <SEOHead settings={settings} />
         
         {sectionOrder.map((section, index) => {
-          const hasVariants = !!(SECTION_VARIANTS[section]?.length);
+const hasVariants = true;
           const sectionContent = content[section] || {};
           const premiumConfig = parseVisualConfig(sectionContent);
 
@@ -466,18 +466,19 @@ const MeuSite = () => {
         </div>
       )}
 
-      {/* Layout Picker */}
       {activeSection && (
-        <LayoutPicker
-          open={layoutPickerOpen}
-          onClose={() => setLayoutPickerOpen(false)}
-          sectionName={getSectionName(activeSection)}
-          sectionKey={activeSection}
-          currentVariant={getVariante(activeSection)}
-          variants={SECTION_VARIANTS[activeSection] || []}
-          onSelect={handleSelectVariant}
-        />
-      )}
+  <TemplatePicker
+    open={TemplatePickerOpen}
+    onClose={() => setTemplatePickerOpen(false)}
+    sectionName={getSectionName(activeSection)}
+    sectionKey={activeSection}
+    currentVariant={getVariante(activeSection)}
+    onSelect={handleSelectVariant}
+    userPlan="premium"
+  />
+)}
+
+
 
       {/* Content Editor */}
       {activeSection && lpId && (

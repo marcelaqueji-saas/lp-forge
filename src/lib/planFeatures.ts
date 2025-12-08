@@ -169,7 +169,7 @@ export const FEATURE_UPGRADE_PROMPTS: Record<PlanFeature, UpgradePromptConfig> =
   remove_branding: {
     feature: 'remove_branding',
     title: 'Remover Marca',
-    description: 'Remova o selo "Feito com SaaS LP" da sua página.',
+    description: 'Remova o selo "Feito com nobron" da sua página.',
     requiredPlan: 'premium',
   },
 };

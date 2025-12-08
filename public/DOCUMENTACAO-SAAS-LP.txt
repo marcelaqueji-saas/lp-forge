@@ -101,7 +101,7 @@ ROTAS PÚBLICAS:
 ---------------
 /                       → Homepage dinâmica (saas_settings.home_lp_id)
 /health                 → Health check
-/saaslp                 → LP oficial do SaaS
+/nobron                 → LP oficial do SaaS
 /lp/:slug               → LP por slug
 /site/:siteSlug         → Site multi-página
 /site/:siteSlug/:page   → Página específica do site

@@ -15,13 +15,13 @@ END $$;
 INSERT INTO public.landing_pages (id, slug, nome, publicado, is_official, owner_id)
 SELECT 
     gen_random_uuid(),
-    'saaslp',
+    'nobron',
     'Site Oficial SaaS-LP',
     true,
     true,
     (SELECT user_id FROM public.user_roles WHERE role = 'admin_master' LIMIT 1)
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.landing_pages WHERE slug = 'saaslp'
+    SELECT 1 FROM public.landing_pages WHERE slug = 'nobron'
 );
 
 -- Get the LP id for content insertion
@@ -29,7 +29,7 @@ DO $$
 DECLARE
     lp_uuid uuid;
 BEGIN
-    SELECT id INTO lp_uuid FROM public.landing_pages WHERE slug = 'saaslp';
+    SELECT id INTO lp_uuid FROM public.landing_pages WHERE slug = 'nobron';
     
     IF lp_uuid IS NOT NULL THEN
         -- Insert minimal content for each section

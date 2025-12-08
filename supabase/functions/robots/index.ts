@@ -27,7 +27,7 @@ serve(async (req) => {
     // Robots.txt padrão seguro
     // Permite indexação das LPs públicas, bloqueia admin/auth
     const robotsTxt = `# robots.txt gerado dinamicamente
-# SaaS LP - Plataforma de Landing Pages
+# nobron - Plataforma de Landing Pages
 
 User-agent: *
 
@@ -35,7 +35,7 @@ User-agent: *
 Allow: /
 Allow: /lp/
 Allow: /site/
-Allow: /saaslp
+Allow: /nobron
 
 # Rotas administrativas bloqueadas
 Disallow: /admin/

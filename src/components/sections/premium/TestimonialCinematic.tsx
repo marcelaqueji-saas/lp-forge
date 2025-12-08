@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { trackSectionView } from '@/lib/tracking';
 
 interface TestimonialItem {
   texto: string;
@@ -25,13 +26,15 @@ interface TestimonialCinematicProps {
 
 const defaultTestimonials: TestimonialItem[] = [
   {
-    texto: 'O SaaS-LP transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
+    texto:
+      'O SaaS-LP transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
     nome: 'Maria Silva',
     cargo: 'CEO, TechStartup',
     foto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
   },
   {
-    texto: 'Os templates premium com animações fizeram toda a diferença nas nossas taxas de conversão. Recomendo para qualquer empresa.',
+    texto:
+      'Os templates premium com animações fizeram toda a diferença nas nossas taxas de conversão. Recomendo para qualquer empresa.',
     nome: 'João Santos',
     cargo: 'Marketing Director, Growth Co',
     foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
@@ -52,6 +55,13 @@ export const TestimonialCinematic = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
   const testimonials = finalContent.depoimentos || defaultTestimonials;
+
+  // 🔍 Rastreamento de visualização da seção
+  useEffect(() => {
+  trackSectionView('provas_sociais');
+  // Se quiser, pode no futuro ajustar o tracking.ts pra aceitar metadata
+}, [finalContent.autoplay, testimonials.length]);
+
 
   useEffect(() => {
     if (!finalContent.autoplay || disableAnimations) return;
@@ -77,7 +87,9 @@ export const TestimonialCinematic = ({
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-4xl">
           {finalContent.titulo && (
-            <h2 className="text-3xl font-bold text-center mb-12">{finalContent.titulo}</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">
+              {finalContent.titulo}
+            </h2>
           )}
           <div className="relative">
             <Quote className="w-16 h-16 text-primary/20 mb-6" />
@@ -188,7 +200,6 @@ export const TestimonialCinematic = ({
           </AnimatePresence>
         </div>
 
-        {/* Navigation */}
         {testimonials.length > 1 && (
           <motion.div
             initial={{ opacity: 0 }}

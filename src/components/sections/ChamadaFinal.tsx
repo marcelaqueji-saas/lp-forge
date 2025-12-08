@@ -1,6 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { trackEvent } from '@/lib/analytics';
+import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface ChamadaFinalContent {
   titulo?: string;
@@ -9,39 +10,80 @@ interface ChamadaFinalContent {
   url_botao?: string;
 }
 
+type ChamadaFinalVariant = 'modelo_a' | 'modelo_b' | 'modelo_c';
+
 interface ChamadaFinalProps {
+  /** ID da LP para tracking; se não vier, não registra eventos (ex: editor) */
+  lpId?: string;
   content?: ChamadaFinalContent;
   previewOverride?: ChamadaFinalContent;
-  variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
+  variante?: ChamadaFinalVariant;
   onPrimaryCTAClick?: () => void;
   cardStyle?: string;
 }
 
 const defaultContent: ChamadaFinalContent = {
   titulo: 'Pronto para começar?',
-  subtitulo: 'Junte-se a milhares de empresas que já transformaram suas conversões.',
+  subtitulo:
+    'Junte-se a milhares de empresas que já transformaram suas conversões.',
   texto_botao: 'Criar minha landing page',
   url_botao: '#planos',
 };
 
-export const ChamadaFinal = ({ 
-  content = {}, 
-  previewOverride, 
+export const ChamadaFinal = ({
+  lpId,
+  content = {},
+  previewOverride,
   variante = 'modelo_a',
   onPrimaryCTAClick,
-  cardStyle = ''
+  cardStyle = '',
 }: ChamadaFinalProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
 
+  // Ref para rastrear visualização da seção (section_view)
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!lpId) return; // sem lpId (editor/preview), não trackeia
+    if (hasTrackedViewRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, 'chamada_final', variante);
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lpId, variante]);
+
   const handleClick = () => {
-    trackEvent('click_cta_chamada_final', { url: finalContent.url_botao });
+    if (lpId) {
+      trackCTAClick(lpId, 'chamada_final', 'primary', variante);
+    }
     onPrimaryCTAClick?.();
   };
 
   // Modelo C - Minimal side-by-side
   if (variante === 'modelo_c') {
     return (
-      <section className="section-padding" id="chamada_final" data-section-key="chamada_final">
+      <section
+        ref={sectionRef}
+        className="section-padding"
+        id="chamada_final"
+        data-section-key="chamada_final"
+      >
         <div className="section-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -51,8 +93,12 @@ export const ChamadaFinal = ({
             className="flex flex-col md:flex-row items-center justify-between gap-8 p-8 rounded-2xl border border-border bg-card/50"
           >
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">{finalContent.titulo}</h2>
-              <p className="text-muted-foreground">{finalContent.subtitulo}</p>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                {finalContent.titulo}
+              </h2>
+              <p className="text-muted-foreground">
+                {finalContent.subtitulo}
+              </p>
             </div>
             <a
               href={finalContent.url_botao}
@@ -70,7 +116,12 @@ export const ChamadaFinal = ({
 
   if (variante === 'modelo_b') {
     return (
-      <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
+      <section
+        ref={sectionRef}
+        className="section-padding relative overflow-hidden"
+        id="chamada_final"
+        data-section-key="chamada_final"
+      >
         <div className="absolute inset-0 gradient-bg opacity-10" />
         <div className="section-container relative">
           <motion.div
@@ -78,14 +129,20 @@ export const ChamadaFinal = ({
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className={`p-12 md:p-16 text-center max-w-4xl mx-auto ${cardStyle || 'premium-card-glass-medium'}`}
+            className={`p-12 md:p-16 text-center max-w-4xl mx-auto ${
+              cardStyle || 'premium-card-glass-medium'
+            }`}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
               Oferta especial
             </div>
-            <h2 className="section-title mb-4">{finalContent.titulo}</h2>
-            <p className="section-subtitle mx-auto mb-8">{finalContent.subtitulo}</p>
+            <h2 className="section-title mb-4">
+              {finalContent.titulo}
+            </h2>
+            <p className="section-subtitle mx-auto mb-8">
+              {finalContent.subtitulo}
+            </p>
             <a
               href={finalContent.url_botao}
               onClick={handleClick}
@@ -102,7 +159,12 @@ export const ChamadaFinal = ({
 
   // Modelo A - Full width gradient
   return (
-    <section className="section-padding relative overflow-hidden" id="chamada_final" data-section-key="chamada_final">
+    <section
+      ref={sectionRef}
+      className="section-padding relative overflow-hidden"
+      id="chamada_final"
+      data-section-key="chamada_final"
+    >
       <div className="absolute inset-0 gradient-bg" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
       <div className="section-container relative text-center text-primary-foreground">
@@ -112,7 +174,9 @@ export const ChamadaFinal = ({
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="section-title mb-4">{finalContent.titulo}</h2>
+          <h2 className="section-title mb-4">
+            {finalContent.titulo}
+          </h2>
           <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto mb-8">
             {finalContent.subtitulo}
           </p>

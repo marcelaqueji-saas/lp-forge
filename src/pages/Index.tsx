@@ -60,7 +60,9 @@ const Index = () => {
         let lp = null;
 
         const hostname = window.location.hostname;
-        if (!hostname.includes('localhost') && !hostname.includes('lovable.app')) {
+
+        // Em produção, tenta resolver pela combinação de domínio
+        if (!hostname.includes('localhost')) {
           lp = await getLPByDomain(hostname);
         }
 
@@ -273,14 +275,15 @@ const Index = () => {
           </motion.div>
 
           {/* Footer */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-8 text-xs text-muted-foreground"
-          >
-            © 2024 SaaS-LP. Todos os direitos reservados.
-          </motion.p>
+<motion.p
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.5, delay: 0.4 }}
+  className="mt-8 text-xs text-muted-foreground"
+>
+  © {new Date().getFullYear()} noBRon. Todos os direitos reservados.
+</motion.p>
+
         </div>
       </div>
     );

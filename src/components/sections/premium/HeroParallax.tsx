@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface HeroParallaxContent {
   badge?: string;
@@ -18,6 +19,7 @@ interface HeroParallaxContent {
 }
 
 interface HeroParallaxProps {
+  lpId?: string;
   content?: HeroParallaxContent;
   previewOverride?: HeroParallaxContent;
   disableAnimations?: boolean;
@@ -34,7 +36,10 @@ const defaultContent: HeroParallaxContent = {
   url_botao_secundario: '#demo',
 };
 
+const VARIANT_ID = 'hero-parallax';
+
 export const HeroParallax = ({
+  lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
@@ -48,8 +53,8 @@ export const HeroParallax = ({
   }, []);
 
   const { scrollYProgress } = useScroll({
-  offset: ['start start', 'end start'],
-});
+    offset: ['start start', 'end start'],
+  });
 
   const y1 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), { stiffness: 100, damping: 30 });
   const y2 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -200]), { stiffness: 100, damping: 30 });
@@ -75,10 +80,33 @@ export const HeroParallax = ({
     mouseY.set(0);
   };
 
+  const handleSectionView = () => {
+    if (!lpId) return;
+    trackSectionView(lpId, 'hero', VARIANT_ID);
+  };
+
+  const handlePrimaryClick = () => {
+    if (lpId) {
+      trackCTAClick(lpId, 'hero', 'primary', VARIANT_ID);
+    }
+  };
+
+  const handleSecondaryClick = () => {
+    if (lpId) {
+      trackCTAClick(lpId, 'hero', 'secondary', VARIANT_ID);
+    }
+  };
+
+  // Static fallback para SSR / animações desativadas
   if (!isClient || disableAnimations) {
-    // Static fallback for SSR or when animations disabled
     return (
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-background via-background/95 to-background">
+      <motion.section
+        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-background via-background/95 to-background"
+        id="hero"
+        data-section-key="hero"
+        onViewportEnter={handleSectionView}
+        viewport={{ once: true, amount: 0.4 }}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           {finalContent.badge && (
@@ -96,32 +124,47 @@ export const HeroParallax = ({
             {finalContent.subtitulo}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild className="text-base h-14 px-8">
+            <Button
+              size="lg"
+              asChild
+              className="text-base h-14 px-8"
+              onClick={handlePrimaryClick}
+            >
               <a href={finalContent.url_botao_primario}>
                 {finalContent.texto_botao_primario}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </a>
             </Button>
-            <Button size="lg" variant="outline" asChild className="text-base h-14 px-8">
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="text-base h-14 px-8"
+              onClick={handleSecondaryClick}
+            >
               <a href={finalContent.url_botao_secundario}>{finalContent.texto_botao_secundario}</a>
             </Button>
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   return (
-    <section
+    <motion.section
       ref={containerRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      id="hero"
+      data-section-key="hero"
+      onViewportEnter={handleSectionView}
+      viewport={{ once: true, amount: 0.4 }}
     >
       {/* Parallax layers */}
       <motion.div
         style={{ y: y1 }}
         className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background"
       />
-      
+
       <motion.div
         style={{ y: y2, opacity }}
         className="absolute inset-0"
@@ -205,6 +248,7 @@ export const HeroParallax = ({
               size="lg"
               asChild
               className="text-base h-14 px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
+              onClick={handlePrimaryClick}
             >
               <a href={finalContent.url_botao_primario}>
                 {finalContent.texto_botao_primario}
@@ -212,7 +256,13 @@ export const HeroParallax = ({
               </a>
             </Button>
           </motion.div>
-          <Button size="lg" variant="outline" asChild className="text-base h-14 px-8">
+          <Button
+            size="lg"
+            variant="outline"
+            asChild
+            className="text-base h-14 px-8"
+            onClick={handleSecondaryClick}
+          >
             <a href={finalContent.url_botao_secundario}>{finalContent.texto_botao_secundario}</a>
           </Button>
         </motion.div>
@@ -227,7 +277,7 @@ export const HeroParallax = ({
           ✓ Sem cartão de crédito • Comece em segundos
         </motion.p>
       </motion.div>
-    </section>
+    </motion.section>
   );
 };
 

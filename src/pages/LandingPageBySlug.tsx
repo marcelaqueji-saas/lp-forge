@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getLPBySlug, getAllContent, getSettings, getSectionOrder, LandingPage, LPContent, LPSettings, DEFAULT_SECTION_ORDER } from '@/lib/lpContentApi';
+import { 
+  getLPBySlug, 
+  getAllContent, 
+  getSettings, 
+  getSectionOrder, 
+  LandingPage, 
+  LPContent, 
+  LPSettings, 
+  DEFAULT_SECTION_ORDER 
+} from '@/lib/lpContentApi';
 import { initGA4, initMetaPixel } from '@/lib/analytics';
 import { captureUTMParams } from '@/lib/utm';
 import { Loader2 } from 'lucide-react';
@@ -9,6 +18,7 @@ import { SectionKey } from '@/lib/sectionModels';
 import { LeadForm } from '@/components/sections/LeadForm';
 import { SEOHead } from '@/components/SEOHead';
 import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
+import { trackPageView } from '@/lib/tracking';
 
 const LandingPageBySlug = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -47,7 +57,11 @@ const LandingPageBySlug = () => {
       setSectionOrder(orderData);
       setLoading(false);
 
-      // Initialize tracking
+      // First-party tracking (page view)
+      console.log('→ Tracking page view', lpData.id);
+      trackPageView(lpData.id);
+
+      // UTM + GA4 + Meta Pixel
       captureUTMParams();
       if (settingsData.ga4_id) {
         initGA4(settingsData.ga4_id);
@@ -60,7 +74,6 @@ const LandingPageBySlug = () => {
     loadLP();
   }, [slug]);
 
-  // Apply theme when settings change
   useEffect(() => {
     if (Object.keys(settings).length > 0) {
       applyThemeToLP(settings);
@@ -90,23 +103,24 @@ const LandingPageBySlug = () => {
     );
   }
 
-  // Filter sections that should render (exclude lead_form as it's handled separately)
-  const sectionsToRender = sectionOrder.filter(s => s !== 'lead_form');
+  const sectionsToRender = sectionOrder.filter((s) => s !== 'lead_form');
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead settings={settings} />
       
       {sectionsToRender.map((section) => {
-        // Special handling for lead form - render after planos
         if (section === 'planos') {
           return (
             <div key={section}>
               <SectionLoader
                 sectionKey={section as SectionKey}
+                lpId={lp.id}
                 content={content[section] || {}}
                 settings={settings}
                 disableAnimations={false}
+                userPlan="free"
+                context="public"
               />
               <LeadForm lpId={lp.id} />
             </div>
@@ -117,9 +131,12 @@ const LandingPageBySlug = () => {
           <SectionLoader
             key={section}
             sectionKey={section as SectionKey}
+            lpId={lp.id}
             content={content[section] || {}}
             settings={settings}
             disableAnimations={false}
+            userPlan="free"
+            context="public"
           />
         );
       })}

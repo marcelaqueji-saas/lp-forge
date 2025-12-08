@@ -1,9 +1,11 @@
+/* IMPORTS PRIMEIRO */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import './styles/premium-presets.css';
+
+/* DEPOIS TAILWIND */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import './styles/premium-presets.css';
 
 @layer base {
   :root {

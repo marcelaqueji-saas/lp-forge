@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { trackCTAClick, trackSectionView } from '@/lib/tracking';
 
 interface CTAFinalContent {
   titulo?: string;
@@ -10,9 +12,12 @@ interface CTAFinalContent {
 }
 
 interface CTAFinalProps {
+  lpId?: string;
   content?: CTAFinalContent;
   previewOverride?: CTAFinalContent;
   disableAnimations?: boolean;
+  buttonStyle?: string; // recebido do SectionLoader (mesmo que não usemos ainda)
+  cardStyle?: string;   // idem
 }
 
 const defaultContent: CTAFinalContent = {
@@ -23,34 +28,66 @@ const defaultContent: CTAFinalContent = {
 };
 
 export const CTAFinal = ({
+  lpId,
   content = {},
   previewOverride,
   disableAnimations = false,
 }: CTAFinalProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const [hasTrackedView, setHasTrackedView] = useState(false);
+
+  const handleViewportEnter = () => {
+    if (!hasTrackedView && lpId) {
+      trackSectionView(lpId, 'chamada_final', 'cta_final_animated');
+      setHasTrackedView(true);
+    }
+  };
+
+  const handleClick = () => {
+    if (lpId) {
+      trackCTAClick(lpId, 'chamada_final', 'primary', 'cta_final_animated');
+    }
+  };
 
   if (disableAnimations) {
     return (
-      <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+      <motion.section
+        className="py-20 bg-gradient-to-br from-primary/10 via-background to-accent/10"
+        id="chamada_final"
+        data-section-key="chamada_final"
+        onViewportEnter={handleViewportEnter}
+        viewport={{ once: true, amount: 0.3 }}
+      >
         <div className="container mx-auto px-4 text-center max-w-3xl">
           <Sparkles className="w-12 h-12 text-primary mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             {finalContent.titulo}
           </h2>
           <p className="text-lg text-muted-foreground mb-8">{finalContent.subtitulo}</p>
-          <Button size="lg" asChild className="text-base h-14 px-8">
+          <Button
+            size="lg"
+            asChild
+            className="text-base h-14 px-8"
+            onClick={handleClick}
+          >
             <a href={finalContent.url_botao}>
               {finalContent.texto_botao}
               <ArrowRight className="w-5 h-5 ml-2" />
             </a>
           </Button>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <motion.section
+      className="py-20 relative overflow-hidden"
+      id="chamada_final"
+      data-section-key="chamada_final"
+      onViewportEnter={handleViewportEnter}
+      viewport={{ once: true, amount: 0.3 }}
+    >
       {/* Animated background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
       <motion.div
@@ -112,6 +149,7 @@ export const CTAFinal = ({
             size="lg"
             asChild
             className="text-base h-14 px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+            onClick={handleClick}
           >
             <motion.a
               href={finalContent.url_botao}
@@ -150,7 +188,7 @@ export const CTAFinal = ({
           />
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 };
 

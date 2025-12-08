@@ -222,20 +222,20 @@ const applyDefaultTemplate = async (lpId: string, userName: string) => {
 
 // Check if user has completed onboarding
 export const hasCompletedOnboarding = (): boolean => {
-  return localStorage.getItem('saaslp_onboarding_completed') === 'true';
+  return localStorage.getItem('nobron_onboarding_completed') === 'true';
 };
 
 // Mark onboarding as completed
 export const markOnboardingCompleted = () => {
-  localStorage.setItem('saaslp_onboarding_completed', 'true');
+  localStorage.setItem('nobron_onboarding_completed', 'true');
 };
 
 // Check if editor tour is completed
 export const hasCompletedEditorTour = (): boolean => {
-  return localStorage.getItem('saaslp_editor_tour_completed') === 'true';
+  return localStorage.getItem('nobron_editor_tour_completed') === 'true';
 };
 
 // Mark editor tour as completed
 export const markEditorTourCompleted = () => {
-  localStorage.setItem('saaslp_editor_tour_completed', 'true');
+  localStorage.setItem('nobron_editor_tour_completed', 'true');
 };

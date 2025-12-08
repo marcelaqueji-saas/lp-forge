@@ -109,7 +109,7 @@ const MasterHomepage = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-bold text-lg">Homepage do SaaS</h1>
+            <h1 className="font-bold text-lg">Homepage noBRon</h1>
             <p className="text-xs text-muted-foreground">
               Configure a página inicial pública
             </p>
