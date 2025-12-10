@@ -1,6 +1,6 @@
 /**
  * FAQEditable - FAQ com edição inline
- * Sprint 4.3: EditableField em título e perguntas/respostas JSON
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -9,8 +9,9 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
 import { EditableField } from '@/components/editor/InlineEditableSection';
 import { LPContent, saveSectionContent } from '@/lib/lpContentApi';
-import { PlanLevel } from '@/lib/sectionModels';
+import { PlanLevel, StylePreset } from '@/lib/sectionModels';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface Pergunta {
   pergunta: string;
@@ -21,6 +22,8 @@ interface FAQEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -32,10 +35,25 @@ const defaultPerguntas: Pergunta[] = [
   { pergunta: 'Vocês oferecem garantia?', resposta: 'Sim! Oferecemos 30 dias de garantia.' },
 ];
 
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-900 text-white";
+    case 'neon': return "bg-black text-white";
+    case 'aurora': return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos': return "bg-white/80";
+    case 'minimal': return "bg-gray-50";
+    case 'frosted': return "bg-white/30 backdrop-blur-xl";
+    default: return "";
+  }
+};
+
 export const FAQEditable = ({
   lpId,
   content,
   variante = 'modelo_a',
+  modelId,
+  stylePreset = 'glass',
   userPlan,
   editable = true,
   onContentUpdate,
@@ -123,7 +141,7 @@ export const FAQEditable = ({
 
   return (
     <section
-      className="section-padding"
+      className={cn("section-padding", getSectionStyleModifiers(stylePreset))}
       id="faq"
       data-section-key="faq"
       ref={sectionRef}

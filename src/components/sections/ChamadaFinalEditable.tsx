@@ -1,6 +1,6 @@
 /**
  * ChamadaFinalEditable - Seção CTA Final com edição inline
- * Sprint 5.1: Suporte a múltiplas variantes (modelo_a, modelo_b, modelo_c)
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -9,13 +9,15 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { trackSectionView, trackCTAClick } from "@/lib/tracking";
 import { EditableField, EditableLink } from "@/components/editor/InlineEditableSection";
 import { LPContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 
 interface ChamadaFinalEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -26,6 +28,19 @@ const defaultContent = {
   subtitulo: "Crie sua landing page em minutos e comece a converter mais visitantes em clientes.",
   texto_botao: "Começar agora — é grátis",
   url_botao: "#planos",
+};
+
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-900 text-white";
+    case 'neon': return "bg-black text-white";
+    case 'aurora': return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos': return "bg-white/80";
+    case 'minimal': return "bg-gray-50";
+    case 'frosted': return "bg-white/30 backdrop-blur-xl";
+    default: return "";
+  }
 };
 
 function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
@@ -39,6 +54,8 @@ export const ChamadaFinalEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -88,7 +105,7 @@ export const ChamadaFinalEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding"
+        className={cn("section-padding", getSectionStyleModifiers(stylePreset))}
         id="cta-final"
         data-section-key="chamada_final"
       >
@@ -156,7 +173,7 @@ export const ChamadaFinalEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding relative overflow-hidden"
+        className={cn("section-padding relative overflow-hidden", getSectionStyleModifiers(stylePreset))}
         id="cta-final"
         data-section-key="chamada_final"
       >
@@ -230,7 +247,7 @@ export const ChamadaFinalEditable = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding bg-gradient-to-br from-primary/10 via-primary/5 to-background"
+      className={cn("section-padding", getSectionStyleModifiers(stylePreset) || "bg-gradient-to-br from-primary/10 via-primary/5 to-background")}
       id="cta-final"
       data-section-key="chamada_final"
     >

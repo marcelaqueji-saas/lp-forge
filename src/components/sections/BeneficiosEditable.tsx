@@ -1,6 +1,6 @@
 /**
  * BeneficiosEditable - Benefícios com edição inline
- * Sprint 5.1: Suporte a múltiplas variantes (modelo_a, modelo_b, modelo_c)
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -9,9 +9,10 @@ import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock, Star, Heart, Awa
 import { trackSectionView } from '@/lib/tracking';
 import { EditableField } from '@/components/editor/InlineEditableSection';
 import { LPContent, saveSectionContent } from '@/lib/lpContentApi';
-import { PlanLevel } from '@/lib/sectionModels';
+import { PlanLevel, StylePreset } from '@/lib/sectionModels';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface Beneficio {
   titulo: string;
@@ -23,6 +24,8 @@ interface BeneficiosEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -38,6 +41,19 @@ const defaultBeneficios: Beneficio[] = [
   { titulo: 'Super rápido', descricao: 'Páginas carregam em menos de 2 segundos.', icone: 'Zap' },
 ];
 
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-900 text-white";
+    case 'neon': return "bg-black text-white";
+    case 'aurora': return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos': return "bg-white/80";
+    case 'minimal': return "bg-gray-50";
+    case 'frosted': return "bg-white/30 backdrop-blur-xl";
+    default: return "";
+  }
+};
+
 // Normaliza variantes
 function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
   if (variant === 'modelo_a' || variant === 'modelo_b' || variant === 'modelo_c') {
@@ -50,6 +66,8 @@ export const BeneficiosEditable = ({
   lpId,
   content,
   variante = 'modelo_a',
+  modelId,
+  stylePreset = 'glass',
   userPlan,
   editable = true,
   onContentUpdate,
@@ -61,8 +79,8 @@ export const BeneficiosEditable = ({
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S5.1 QA] BeneficiosEditable: mounted', { lpId, editable, variante, normalizedVariant });
-  }, [lpId, editable, variante, normalizedVariant]);
+    console.log('[S5.2 QA] BeneficiosEditable: mounted', { lpId, editable, variante, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, variante, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent(content);
@@ -198,7 +216,7 @@ export const BeneficiosEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding"
+        className={cn("section-padding", getSectionStyleModifiers(stylePreset))}
         id="beneficios"
         data-section-key="beneficios"
       >
@@ -258,7 +276,7 @@ export const BeneficiosEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding"
+        className={cn("section-padding", getSectionStyleModifiers(stylePreset))}
         id="beneficios"
         data-section-key="beneficios"
       >
@@ -369,7 +387,7 @@ export const BeneficiosEditable = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding bg-card/50"
+      className={cn("section-padding", getSectionStyleModifiers(stylePreset) || "bg-card/50")}
       id="beneficios"
       data-section-key="beneficios"
     >

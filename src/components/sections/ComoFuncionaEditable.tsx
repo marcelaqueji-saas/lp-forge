@@ -1,6 +1,6 @@
 /**
  * ComoFuncionaEditable - Seção "Como Funciona" com edição inline
- * Sprint 4.4: 100% do conteúdo editável inline
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -18,7 +18,7 @@ import {
 import { trackSectionView } from "@/lib/tracking";
 import { EditableField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 
 interface Passo {
@@ -31,10 +31,25 @@ interface ComoFuncionaEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
 }
+
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-900 text-white";
+    case 'neon': return "bg-black text-white";
+    case 'aurora': return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos': return "bg-white/80";
+    case 'minimal': return "bg-gray-50";
+    case 'frosted': return "bg-white/30 backdrop-blur-xl";
+    default: return "";
+  }
+};
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Rocket,
@@ -61,6 +76,8 @@ export const ComoFuncionaEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -71,8 +88,8 @@ export const ComoFuncionaEditable = ({
 
   // QA Log
   useEffect(() => {
-    console.log('[S4.4 QA] ComoFuncionaEditable: mounted', { lpId, editable, variante });
-  }, [lpId, editable, variante]);
+    console.log('[S5.2 QA] ComoFuncionaEditable: mounted', { lpId, editable, variante, modelId, stylePreset });
+  }, [lpId, editable, variante, modelId, stylePreset]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
@@ -128,7 +145,7 @@ export const ComoFuncionaEditable = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding bg-muted/30"
+      className={cn("section-padding", getSectionStyleModifiers(stylePreset) || "bg-muted/30")}
       id="como-funciona"
       data-section-key="como_funciona"
     >
