@@ -20,6 +20,7 @@ import { SEOHead } from '@/components/SEOHead';
 import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { CanonicalUrl } from '@/components/seo/CanonicalUrl';
+import { WhatsAppFloatingButton, WhatsAppConfig } from '@/components/WhatsAppFloatingButton';
 
 const LandingPageBySlug = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -136,6 +137,14 @@ const LandingPageBySlug = () => {
     return enabledSections.includes(section);
   });
 
+  // Build WhatsApp config from settings
+  const whatsAppConfig: WhatsAppConfig = {
+    whatsapp_enabled: settings.whatsapp_enabled,
+    whatsapp_phone: settings.whatsapp_phone,
+    whatsapp_default_message: settings.whatsapp_default_message,
+    whatsapp_position: settings.whatsapp_position as 'bottom_right' | 'bottom_left',
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead settings={settings} canonicalPath={`/lp/${slug}`} />
@@ -172,6 +181,9 @@ const LandingPageBySlug = () => {
           />
         );
       })}
+
+      {/* WhatsApp Floating Button */}
+      <WhatsAppFloatingButton settings={whatsAppConfig} />
     </div>
   );
 };

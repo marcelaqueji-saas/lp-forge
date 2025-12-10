@@ -27,6 +27,7 @@ import {
 } from '@/lib/tracking';
 import { captureUTMParams } from '@/lib/utm';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WhatsAppFloatingButton, WhatsAppConfig } from '@/components/WhatsAppFloatingButton';
 
 // -----------------------------------------------------
 // Hero secundário (página interna simples)
@@ -320,6 +321,14 @@ const SitePublic = () => {
     );
   };
 
+  // Build WhatsApp config from settings
+  const whatsAppConfig: WhatsAppConfig = {
+    whatsapp_enabled: settings.whatsapp_enabled,
+    whatsapp_phone: settings.whatsapp_phone,
+    whatsapp_default_message: settings.whatsapp_default_message,
+    whatsapp_position: settings.whatsapp_position as 'bottom_right' | 'bottom_left',
+  };
+
   return (
     <div className="min-h-screen bg-background site-container">
       <SEOHead settings={settings} />
@@ -364,6 +373,9 @@ const SitePublic = () => {
 
         return <Component {...props} />;
       })}
+
+      {/* WhatsApp Floating Button */}
+      <WhatsAppFloatingButton settings={whatsAppConfig} />
     </div>
   );
 };

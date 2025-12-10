@@ -20,6 +20,13 @@ import {
   getCardClasses,
   prefersReducedMotion,
 } from '@/lib/premiumPresets';
+import {
+  mergeSectionStyles,
+  getBackgroundStyle,
+  getSectionColorStyles,
+  LPGlobalStyleSettings,
+  SectionContentStyle,
+} from '@/lib/sectionStyleTypes';
 
 import type { PlanTier } from '@/lib/authApi';
 import type { PlanLevelWithMaster } from '@/lib/sectionModels';
@@ -460,18 +467,58 @@ interface SectionLoaderProps {
   onContentUpdate?: (sectionKey: SectionKey, newContent: LPContent) => void;
 }
 
-function buildSectionStyles(content?: LPContent): React.CSSProperties {
+function buildSectionStyles(
+  content?: LPContent,
+  settings?: Record<string, string | undefined>
+): React.CSSProperties {
   const styles: React.CSSProperties = {};
 
-  if (!content) return styles;
+  if (!content && !settings) return styles;
 
-  if ((content as any).style_gradient) {
-    styles.background = (content as any).style_gradient as string;
-  } else if ((content as any).style_bg) {
-    styles.backgroundColor = (content as any).style_bg as string;
+  // Extract global settings
+  const globalSettings: LPGlobalStyleSettings = {
+    background_mode: (settings?.background_mode as 'global' | 'per_section') || 'global',
+    background_global_type: (settings?.background_global_type as 'solid' | 'gradient' | 'image') || 'solid',
+    background_global_color: settings?.background_global_color,
+    background_global_gradient: settings?.background_global_gradient,
+    background_global_image_url: settings?.background_global_image_url,
+    primary_color: settings?.primary_color,
+    secondary_color: settings?.secondary_color,
+    accent_color: settings?.accent_color,
+  };
+
+  // Extract section-specific style content
+  const sectionStyleContent: SectionContentStyle = {
+    background_type: (content as any)?.background_type,
+    background_color: (content as any)?.background_color,
+    background_gradient: (content as any)?.background_gradient,
+    background_image_url: (content as any)?.background_image_url,
+    primary_color: (content as any)?.primary_color,
+    secondary_color: (content as any)?.secondary_color,
+    accent_color: (content as any)?.accent_color,
+  };
+
+  // Merge global and section styles
+  const mergedConfig = mergeSectionStyles(globalSettings, sectionStyleContent);
+
+  // Apply background style
+  const bgStyle = getBackgroundStyle(mergedConfig.background);
+  Object.assign(styles, bgStyle);
+
+  // Apply section colors as CSS variables
+  const colorStyles = getSectionColorStyles(mergedConfig.colors);
+  Object.assign(styles, colorStyles);
+
+  // Legacy support: if content has old style_gradient/style_bg fields
+  if (!mergedConfig.background.type || mergedConfig.background.type === 'solid') {
+    if ((content as any)?.style_gradient) {
+      styles.background = (content as any).style_gradient as string;
+    } else if ((content as any)?.style_bg) {
+      styles.backgroundColor = (content as any).style_bg as string;
+    }
   }
 
-  if ((content as any).style_text) {
+  if ((content as any)?.style_text) {
     styles.color = (content as any).style_text as string;
   }
 
@@ -620,7 +667,7 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     }
 
     const legacyVariant = mapVariantToLegacy(variant);
-    const sectionStyles = buildSectionStyles(content);
+    const sectionStyles = buildSectionStyles(content, settings);
     const visualClasses = getVisualClasses(
       visualConfig,
       reducedMotion || disableAnimations
