@@ -1,92 +1,33 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { SEOHead } from '@/components/SEOHead';
 import {
   getLPById,
   getAllContent,
   getSettings,
-  getSectionOrder,
-  saveSettings,
-  saveSectionContent,
+  getUserRoleForLP,
   LPContent,
   LPSettings,
-  getUserRoleForLP,
-  DEFAULT_SECTION_ORDER,
-  SECTION_NAMES,
 } from '@/lib/lpContentApi';
-import { hasCompletedEditorTour, markOnboardingCompleted } from '@/lib/userApi';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import {
-  ArrowLeft,
-  Eye,
-  Loader2,
-  ExternalLink,
-  Edit3,
-  ChevronDown,
-} from 'lucide-react';
-import { SectionOverlay } from '@/components/editor/SectionOverlay';
-import { TemplatePicker } from '@/components/editor/TemplatePicker';
-import { ContentEditor } from '@/components/editor/ContentEditor';
-import { EditorTour } from '@/components/editor/EditorTour';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { SectionLoader, resolveVariant } from '@/components/sections/SectionLoader';
-import type { SectionKey } from '@/lib/sectionModels';
-import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
-import { parseVisualConfig, PremiumVisualConfig } from '@/lib/premiumPresets';
+import { BlockEditor } from '@/components/editor/BlockEditor';
 import { useAuth } from '@/hooks/useAuth';
 import type { PlanTier } from '@/lib/authApi';
+import type { PlanLevel } from '@/lib/sectionModels';
 
 const MeuSite = () => {
   const { lpId } = useParams();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>(
-    {} as Record<SectionKey, HTMLDivElement | null>
-  );
   const { profile } = useAuth();
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [lpData, setLpData] = useState<any>(null);
-  const [content, setContent] = useState<Record<string, LPContent>>({});
-  const [settings, setSettings] = useState<LPSettings>({});
-  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
   const [userRole, setUserRole] = useState<string | null>(null);
-
-  // Editor state
-  const [editMode] = useState(true);
-  const [runTour, setRunTour] = useState(false);
-  const [TemplatePickerOpen, setTemplatePickerOpen] = useState(false);
-  const [contentEditorOpen, setContentEditorOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
-
-  // Disable animations in editor for performance
-  const disableAnimations = editMode;
 
   useEffect(() => {
     checkAuthAndLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lpId]);
-
-  // Apply theme when settings change
-  useEffect(() => {
-    if (Object.keys(settings).length > 0) {
-      applyThemeToLP(settings);
-    }
-
-    return () => {
-      removeThemeFromLP();
-    };
-  }, [settings]);
 
   const checkAuthAndLoad = async () => {
     const {
@@ -114,11 +55,6 @@ const MeuSite = () => {
 
     // Load LP data
     await loadLP();
-
-    // Check if tour should run
-    if (!hasCompletedEditorTour()) {
-      setTimeout(() => setRunTour(true), 500);
-    }
   };
 
   const loadLP = async () => {
@@ -126,12 +62,7 @@ const MeuSite = () => {
 
     setLoading(true);
 
-    const [lp, contentData, settingsData, order] = await Promise.all([
-      getLPById(lpId),
-      getAllContent(lpId),
-      getSettings(lpId),
-      getSectionOrder(lpId),
-    ]);
+    const lp = await getLPById(lpId);
 
     if (!lp) {
       toast({ title: 'LP não encontrada', variant: 'destructive' });
@@ -140,173 +71,11 @@ const MeuSite = () => {
     }
 
     setLpData(lp);
-    setContent(contentData);
-    setSettings(settingsData);
-    setSectionOrder(order);
     setLoading(false);
-  };
-
-  const handleTourFinish = () => {
-    setRunTour(false);
-    markOnboardingCompleted();
-  };
-
-  const scrollToSection = (sectionKey: SectionKey) => {
-    const element = sectionRefs.current[sectionKey];
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const handleChangeLayout = (sectionKey: SectionKey) => {
-    setActiveSection(sectionKey);
-    scrollToSection(sectionKey);
-    setTemplatePickerOpen(true);
-  };
-
-  const handleEditContent = (sectionKey: SectionKey) => {
-    setActiveSection(sectionKey);
-    scrollToSection(sectionKey);
-    setContentEditorOpen(true);
-  };
-
-  const handleSelectVariant = async (variantId: string) => {
-    if (!lpId || !activeSection) return;
-
-    try {
-      const currentContent = content[activeSection] || {};
-
-      const updatedContent: LPContent = {
-        ...currentContent,
-        variant: variantId,
-      };
-
-      // saveSectionContent agora espera SectionKey, então usamos activeSection,
-      // que já é SectionKey
-      await saveSectionContent(lpId, activeSection, updatedContent);
-
-      const settingKey = `${activeSection}_variante`;
-      await saveSettings(lpId, { [settingKey]: variantId });
-
-      setContent(prev => ({
-        ...prev,
-        [activeSection]: updatedContent,
-      }));
-
-      setSettings(prev => ({
-        ...prev,
-        [settingKey]: variantId,
-      }));
-
-      toast({ title: 'Layout atualizado!' });
-      setTemplatePickerOpen(false);
-
-      console.log(`[MeuSite] Variant changed: ${activeSection} → ${variantId}`);
-    } catch (error) {
-      console.error('[MeuSite] Error saving variant:', error);
-      toast({ title: 'Erro ao salvar layout', variant: 'destructive' });
-    }
-  };
-
-  const handleStyleChange = async (
-    sectionKey: SectionKey,
-    styles: Record<string, string | undefined>,
-  ) => {
-    if (!lpId) return;
-
-    try {
-      const currentContent = content[sectionKey] || {};
-
-      const updatedContent: LPContent = {
-        ...currentContent,
-        ...styles,
-      };
-
-      // Remove undefined values (reset para global)
-      Object.keys(styles).forEach(key => {
-        if (styles[key] === undefined) {
-          delete updatedContent[key];
-        }
-      });
-
-      await saveSectionContent(lpId, sectionKey, updatedContent);
-
-      setContent(prev => ({
-        ...prev,
-        [sectionKey]: updatedContent,
-      }));
-
-      toast({ title: 'Estilo atualizado!' });
-      console.log(`[MeuSite] Styles changed for ${sectionKey}:`, styles);
-    } catch (error) {
-      console.error('[MeuSite] Error saving styles:', error);
-      toast({ title: 'Erro ao salvar estilo', variant: 'destructive' });
-    }
-  };
-
-  const handlePremiumConfigChange = async (
-    sectionKey: SectionKey,
-    partialConfig: Partial<PremiumVisualConfig>,
-  ) => {
-    if (!lpId) return;
-
-    try {
-      const currentContent = content[sectionKey] || {};
-
-      const updatedContent: LPContent = {
-        ...currentContent,
-        ...(partialConfig.background_style !== undefined && {
-          background_style: partialConfig.background_style,
-        }),
-        ...(partialConfig.ornament_style !== undefined && {
-          ornament_style: partialConfig.ornament_style,
-        }),
-        ...(partialConfig.animation_preset !== undefined && {
-          animation_preset: partialConfig.animation_preset,
-        }),
-        ...(partialConfig.button_style !== undefined && {
-          button_style: partialConfig.button_style,
-        }),
-        ...(partialConfig.cursor_effect !== undefined && {
-          cursor_effect: partialConfig.cursor_effect,
-        }),
-        ...(partialConfig.separator_before !== undefined && {
-          separator_before: partialConfig.separator_before,
-        }),
-        ...(partialConfig.separator_after !== undefined && {
-          separator_after: partialConfig.separator_after,
-        }),
-        ...(partialConfig.card_style !== undefined && {
-          card_style: partialConfig.card_style,
-        }),
-      };
-
-      await saveSectionContent(lpId, sectionKey, updatedContent);
-
-      setContent(prev => ({
-        ...prev,
-        [sectionKey]: updatedContent,
-      }));
-
-      toast({ title: 'Efeitos visuais atualizados!' });
-      console.log(
-        `[MeuSite] Premium config changed for ${sectionKey}:`,
-        partialConfig,
-      );
-    } catch (error) {
-      console.error('[MeuSite] Error saving premium config:', error);
-      toast({ title: 'Erro ao salvar efeitos', variant: 'destructive' });
-    }
-  };
-
-  const handleContentSave = () => {
-    loadLP();
   };
 
   const handlePublish = async () => {
     if (!lpId) return;
-
-    setSaving(true);
 
     const { error } = await supabase
       .from('landing_pages')
@@ -322,22 +91,12 @@ const MeuSite = () => {
         description: 'Sua página está no ar.',
       });
     }
-
-    setSaving(false);
   };
 
   const handleViewPublic = () => {
     if (lpData?.slug) {
       window.open(`/lp/${lpData.slug}`, '_blank');
     }
-  };
-
-  const getVariante = (section: string): string => {
-    return resolveVariant(section as SectionKey, content[section], settings);
-  };
-
-  const getSectionName = (section: string): string => {
-    return SECTION_NAMES[section] || section;
   };
 
   if (loading) {
@@ -355,225 +114,28 @@ const MeuSite = () => {
   }
 
   const canEdit = userRole === 'owner' || userRole === 'editor';
+  
+  // Obter plano do usuário
+  const userPlan: PlanLevel = (profile?.plan as PlanLevel) || 'free';
 
-  // =========================
-  // CÁLCULO CENTRAL:
-  // baseOrder + enabled_sections → sectionsToRender
-  // =========================
-
-  const baseOrder = (
-    sectionOrder && sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER
-  ).filter(s => s !== 'lead_form');
-
-  let enabledSections: string[] | null = null;
-
-  const rawEnabled = (settings as any)?.enabled_sections as string | undefined;
-  if (rawEnabled) {
-    try {
-      const parsed = JSON.parse(rawEnabled);
-      if (Array.isArray(parsed)) {
-        enabledSections = parsed as string[];
-      }
-    } catch {
-      enabledSections = null;
-    }
+  if (!canEdit) {
+    toast({ title: 'Você não tem permissão para editar esta página', variant: 'destructive' });
+    navigate('/painel');
+    return null;
   }
 
-  const sectionsToRender =
-    enabledSections && enabledSections.length > 0
-      ? baseOrder.filter(section => enabledSections!.includes(section))
-      : baseOrder;
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Editor Header */}
-      <div
-        className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur border-b"
-        data-tour-id="editor-top-actions"
-      >
-        <div className="container mx-auto px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/painel')}
-              className="shrink-0 h-8 md:h-9 px-2 md:px-3"
-            >
-              <ArrowLeft className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Painel</span>
-            </Button>
-
-            <div className="hidden md:block min-w-0">
-              <h1 className="font-medium text-sm truncate">{lpData?.nome}</h1>
-              <p className="text-xs text-muted-foreground">
-                {lpData?.publicado ? 'Publicado' : 'Rascunho'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewPublic}
-              className="h-8 md:h-9 px-2 md:px-3"
-            >
-              <Eye className="w-4 h-4 md:mr-2" />
-              <span className="hidden sm:inline">Ver como visitante</span>
-            </Button>
-
-            {canEdit && !lpData?.publicado && (
-              <Button
-                size="sm"
-                onClick={handlePublish}
-                disabled={saving}
-                className="h-8 md:h-9 px-3"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <ExternalLink className="w-4 h-4 md:mr-2" />
-                    <span className="hidden sm:inline">Publicar</span>
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile section navigator */}
-        {isMobile && canEdit && (
-          <div className="px-3 pb-2 border-t pt-2 bg-card/80">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-between h-9 text-sm"
-                >
-                  <span>Ir para seção...</span>
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[calc(100vw-24px)]"
-                align="center"
-              >
-                {sectionsToRender.map(section => (
-                  <DropdownMenuItem
-                    key={section}
-                    onClick={() => scrollToSection(section as SectionKey)}
-                    className="py-2.5"
-                  >
-                    {getSectionName(section)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
-      </div>
-
-      {/* Main content with sections */}
-      <div className={isMobile && canEdit ? 'pt-28' : 'pt-14 md:pt-16'}>
-        <SEOHead settings={settings} />
-
-        {sectionsToRender.map((section, index) => {
-          const sectionKey = section as SectionKey;
-          const hasVariants = true;
-          const sectionContent = content[section] || {};
-          const premiumConfig = parseVisualConfig(sectionContent);
-
-          return (
-            <div
-              key={section}
-              className="relative"
-              ref={el => {
-                sectionRefs.current[sectionKey] = el;
-              }}
-              data-section-key={section}
-            >
-              {editMode && canEdit && (
-                <SectionOverlay
-                  sectionKey={section}
-                  sectionName={getSectionName(section)}
-                  isFirst={index === 0}
-                  canChangeLayout={hasVariants}
-                  currentStyles={{
-                    style_bg: sectionContent.style_bg as string,
-                    style_text: sectionContent.style_text as string,
-                    style_gradient: sectionContent.style_gradient as string,
-                  }}
-                  premiumConfig={premiumConfig}
-                  userPlan={(profile?.plan as PlanTier) || 'free'}
-                  onChangeLayout={() => handleChangeLayout(sectionKey)}
-                  onEditContent={() => handleEditContent(sectionKey)}
-                  onStyleChange={styles => handleStyleChange(sectionKey, styles)}
-                  onPremiumConfigChange={config =>
-                    handlePremiumConfigChange(sectionKey, config)
-                  }
-                />
-              )}
-
-              <SectionLoader
-                sectionKey={sectionKey}
-                content={sectionContent}
-                settings={settings}
-                disableAnimations={disableAnimations}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Mobile floating edit indicator */}
-      {isMobile && canEdit && (
-        <div className="fixed bottom-4 right-4 z-40">
-          <Button
-            size="lg"
-            className="h-12 w-12 rounded-full shadow-lg gradient-bg"
-            onClick={() => {
-              const firstSection = sectionsToRender[0];
-              if (firstSection) {
-                scrollToSection(firstSection as SectionKey);
-              }
-            }}
-          >
-            <Edit3 className="w-5 h-5" />
-          </Button>
-        </div>
-      )}
-
-      {/* Template Picker */}
-      {activeSection && lpId && (
-        <TemplatePicker
-          open={TemplatePickerOpen}
-          onClose={() => setTemplatePickerOpen(false)}
-          sectionName={getSectionName(activeSection)}
-          sectionKey={activeSection}
-          currentVariant={getVariante(activeSection)}
-          onSelect={handleSelectVariant}
-          userPlan={(profile?.plan as PlanTier) || 'free'}
-          lpId={lpId}
-        />
-      )}
-
-      {/* Content Editor */}
-      {activeSection && lpId && (
-        <ContentEditor
-          open={contentEditorOpen}
-          onClose={() => setContentEditorOpen(false)}
-          lpId={lpId}
-          sectionKey={activeSection}
-          sectionName={getSectionName(activeSection)}
-          onSave={handleContentSave}
-        />
-      )}
-
-      {/* Editor Tour */}
-      <EditorTour run={runTour} onFinish={handleTourFinish} />
-    </div>
+    <BlockEditor
+      lpId={lpId!}
+      lpData={{
+        nome: lpData?.nome || 'Minha Página',
+        slug: lpData?.slug || '',
+        publicado: lpData?.publicado || false,
+      }}
+      userPlan={userPlan}
+      onPublish={handlePublish}
+      onViewPublic={handleViewPublic}
+    />
   );
 };
 

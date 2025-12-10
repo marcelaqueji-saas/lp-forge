@@ -1,18 +1,19 @@
 /**
- * BlockEditor - Editor principal por blocos
+ * BlockEditor - Editor principal por blocos (Sprint 2)
  * Componente central que gerencia a estrutura de blocos da LP
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { 
   ArrowLeft, 
   Eye, 
+  Edit3,
   Save, 
   Loader2, 
   ExternalLink,
-  Settings,
-  Sparkles
+  Sparkles,
+  LayoutGrid
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,10 @@ import { BlockCard } from './BlockCard';
 import { BlockSeparator } from './BlockSeparator';
 import { AddBlockModal } from './AddBlockModal';
 import { ContentEditor } from './ContentEditor';
+import { PlanLimitIndicator } from './PlanLimitIndicator';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
+import { SectionLoader } from '@/components/sections/SectionLoader';
+import { SEOHead } from '@/components/SEOHead';
 import {
   saveSectionContent,
   saveSettings,
@@ -40,8 +44,13 @@ import {
   updateSectionOrder,
   getAllContent,
   getSettings,
+  LPContent,
+  LPSettings,
 } from '@/lib/lpContentApi';
 import { supabase } from '@/integrations/supabase/client';
+import { trackEvent } from '@/lib/tracking';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
+import { SECTION_NAMES } from '@/lib/lpContentApi';
 
 interface BlockEditorProps {
   lpId: string;
@@ -63,11 +72,16 @@ export const BlockEditor = ({
   onViewPublic,
 }: BlockEditorProps) => {
   const navigate = useNavigate();
+  const previewRef = useRef<HTMLDivElement>(null);
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [blocks, setBlocks] = useState<EditorBlock[]>([]);
-  const [content, setContent] = useState<Record<string, any>>({});
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [content, setContent] = useState<Record<string, LPContent>>({});
+  const [settings, setSettings] = useState<LPSettings>({});
+  
+  // Modo de visualização
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   // Modais
   const [addBlockModal, setAddBlockModal] = useState<{ open: boolean; position: number }>({
@@ -82,10 +96,20 @@ export const BlockEditor = ({
 
   const limits = PLAN_LIMITS[userPlan];
 
+  // Scroll tracking no modo preview
+  useScrollTracking(lpId);
+
   // Carregar dados iniciais
   useEffect(() => {
     loadEditorData();
   }, [lpId]);
+
+  // Track page view no modo preview
+  useEffect(() => {
+    if (viewMode === 'preview') {
+      trackEvent({ event_type: 'view', lp_id: lpId, metadata: { context: 'editor_preview' } });
+    }
+  }, [viewMode, lpId]);
 
   const loadEditorData = async () => {
     setLoading(true);
@@ -97,7 +121,7 @@ export const BlockEditor = ({
       ]);
 
       setContent(contentData);
-      setSettings(settingsData as Record<string, string>);
+      setSettings(settingsData);
 
       // Construir lista de blocos a partir da ordem salva
       const existingBlocks: EditorBlock[] = [];
@@ -106,7 +130,7 @@ export const BlockEditor = ({
       existingBlocks.push({
         id: generateBlockId(),
         sectionKey: 'menu',
-        modelId: contentData.menu?.['__model_id'] || 'menu_horizontal',
+        modelId: (contentData.menu as any)?.['__model_id'] || 'menu_horizontal',
         order: 0,
         content: contentData.menu || {},
       });
@@ -115,7 +139,7 @@ export const BlockEditor = ({
       existingBlocks.push({
         id: generateBlockId(),
         sectionKey: 'hero',
-        modelId: contentData.hero?.['__model_id'] || 'hero_basic',
+        modelId: (contentData.hero as any)?.['__model_id'] || 'hero-basic',
         order: 1,
         content: contentData.hero || {},
       });
@@ -130,7 +154,7 @@ export const BlockEditor = ({
           existingBlocks.push({
             id: generateBlockId(),
             sectionKey: key as SectionKey,
-            modelId: contentData[key]?.['__model_id'] || getDefaultModel(key as SectionKey),
+            modelId: (contentData[key] as any)?.['__model_id'] || getDefaultModel(key as SectionKey),
             order: idx + 2,
             content: contentData[key] || {},
           });
@@ -141,7 +165,7 @@ export const BlockEditor = ({
       existingBlocks.push({
         id: generateBlockId(),
         sectionKey: 'rodape',
-        modelId: contentData.rodape?.['__model_id'] || 'footer_basic',
+        modelId: (contentData.rodape as any)?.['__model_id'] || 'footer-basic',
         order: 999,
         content: contentData.rodape || {},
       });
@@ -157,7 +181,7 @@ export const BlockEditor = ({
 
   const getDefaultModel = (sectionKey: SectionKey): string => {
     const models = SECTION_MODELS_BY_SECTION[sectionKey] || [];
-    return models[0]?.id || `${sectionKey}_basic`;
+    return models[0]?.id || `${sectionKey}-basic`;
   };
 
   // Contar blocos dinâmicos (não fixos)
@@ -182,14 +206,13 @@ export const BlockEditor = ({
       sectionKey,
       modelId,
       order: position,
-      content: { __model_id: modelId },
+      content: { __model_id: modelId } as unknown as LPContent,
       isNew: true,
     };
 
     // Inserir na posição correta
     setBlocks(prev => {
       const updated = [...prev];
-      // Encontrar onde inserir (entre blocos dinâmicos)
       let insertIndex = 2; // Após menu e hero
       for (let i = 2; i < updated.length; i++) {
         if (updated[i].sectionKey === 'rodape') break;
@@ -202,18 +225,20 @@ export const BlockEditor = ({
 
     // Salvar no backend
     try {
-      await saveSectionContent(lpId, sectionKey, { __model_id: modelId });
+      await saveSectionContent(lpId, sectionKey, { __model_id: modelId } as unknown as LPContent);
       await persistBlockOrder();
       toast({ title: 'Bloco adicionado!' });
     } catch (error) {
       console.error('[BlockEditor] Error adding block:', error);
       toast({ title: 'Erro ao adicionar bloco', variant: 'destructive' });
     }
+
+    setAddBlockModal({ open: false, position: 0 });
   }, [lpId, dynamicBlockCount, userPlan]);
 
   const handleChangeModel = useCallback(async (blockId: string, modelId: string) => {
     setBlocks(prev => prev.map(b => 
-      b.id === blockId ? { ...b, modelId, content: { ...b.content, __model_id: modelId } } : b
+      b.id === blockId ? { ...b, modelId, content: { ...b.content, __model_id: modelId } as LPContent } : b
     ));
 
     const block = blocks.find(b => b.id === blockId);
@@ -222,7 +247,7 @@ export const BlockEditor = ({
         await saveSectionContent(lpId, block.sectionKey, { 
           ...block.content, 
           __model_id: modelId 
-        });
+        } as LPContent);
         await saveSettings(lpId, { [`${block.sectionKey}_variante`]: modelId });
         toast({ title: 'Modelo atualizado!' });
       } catch (error) {
@@ -272,7 +297,6 @@ export const BlockEditor = ({
     setBlocks(prev => prev.filter(b => b.id !== blockId).map((b, i) => ({ ...b, order: i })));
 
     try {
-      // Remover conteúdo do backend
       const { error } = await supabase
         .from('lp_content')
         .delete()
@@ -290,7 +314,6 @@ export const BlockEditor = ({
   }, [lpId, blocks]);
 
   const handleReorder = useCallback(async (newOrder: EditorBlock[]) => {
-    // Garantir que menu, hero e rodapé não sejam reordenados
     const menu = newOrder.find(b => b.sectionKey === 'menu');
     const hero = newOrder.find(b => b.sectionKey === 'hero');
     const rodape = newOrder.find(b => b.sectionKey === 'rodape');
@@ -316,7 +339,6 @@ export const BlockEditor = ({
     
     await updateSectionOrder(lpId, order);
     
-    // Atualizar enabled_sections
     const enabledSections = blocks.map(b => b.sectionKey);
     await saveSettings(lpId, { 
       enabled_sections: JSON.stringify(enabledSections) 
@@ -331,7 +353,7 @@ export const BlockEditor = ({
     loadEditorData();
   };
 
-  // Separar blocos dinâmicos para reordenação
+  // Separar blocos
   const menuBlock = blocks.find(b => b.sectionKey === 'menu');
   const heroBlock = blocks.find(b => b.sectionKey === 'hero');
   const footerBlock = blocks.find(b => b.sectionKey === 'rodape');
@@ -344,7 +366,10 @@ export const BlockEditor = ({
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Carregando editor...</p>
+        </div>
       </div>
     );
   }
@@ -352,39 +377,59 @@ export const BlockEditor = ({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => navigate('/painel')}
+              className="h-9"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Painel</span>
             </Button>
             
             <div className="hidden md:block">
-              <h1 className="font-medium text-sm">{lpData.nome}</h1>
+              <h1 className="font-semibold text-sm">{lpData.nome}</h1>
               <div className="flex items-center gap-2">
                 <Badge variant={lpData.publicado ? 'default' : 'secondary'} className="text-[10px]">
                   {lpData.publicado ? 'Publicado' : 'Rascunho'}
-                </Badge>
-                <Badge variant="outline" className="text-[10px] uppercase">
-                  {userPlan}
                 </Badge>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onViewPublic}>
-              <Eye className="w-4 h-4 mr-2" />
+          {/* Toggle Visual/Edição */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+            <Button
+              variant={viewMode === 'edit' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('edit')}
+              className="h-8 px-3"
+            >
+              <LayoutGrid className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Editar</span>
+            </Button>
+            <Button
+              variant={viewMode === 'preview' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('preview')}
+              className="h-8 px-3"
+            >
+              <Eye className="w-4 h-4 mr-1.5" />
               <span className="hidden sm:inline">Visualizar</span>
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onViewPublic} className="h-9">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Abrir página</span>
             </Button>
             
             {!lpData.publicado && (
-              <Button size="sm" onClick={onPublish} disabled={saving}>
+              <Button size="sm" onClick={onPublish} disabled={saving} className="h-9">
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
@@ -400,140 +445,166 @@ export const BlockEditor = ({
       </header>
 
       {/* Content */}
-      <main className="container mx-auto px-4 py-6 max-w-3xl">
-        {/* Info do plano */}
-        <div className="mb-6 p-4 rounded-xl bg-muted/50 border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">
-                {dynamicBlockCount}/{limits.maxDynamicBlocks} blocos utilizados
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Plano {userPlan} • {limits.maxDynamicBlocks - dynamicBlockCount} disponíveis
-              </p>
-            </div>
-            {userPlan !== 'premium' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setUpgradeModal({ open: true, feature: 'recursos premium' })}
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Upgrade
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Lista de blocos */}
-        <div className="space-y-0">
-          {/* Menu (fixo) */}
-          {menuBlock && (
-            <BlockCard
-              block={menuBlock}
-              definition={getBlockDefinition('menu')!}
+      <AnimatePresence mode="wait">
+        {viewMode === 'edit' ? (
+          <motion.main
+            key="edit"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+            className="container mx-auto px-4 py-6 max-w-3xl"
+          >
+            {/* Indicador de plano */}
+            <PlanLimitIndicator
               userPlan={userPlan}
-              onEdit={() => handleEditContent('menu')}
-              onChangeModel={(modelId) => handleChangeModel(menuBlock.id, modelId)}
-              onDuplicate={() => {}}
-              onRemove={() => {}}
-              onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
+              currentBlocks={dynamicBlockCount}
+              onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'recursos premium' })}
+              className="mb-6"
             />
-          )}
 
-          {/* Hero (fixo) */}
-          {heroBlock && (
-            <>
+            {/* Lista de blocos */}
+            <div className="space-y-0">
+              {/* Menu (fixo) */}
+              {menuBlock && (
+                <BlockCard
+                  block={menuBlock}
+                  definition={getBlockDefinition('menu')!}
+                  userPlan={userPlan}
+                  onEdit={() => handleEditContent('menu')}
+                  onChangeModel={(modelId) => handleChangeModel(menuBlock.id, modelId)}
+                  onDuplicate={() => {}}
+                  onRemove={() => {}}
+                  onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
+                />
+              )}
+
+              {/* Hero (fixo) */}
+              {heroBlock && (
+                <>
+                  <BlockSeparator
+                    position={0}
+                    canAddBlock={false}
+                    isLimitReached={false}
+                    onAddBlock={() => {}}
+                    onUpgradeClick={() => {}}
+                  />
+                  <BlockCard
+                    block={heroBlock}
+                    definition={getBlockDefinition('hero')!}
+                    userPlan={userPlan}
+                    onEdit={() => handleEditContent('hero')}
+                    onChangeModel={(modelId) => handleChangeModel(heroBlock.id, modelId)}
+                    onDuplicate={() => {}}
+                    onRemove={() => {}}
+                    onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
+                  />
+                </>
+              )}
+
+              {/* Separador + botão de adicionar após Hero */}
               <BlockSeparator
                 position={0}
-                canAddBlock={false}
-                isLimitReached={false}
-                onAddBlock={() => {}}
-                onUpgradeClick={() => {}}
+                canAddBlock={canAddMoreBlocks(dynamicBlockCount, userPlan)}
+                isLimitReached={!canAddMoreBlocks(dynamicBlockCount, userPlan)}
+                onAddBlock={(pos) => setAddBlockModal({ open: true, position: pos })}
+                onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'adicionar mais blocos' })}
               />
-              <BlockCard
-                block={heroBlock}
-                definition={getBlockDefinition('hero')!}
-                userPlan={userPlan}
-                onEdit={() => handleEditContent('hero')}
-                onChangeModel={(modelId) => handleChangeModel(heroBlock.id, modelId)}
-                onDuplicate={() => {}}
-                onRemove={() => {}}
-                onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
-              />
-            </>
-          )}
 
-          {/* Separador + botão de adicionar após Hero */}
-          <BlockSeparator
-            position={0}
-            canAddBlock={canAddMoreBlocks(dynamicBlockCount, userPlan)}
-            isLimitReached={!canAddMoreBlocks(dynamicBlockCount, userPlan)}
-            onAddBlock={(pos) => setAddBlockModal({ open: true, position: pos })}
-            onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'adicionar mais blocos' })}
-          />
+              {/* Blocos dinâmicos (reordenáveis) */}
+              <Reorder.Group 
+                axis="y" 
+                values={dynamicBlocks}
+                onReorder={(newOrder) => {
+                  const fullOrder = [menuBlock!, heroBlock!, ...newOrder, footerBlock!];
+                  handleReorder(fullOrder);
+                }}
+                className="space-y-0"
+              >
+                <AnimatePresence mode="popLayout">
+                  {dynamicBlocks.map((block, index) => {
+                    const definition = getBlockDefinition(block.sectionKey);
+                    if (!definition) return null;
 
-          {/* Blocos dinâmicos (reordenáveis) */}
-          <Reorder.Group 
-            axis="y" 
-            values={dynamicBlocks}
-            onReorder={(newOrder) => {
-              const fullOrder = [menuBlock!, heroBlock!, ...newOrder, footerBlock!];
-              handleReorder(fullOrder);
-            }}
-            className="space-y-0"
+                    return (
+                      <Reorder.Item 
+                        key={block.id} 
+                        value={block}
+                        className="list-none"
+                      >
+                        <BlockCard
+                          block={block}
+                          definition={definition}
+                          userPlan={userPlan}
+                          onEdit={() => handleEditContent(block.sectionKey)}
+                          onChangeModel={(modelId) => handleChangeModel(block.id, modelId)}
+                          onDuplicate={() => handleDuplicateBlock(block.id)}
+                          onRemove={() => handleRemoveBlock(block.id)}
+                          onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
+                        />
+
+                        {/* Separador entre blocos dinâmicos */}
+                        <BlockSeparator
+                          position={index + 1}
+                          canAddBlock={canAddMoreBlocks(dynamicBlockCount, userPlan)}
+                          isLimitReached={!canAddMoreBlocks(dynamicBlockCount, userPlan)}
+                          onAddBlock={(pos) => setAddBlockModal({ open: true, position: pos })}
+                          onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'adicionar mais blocos' })}
+                        />
+                      </Reorder.Item>
+                    );
+                  })}
+                </AnimatePresence>
+              </Reorder.Group>
+
+              {/* Footer (fixo) */}
+              {footerBlock && (
+                <BlockCard
+                  block={footerBlock}
+                  definition={getBlockDefinition('rodape')!}
+                  userPlan={userPlan}
+                  onEdit={() => handleEditContent('rodape')}
+                  onChangeModel={(modelId) => handleChangeModel(footerBlock.id, modelId)}
+                  onDuplicate={() => {}}
+                  onRemove={() => {}}
+                  onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
+                />
+              )}
+            </div>
+          </motion.main>
+        ) : (
+          <motion.div
+            key="preview"
+            ref={previewRef}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+            className="min-h-screen"
           >
-            <AnimatePresence mode="popLayout">
-              {dynamicBlocks.map((block, index) => {
-                const definition = getBlockDefinition(block.sectionKey);
-                if (!definition) return null;
-
-                return (
-                  <Reorder.Item 
-                    key={block.id} 
-                    value={block}
-                    className="list-none"
-                  >
-                    <BlockCard
-                      block={block}
-                      definition={definition}
-                      userPlan={userPlan}
-                      onEdit={() => handleEditContent(block.sectionKey)}
-                      onChangeModel={(modelId) => handleChangeModel(block.id, modelId)}
-                      onDuplicate={() => handleDuplicateBlock(block.id)}
-                      onRemove={() => handleRemoveBlock(block.id)}
-                      onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
-                    />
-                    
-                    {/* Separador após cada bloco dinâmico */}
-                    <BlockSeparator
-                      position={index + 1}
-                      canAddBlock={canAddMoreBlocks(dynamicBlockCount, userPlan)}
-                      isLimitReached={!canAddMoreBlocks(dynamicBlockCount, userPlan)}
-                      onAddBlock={(pos) => setAddBlockModal({ open: true, position: pos })}
-                      onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'adicionar mais blocos' })}
-                    />
-                  </Reorder.Item>
-                );
-              })}
-            </AnimatePresence>
-          </Reorder.Group>
-
-          {/* Footer (fixo) */}
-          {footerBlock && (
-            <BlockCard
-              block={footerBlock}
-              definition={getBlockDefinition('rodape')!}
-              userPlan={userPlan}
-              onEdit={() => handleEditContent('rodape')}
-              onChangeModel={(modelId) => handleChangeModel(footerBlock.id, modelId)}
-              onDuplicate={() => {}}
-              onRemove={() => {}}
-              onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'modelos premium' })}
-            />
-          )}
-        </div>
-      </main>
+            <SEOHead settings={settings} />
+            
+            {/* Renderizar seções em ordem */}
+            {blocks.map((block) => (
+              <section 
+                key={block.id}
+                data-section-key={block.sectionKey}
+                className="relative"
+              >
+                <SectionLoader
+                  sectionKey={block.sectionKey}
+                  lpId={lpId}
+                  content={content[block.sectionKey]}
+                  settings={settings}
+                  userPlan={userPlan}
+                  context="public"
+                  disableAnimations={false}
+                />
+              </section>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modais */}
       <AddBlockModal
@@ -553,7 +624,7 @@ export const BlockEditor = ({
           onClose={() => setContentEditorModal({ open: false, sectionKey: null })}
           lpId={lpId}
           sectionKey={contentEditorModal.sectionKey}
-          sectionName={getBlockDefinition(contentEditorModal.sectionKey)?.name || ''}
+          sectionName={SECTION_NAMES[contentEditorModal.sectionKey] || contentEditorModal.sectionKey}
           onSave={handleContentSave}
         />
       )}
@@ -563,6 +634,7 @@ export const BlockEditor = ({
         onClose={() => setUpgradeModal({ open: false, feature: '' })}
         feature={upgradeModal.feature}
         currentPlan={userPlan}
+        requiredPlan={userPlan === 'free' ? 'pro' : 'premium'}
       />
     </div>
   );
