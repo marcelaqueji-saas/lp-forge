@@ -134,9 +134,9 @@ export const FAQEditable = ({
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <h2 className="section-title mb-4">
+          <h2 className="section-title mb-3 sm:mb-4 break-words">
             <EditableField
               value={fc.titulo || 'Perguntas frequentes'}
               fieldKey="titulo"
@@ -151,7 +151,7 @@ export const FAQEditable = ({
           </h2>
         </motion.div>
 
-        {/* Accordion */}
+        {/* Accordion - mobile-first */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -160,7 +160,7 @@ export const FAQEditable = ({
             hidden: { opacity: 0 },
             visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
           }}
-          className="max-w-3xl mx-auto space-y-4"
+          className="max-w-3xl mx-auto space-y-3 sm:space-y-4"
         >
           {perguntas.map((item, index) => (
             <motion.div
@@ -171,21 +171,21 @@ export const FAQEditable = ({
               }}
               className="overflow-hidden premium-card-soft relative group"
             >
-              {/* Remove button */}
+              {/* Remove button - touch-friendly */}
               {editable && (
                 <button
                   onClick={() => removePergunta(index)}
-                  className="absolute top-4 right-12 p-1.5 rounded-full bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20 z-10"
+                  className="absolute top-3 sm:top-4 right-10 sm:right-12 p-2 sm:p-1.5 rounded-full bg-destructive/10 text-destructive opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20 z-10 touch-manipulation"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                 </button>
               )}
 
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full p-6 text-left flex items-center justify-between gap-4 hover:bg-muted/50 transition-colors"
+                className="w-full p-4 sm:p-5 md:p-6 text-left flex items-start sm:items-center justify-between gap-3 sm:gap-4 hover:bg-muted/50 transition-colors touch-manipulation"
               >
-                <span className="font-semibold flex-1">
+                <span className="font-medium sm:font-semibold text-sm sm:text-base flex-1 break-words pr-2">
                   {editable ? (
                     <input
                       type="text"
@@ -197,14 +197,14 @@ export const FAQEditable = ({
                       }}
                       onBlur={() => handlePerguntaChange(index, 'pergunta', item.pergunta)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1"
+                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 text-sm sm:text-base touch-manipulation"
                     />
                   ) : (
                     item.pergunta
                   )}
                 </span>
-                <div className={`transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}>
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                <div className={`transition-transform duration-300 flex-shrink-0 ${openIndex === index ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 </div>
               </button>
 
@@ -217,7 +217,7 @@ export const FAQEditable = ({
                 transition={{ duration: 0.3 }}
                 className="overflow-hidden"
               >
-                <div className="px-6 pb-6 text-muted-foreground">
+                <div className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6 text-muted-foreground text-sm sm:text-base">
                   {editable ? (
                     <textarea
                       value={item.resposta}
@@ -227,25 +227,25 @@ export const FAQEditable = ({
                         setPerguntas(updated);
                       }}
                       onBlur={() => handlePerguntaChange(index, 'resposta', item.resposta)}
-                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 resize-none min-h-[60px]"
+                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 resize-none min-h-[60px] text-sm sm:text-base touch-manipulation break-words"
                       rows={3}
                     />
                   ) : (
-                    item.resposta
+                    <span className="break-words">{item.resposta}</span>
                   )}
                 </div>
               </motion.div>
             </motion.div>
           ))}
 
-          {/* Add button */}
+          {/* Add button - touch-friendly */}
           {editable && (
             <motion.button
               onClick={addPergunta}
-              className="w-full p-4 border-2 border-dashed border-muted-foreground/20 rounded-xl flex items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              className="w-full p-3 sm:p-4 border-2 border-dashed border-muted-foreground/20 rounded-xl flex items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all touch-manipulation"
             >
-              <Plus className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Adicionar pergunta</span>
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <span className="text-xs sm:text-sm text-muted-foreground">Adicionar pergunta</span>
             </motion.button>
           )}
         </motion.div>
