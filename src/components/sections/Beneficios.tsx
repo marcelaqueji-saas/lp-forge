@@ -123,7 +123,7 @@ export const Beneficios = ({
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    if (!lpId) return; // sem lpId = sem tracking (ex: editor/preview)
+    if (!lpId) return;
     if (hasTrackedViewRef.current) return;
 
     const observer = new IntersectionObserver(
@@ -151,7 +151,7 @@ export const Beneficios = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding"
+        className={`section-padding ${styles.container}`}
         id="beneficios"
         data-section-key="beneficios"
       >
@@ -163,10 +163,10 @@ export const Beneficios = ({
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="section-title mb-4">
+              <h2 className={`section-title mb-4 ${styles.title}`}>
                 {finalContent.titulo}
               </h2>
-              <p className="section-subtitle">
+              <p className={`section-subtitle ${styles.subtitle}`}>
                 {finalContent.subtitulo}
               </p>
             </motion.div>
@@ -185,14 +185,14 @@ export const Beneficios = ({
                   <motion.div
                     key={index}
                     variants={itemVariants}
-                    className={`p-5 text-center ${
-                      cardStyle || 'premium-card-soft'
+                    className={`p-5 text-center rounded-2xl ${
+                      cardStyle || styles.card
                     }`}
                   >
-                    <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-3">
-                      <Icon className="w-7 h-7 text-primary-foreground" />
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 ${styles.accent}`}>
+                      <Icon className="w-7 h-7" />
                     </div>
-                    <h3 className="font-semibold text-sm">
+                    <h3 className={`font-semibold text-sm ${styles.title}`}>
                       {beneficio.titulo}
                     </h3>
                   </motion.div>
@@ -209,11 +209,10 @@ export const Beneficios = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding relative overflow-hidden"
+        className={`section-padding relative overflow-hidden ${styles.container}`}
         id="beneficios"
         data-section-key="beneficios"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="section-container relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -222,10 +221,10 @@ export const Beneficios = ({
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="section-title mb-4">
+            <h2 className={`section-title mb-4 ${styles.title}`}>
               {finalContent.titulo}
             </h2>
-            <p className="section-subtitle mx-auto">
+            <p className={`section-subtitle mx-auto ${styles.subtitle}`}>
               {finalContent.subtitulo}
             </p>
           </motion.div>
@@ -246,14 +245,14 @@ export const Beneficios = ({
                   variants={itemVariants}
                   className="flex items-start gap-4 p-4"
                 >
-                  <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-primary-foreground" />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${styles.accent}`}>
+                    <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">
+                    <h3 className={`font-semibold mb-1 ${styles.title}`}>
                       {beneficio.titulo}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className={`text-sm ${styles.subtitle}`}>
                       {beneficio.descricao}
                     </p>
                   </div>
@@ -270,7 +269,7 @@ export const Beneficios = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding bg-card/50"
+      className={`section-padding ${styles.container}`}
       id="beneficios"
       data-section-key="beneficios"
     >
@@ -282,10 +281,10 @@ export const Beneficios = ({
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="section-title mb-4">
+          <h2 className={`section-title mb-4 ${styles.title}`}>
             {finalContent.titulo}
           </h2>
-          <p className="section-subtitle mx-auto">
+          <p className={`section-subtitle mx-auto ${styles.subtitle}`}>
             {finalContent.subtitulo}
           </p>
         </motion.div>
@@ -304,15 +303,15 @@ export const Beneficios = ({
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className={`p-6 ${cardStyle || 'premium-card-soft'}`}
+                className={`p-6 rounded-2xl ${cardStyle || styles.card}`}
               >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Icon className="w-6 h-6 text-primary" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${styles.accent}`}>
+                  <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className={`text-lg font-semibold mb-2 ${styles.title}`}>
                   {beneficio.titulo}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className={styles.subtitle}>
                   {beneficio.descricao}
                 </p>
               </motion.div>
