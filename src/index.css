@@ -714,3 +714,35 @@
 .preset-minimal .minimal-button:hover {
   @apply bg-zinc-800;
 }
+
+/* Header/Footer specific preset styles */
+.preset-dark header,
+.preset-dark footer {
+  @apply bg-zinc-900/95 border-zinc-700;
+}
+
+.preset-dark header a,
+.preset-dark footer a {
+  @apply text-zinc-300 hover:text-white;
+}
+
+.preset-neon header,
+.preset-neon footer {
+  @apply bg-zinc-950/95 border-primary/20;
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
+}
+
+.preset-neon header a,
+.preset-neon footer a {
+  @apply text-zinc-300 hover:text-primary;
+}
+
+.preset-minimal header,
+.preset-minimal footer {
+  @apply bg-white/95 border-zinc-200;
+}
+
+.preset-minimal header a,
+.preset-minimal footer a {
+  @apply text-zinc-600 hover:text-zinc-900;
+}
