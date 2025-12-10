@@ -32,11 +32,9 @@ import {
   canAddMoreBlocks,
   canUseModel,
   PLAN_LIMITS,
-  BlockDefinition
 } from '@/lib/blockEditorTypes';
-import { DEFAULT_SECTION_ORDER, SECTION_NAMES } from '@/lib/lpContentApi';
+import { SECTION_NAMES } from '@/lib/lpContentApi';
 import { ModelThumbnail } from './ModelThumbnail';
-import { SectionLoader } from '@/components/sections/SectionLoader';
 
 interface StructurePhaseProps {
   blocks: EditorBlock[];
@@ -89,12 +87,12 @@ export const StructurePhase = ({
   // Find which sections are already added
   const existingSectionKeys = blocks.map(b => b.sectionKey);
   
-  // Find next section to add
+  // Find next section to add (sequential)
   const nextSectionToAdd = SECTION_SEQUENCE.find(
     s => !existingSectionKeys.includes(s)
   );
 
-  // Count dynamic blocks
+  // Count dynamic blocks (not fixed: menu, hero, rodape)
   const dynamicBlockCount = blocks.filter(b => {
     const def = getBlockDefinition(b.sectionKey);
     return def && !def.isFixed;
@@ -102,7 +100,7 @@ export const StructurePhase = ({
 
   const canAddMore = isMaster || canAddMoreBlocks(dynamicBlockCount, userPlan);
 
-  // Separate blocks
+  // Separate blocks by type
   const menuBlock = blocks.find(b => b.sectionKey === 'menu');
   const heroBlock = blocks.find(b => b.sectionKey === 'hero');
   const footerBlock = blocks.find(b => b.sectionKey === 'rodape');
@@ -127,6 +125,19 @@ export const StructurePhase = ({
     console.log('[S5.0 QA] StructurePhase: Model changed', { blockId, modelId });
   };
 
+  const handleDynamicReorder = useCallback((reorderedDynamic: EditorBlock[]) => {
+    // Rebuild full order: menu → hero → dynamic (reordered) → rodape
+    const fullOrder = [
+      menuBlock,
+      heroBlock,
+      ...reorderedDynamic,
+      footerBlock,
+    ].filter(Boolean) as EditorBlock[];
+    
+    onReorder(fullOrder);
+    console.log('[S5.0 QA] StructurePhase: Reordered', reorderedDynamic.map(b => b.sectionKey));
+  }, [menuBlock, heroBlock, footerBlock, onReorder]);
+
   const renderBlockCard = (block: EditorBlock, canModify: boolean = true) => {
     const definition = getBlockDefinition(block.sectionKey);
     if (!definition) return null;
@@ -136,144 +147,118 @@ export const StructurePhase = ({
     const isExpanded = expandedSection === block.id;
 
     return (
-      <motion.div
-        key={block.id}
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="group"
-      >
-        <Card className={cn(
-          "border-2 transition-all duration-200",
-          isExpanded ? "border-primary shadow-lg" : "border-border hover:border-primary/50"
-        )}>
-          <CardContent className="p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {definition.canReorder && (
-                  <div className="cursor-grab text-muted-foreground hover:text-foreground">
-                    <GripVertical className="w-4 h-4" />
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{definition.name}</span>
-                    {definition.isFixed && (
-                      <Badge variant="outline" className="text-[10px]">Fixo</Badge>
-                    )}
-                  </div>
-                  {currentModel && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Modelo: {currentModel.name}
-                    </p>
+      <Card className={cn(
+        "border-2 transition-all duration-200",
+        isExpanded ? "border-primary shadow-lg" : "border-border hover:border-primary/50"
+      )}>
+        <CardContent className="p-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {definition.canReorder && canModify && (
+                <div className="cursor-grab text-muted-foreground hover:text-foreground">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">{definition.name}</span>
+                  {definition.isFixed && (
+                    <Badge variant="outline" className="text-[10px]">Fixo</Badge>
                   )}
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* Model selector toggle */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setExpandedSection(isExpanded ? null : block.id)}
-                  className="h-8"
-                >
-                  <Layout className="w-4 h-4 mr-1" />
-                  Trocar modelo
-                  <ChevronDown className={cn(
-                    "w-4 h-4 ml-1 transition-transform",
-                    isExpanded && "rotate-180"
-                  )} />
-                </Button>
-
-                {/* Actions for dynamic blocks */}
-                {canModify && definition.canRemove && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDuplicateBlock(block.id)}
-                      className="h-8 w-8 p-0"
-                      disabled={!canAddMore}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onRemoveBlock(block.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </>
+                {currentModel && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Modelo: {currentModel.name}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Model selector expanded */}
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-4 mt-4 border-t">
-                    <p className="text-sm font-medium mb-3">Escolher modelo:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {models.map((model) => {
-                        const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
-                        const isSelected = block.modelId === model.id;
-                        
-                        return (
-                          <ModelThumbnail
-                            key={model.id}
-                            modelId={model.id}
-                            name={model.name}
-                            plan={model.plan}
-                            isLocked={isLocked}
-                            isSelected={isSelected}
-                            onClick={() => {
-                              if (isLocked) {
-                                onUpgradeClick();
-                              } else {
-                                handleModelChange(block.id, model.id);
-                              }
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="flex items-center gap-2">
+              {/* Model selector toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpandedSection(isExpanded ? null : block.id)}
+                className="h-8"
+              >
+                <Layout className="w-4 h-4 mr-1" />
+                Trocar modelo
+                <ChevronDown className={cn(
+                  "w-4 h-4 ml-1 transition-transform",
+                  isExpanded && "rotate-180"
+                )} />
+              </Button>
 
-            {/* Live preview of current model (collapsed) */}
-            {!isExpanded && (
-              <div className="mt-4 rounded-lg overflow-hidden border bg-muted/30 max-h-[200px] overflow-y-hidden relative">
-                <div className="scale-[0.4] origin-top-left w-[250%] pointer-events-none">
-                  <SectionLoader
-                    sectionKey={block.sectionKey}
-                    lpId={lpId}
-                    content={content[block.sectionKey]}
-                    settings={settings}
-                    userPlan={userPlan}
-                    context="editor"
-                    editable={false}
-                    disableAnimations={true}
-                  />
+              {/* Actions for dynamic blocks only */}
+              {canModify && definition.canRemove && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDuplicateBlock(block.id)}
+                    className="h-8 w-8 p-0"
+                    disabled={!canAddMore}
+                    title="Duplicar bloco"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveBlock(block.id)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    title="Remover bloco"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Model selector expanded */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-4 mt-4 border-t">
+                  <p className="text-sm font-medium mb-3 text-foreground">Escolher modelo:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {models.map((model) => {
+                      const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
+                      const isSelected = block.modelId === model.id;
+                      
+                      return (
+                        <ModelThumbnail
+                          key={model.id}
+                          modelId={model.id}
+                          name={model.name}
+                          plan={model.plan}
+                          isLocked={isLocked}
+                          isSelected={isSelected}
+                          onClick={() => {
+                            if (isLocked) {
+                              onUpgradeClick();
+                            } else {
+                              handleModelChange(block.id, model.id);
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/80 pointer-events-none" />
-              </div>
+              </motion.div>
             )}
-          </CardContent>
-        </Card>
-      </motion.div>
+          </AnimatePresence>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -316,12 +301,12 @@ export const StructurePhase = ({
                 <Plus className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold">Adicionar: {definition.name}</h3>
+                <h3 className="font-semibold text-foreground">Adicionar: {definition.name}</h3>
                 <p className="text-sm text-muted-foreground">{definition.description}</p>
               </div>
             </div>
 
-            <p className="text-sm font-medium mb-3">Escolha um modelo:</p>
+            <p className="text-sm font-medium mb-3 text-foreground">Escolha um modelo:</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {models.map((model) => {
                 const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
@@ -359,22 +344,6 @@ export const StructurePhase = ({
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-4 pt-4 border-t"
               >
-                <div className="rounded-lg overflow-hidden border bg-background mb-4 max-h-[300px] overflow-y-hidden relative">
-                  <div className="scale-[0.5] origin-top-left w-[200%] pointer-events-none">
-                    <SectionLoader
-                      sectionKey={nextSectionToAdd}
-                      lpId={lpId}
-                      content={{ __model_id: previewModel.modelId }}
-                      settings={settings}
-                      userPlan={userPlan}
-                      context="editor"
-                      editable={false}
-                      disableAnimations={true}
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 pointer-events-none" />
-                </div>
-
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
@@ -403,7 +372,7 @@ export const StructurePhase = ({
       {/* Status */}
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
         <div>
-          <p className="font-medium">Estrutura da página</p>
+          <p className="font-medium text-foreground">Estrutura da página</p>
           <p className="text-sm text-muted-foreground">
             {blocks.length} seções • {dynamicBlockCount} blocos dinâmicos
           </p>
@@ -421,20 +390,25 @@ export const StructurePhase = ({
       </div>
 
       {/* Menu Block (fixed, first) */}
-      {menuBlock && renderBlockCard(menuBlock, false)}
+      {menuBlock && (
+        <motion.div layout key={menuBlock.id}>
+          {renderBlockCard(menuBlock, false)}
+        </motion.div>
+      )}
 
       {/* Hero Block (fixed, second) */}
-      {heroBlock && renderBlockCard(heroBlock, false)}
+      {heroBlock && (
+        <motion.div layout key={heroBlock.id}>
+          {renderBlockCard(heroBlock, false)}
+        </motion.div>
+      )}
 
       {/* Dynamic blocks (reorderable) */}
       {dynamicBlocks.length > 0 && (
         <Reorder.Group
           axis="y"
           values={dynamicBlocks}
-          onReorder={(newOrder) => {
-            const fullOrder = [menuBlock!, heroBlock!, ...newOrder, footerBlock!].filter(Boolean);
-            onReorder(fullOrder);
-          }}
+          onReorder={handleDynamicReorder}
           className="space-y-4"
         >
           {dynamicBlocks.map((block) => (
@@ -443,7 +417,9 @@ export const StructurePhase = ({
               value={block}
               className="list-none"
             >
-              {renderBlockCard(block, true)}
+              <motion.div layout>
+                {renderBlockCard(block, true)}
+              </motion.div>
             </Reorder.Item>
           ))}
         </Reorder.Group>
@@ -453,7 +429,11 @@ export const StructurePhase = ({
       {renderAddSectionCard()}
 
       {/* Footer Block (fixed, last) */}
-      {footerBlock && renderBlockCard(footerBlock, false)}
+      {footerBlock && (
+        <motion.div layout key={footerBlock.id}>
+          {renderBlockCard(footerBlock, false)}
+        </motion.div>
+      )}
 
       {/* All sections added message */}
       {!nextSectionToAdd && blocks.length >= SECTION_SEQUENCE.length && (

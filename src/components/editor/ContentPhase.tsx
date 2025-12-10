@@ -7,7 +7,6 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Pencil, 
-  Eye, 
   Check,
   ChevronDown,
   Image,
@@ -29,8 +28,19 @@ import {
   getBlockDefinition 
 } from '@/lib/blockEditorTypes';
 import { SECTION_NAMES, LPContent, saveSectionContent } from '@/lib/lpContentApi';
-import { SectionLoader } from '@/components/sections/SectionLoader';
 import { toast } from '@/hooks/use-toast';
+
+// Editable components
+import { HeroEditable } from '@/components/sections/HeroEditable';
+import { BeneficiosEditable } from '@/components/sections/BeneficiosEditable';
+import { FAQEditable } from '@/components/sections/FAQEditable';
+import { ComoFuncionaEditable } from '@/components/sections/ComoFuncionaEditable';
+import { ParaQuemEEditable } from '@/components/sections/ParaQuemEEditable';
+import { ProvasSociaisEditable } from '@/components/sections/ProvasSociaisEditable';
+import { PlanosEditable } from '@/components/sections/PlanosEditable';
+import { ChamadaFinalEditable } from '@/components/sections/ChamadaFinalEditable';
+import { MenuEditable } from '@/components/sections/MenuEditable';
+import { RodapeEditable } from '@/components/sections/RodapeEditable';
 
 interface ContentPhaseProps {
   blocks: EditorBlock[];
@@ -86,6 +96,20 @@ const SECTION_CONTENT_TYPES: Record<SectionKey, { icon: React.ReactNode; label: 
   ],
 };
 
+// Map of section keys to editable components
+const EDITABLE_COMPONENTS: Record<SectionKey, React.ComponentType<any>> = {
+  hero: HeroEditable,
+  beneficios: BeneficiosEditable,
+  faq: FAQEditable,
+  como_funciona: ComoFuncionaEditable,
+  para_quem_e: ParaQuemEEditable,
+  provas_sociais: ProvasSociaisEditable,
+  planos: PlanosEditable,
+  chamada_final: ChamadaFinalEditable,
+  menu: MenuEditable,
+  rodape: RodapeEditable,
+};
+
 export const ContentPhase = ({
   blocks,
   lpId,
@@ -111,8 +135,10 @@ export const ContentPhase = ({
     });
   };
 
-  const handleStartEditing = (sectionKey: SectionKey) => {
+  const handleStartEditing = (sectionKey: SectionKey, blockId: string) => {
     setEditingSection(sectionKey);
+    // Auto-expand the card
+    setExpandedCards(prev => new Set(prev).add(blockId));
     console.log('[S5.0 QA] ContentPhase: Started editing', { sectionKey });
   };
 
@@ -122,10 +148,24 @@ export const ContentPhase = ({
     console.log('[S5.0 QA] ContentPhase: Stopped editing');
   };
 
-  const handleContentChange = useCallback(async (sectionKey: SectionKey, newContent: LPContent) => {
-    onContentUpdate(sectionKey, newContent);
-    console.log('[S5.0 QA] ContentPhase: Content updated', { sectionKey });
-  }, [onContentUpdate]);
+  const handleSectionContentUpdate = useCallback(async (
+    sectionKey: SectionKey, 
+    key: string, 
+    value: string
+  ) => {
+    const currentContent = content[sectionKey] || {};
+    const newContent = { ...currentContent, [key]: value };
+    
+    // Save to database
+    try {
+      await saveSectionContent(lpId, sectionKey, newContent);
+      onContentUpdate(sectionKey, newContent);
+      console.log('[S5.0 QA] ContentPhase: Content saved', { sectionKey, key });
+    } catch (error) {
+      console.error('[ContentPhase] Save error:', error);
+      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+    }
+  }, [lpId, content, onContentUpdate]);
 
   const getContentStatus = (sectionKey: SectionKey): 'default' | 'edited' => {
     const sectionContent = content[sectionKey];
@@ -134,6 +174,33 @@ export const ContentPhase = ({
     // Check if any content besides __model_id exists
     const keys = Object.keys(sectionContent).filter(k => !k.startsWith('_'));
     return keys.length > 1 ? 'edited' : 'default';
+  };
+
+  const renderEditableComponent = (block: EditorBlock) => {
+    const EditableComponent = EDITABLE_COMPONENTS[block.sectionKey];
+    if (!EditableComponent) {
+      return (
+        <div className="p-8 text-center text-muted-foreground">
+          Editor não disponível para esta seção
+        </div>
+      );
+    }
+
+    const sectionContent = content[block.sectionKey] || {};
+    const isEditing = editingSection === block.sectionKey;
+
+    return (
+      <EditableComponent
+        lpId={lpId}
+        content={sectionContent}
+        userPlan={userPlan}
+        editable={isEditing}
+        variante={block.modelId}
+        onContentUpdate={(key: string, value: string) => 
+          handleSectionContentUpdate(block.sectionKey, key, value)
+        }
+      />
+    );
   };
 
   const renderSectionCard = (block: EditorBlock) => {
@@ -176,7 +243,9 @@ export const ContentPhase = ({
                 )} />
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{SECTION_NAMES[block.sectionKey] || definition.name}</span>
+                    <span className="font-medium text-foreground">
+                      {SECTION_NAMES[block.sectionKey] || definition.name}
+                    </span>
                     <Badge variant="outline" className="text-[10px]">
                       {currentModel?.name || 'Modelo básico'}
                     </Badge>
@@ -212,8 +281,7 @@ export const ContentPhase = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleToggleExpand(block.id);
-                      handleStartEditing(block.sectionKey);
+                      handleStartEditing(block.sectionKey, block.id);
                     }}
                     className="h-8"
                   >
@@ -258,28 +326,16 @@ export const ContentPhase = ({
 
                   {/* Section preview/editor */}
                   <div className={cn(
-                    "relative border-t",
-                    !isEditing && "max-h-[400px] overflow-y-auto"
+                    "relative border-t bg-background",
+                    !isEditing && "max-h-[500px] overflow-y-auto"
                   )}>
-                    <SectionLoader
-                      sectionKey={block.sectionKey}
-                      lpId={lpId}
-                      content={content[block.sectionKey]}
-                      settings={settings}
-                      userPlan={userPlan}
-                      context="editor"
-                      editable={isEditing}
-                      disableAnimations={true}
-                      onContentUpdate={(_, newContent) => handleContentChange(block.sectionKey, newContent)}
-                    />
+                    {renderEditableComponent(block)}
 
                     {/* Overlay when not editing */}
                     {!isEditing && (
                       <div 
                         className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60 flex items-end justify-center pb-4 cursor-pointer"
-                        onClick={() => {
-                          handleStartEditing(block.sectionKey);
-                        }}
+                        onClick={() => handleStartEditing(block.sectionKey, block.id)}
                       >
                         <Button variant="secondary" size="sm">
                           <Pencil className="w-4 h-4 mr-2" />
@@ -302,7 +358,7 @@ export const ContentPhase = ({
       {/* Status bar */}
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
         <div>
-          <p className="font-medium">Edição de conteúdo</p>
+          <p className="font-medium text-foreground">Edição de conteúdo</p>
           <p className="text-sm text-muted-foreground">
             Clique em qualquer seção para editar textos, imagens e listas
           </p>
@@ -315,7 +371,7 @@ export const ContentPhase = ({
       </div>
 
       {/* Editing tip */}
-      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-700">
+      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-700 dark:text-blue-300">
         <strong>Dica:</strong> Na edição inline, clique diretamente no texto ou imagem que deseja alterar. 
         As alterações são salvas automaticamente.
       </div>
