@@ -9,7 +9,7 @@ import { ArrowRight, Play } from "lucide-react";
 import { trackCTAClick, trackSectionView } from "@/lib/tracking";
 import { EditableField, EditableImageField, EditableLink } from "@/components/editor/InlineEditableSection";
 import { LPContent, saveSectionContent } from "@/lib/lpContentApi";
-import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset, getLayoutVariant } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 import heroImage from "@/assets/hero-dashboard.png";
 
@@ -35,33 +35,6 @@ const defaultContent = {
   url_botao_secundario: "#como-funciona",
   imagem_principal: heroImage,
 };
-
-// Normaliza variantes para os layouts base
-function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
-  switch (variant) {
-    case 'hero_center':
-    case 'hero_benefits_intro':
-    case 'hero_minimal_centered':
-      return 'modelo_b';
-    case 'hero_split_basic':
-    case 'hero_social_proof':
-    case 'hero_gallery_slider':
-    case 'hero_metrics_highlights':
-    case 'hero_split_visionos':
-      return 'modelo_a';
-    case 'hero_headline_rotator':
-    case 'hero_parallax_vision':
-    case 'hero_cinematic_video':
-    case 'hero_ticket_launch':
-      return 'modelo_c';
-    case 'modelo_a':
-    case 'modelo_b':
-    case 'modelo_c':
-      return variant;
-    default:
-      return 'modelo_a';
-  }
-}
 
 // Get hero style classes based on stylePreset (only visual styles, not layout)
 const getHeroStyleModifiers = (stylePreset: StylePreset = 'glass') => {
@@ -94,7 +67,8 @@ export const HeroEditable = ({
   editable = true,
   onContentUpdate,
 }: HeroEditableProps) => {
-  const normalizedVariant = normalizeVariant(variante);
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);

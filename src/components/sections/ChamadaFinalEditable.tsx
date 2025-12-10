@@ -9,7 +9,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { trackSectionView, trackCTAClick } from "@/lib/tracking";
 import { EditableField, EditableLink } from "@/components/editor/InlineEditableSection";
 import { LPContent } from "@/lib/lpContentApi";
-import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset, getLayoutVariant } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 
 interface ChamadaFinalEditableProps {
@@ -43,12 +43,7 @@ const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
   }
 };
 
-function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
-  if (variant === 'modelo_a' || variant === 'modelo_b' || variant === 'modelo_c') {
-    return variant;
-  }
-  return 'modelo_a';
-}
+// Layout variant mapping is handled by getLayoutVariant from sectionModels
 
 export const ChamadaFinalEditable = ({
   lpId,
@@ -60,14 +55,15 @@ export const ChamadaFinalEditable = ({
   editable = true,
   onContentUpdate,
 }: ChamadaFinalEditableProps) => {
-  const normalizedVariant = normalizeVariant(variante);
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S5.1 QA] ChamadaFinalEditable: mounted', { lpId, editable, variante, normalizedVariant });
-  }, [lpId, editable, variante, normalizedVariant]);
+    console.log('[S5.3 QA] ChamadaFinalEditable: mounted', { lpId, editable, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });

@@ -9,7 +9,7 @@ import { Check, Sparkles, Shield, Zap, Globe, BarChart3, Clock, Star, Heart, Awa
 import { trackSectionView } from '@/lib/tracking';
 import { EditableField } from '@/components/editor/InlineEditableSection';
 import { LPContent, saveSectionContent } from '@/lib/lpContentApi';
-import { PlanLevel, StylePreset } from '@/lib/sectionModels';
+import { PlanLevel, StylePreset, getLayoutVariant } from '@/lib/sectionModels';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -54,14 +54,6 @@ const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
   }
 };
 
-// Normaliza variantes
-function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
-  if (variant === 'modelo_a' || variant === 'modelo_b' || variant === 'modelo_c') {
-    return variant;
-  }
-  return 'modelo_a';
-}
-
 export const BeneficiosEditable = ({
   lpId,
   content,
@@ -72,7 +64,8 @@ export const BeneficiosEditable = ({
   editable = true,
   onContentUpdate,
 }: BeneficiosEditableProps) => {
-  const normalizedVariant = normalizeVariant(variante);
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>(content);
   const [beneficios, setBeneficios] = useState<Beneficio[]>([]);
   const sectionRef = useRef<HTMLElement | null>(null);

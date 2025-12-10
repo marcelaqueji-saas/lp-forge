@@ -18,7 +18,7 @@ import {
 import { trackSectionView } from "@/lib/tracking";
 import { EditableField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset, getLayoutVariant } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 
 interface Passo {
@@ -82,14 +82,16 @@ export const ComoFuncionaEditable = ({
   editable = true,
   onContentUpdate,
 }: ComoFuncionaEditableProps) => {
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);
 
   // QA Log
   useEffect(() => {
-    console.log('[S5.2 QA] ComoFuncionaEditable: mounted', { lpId, editable, variante, modelId, stylePreset });
-  }, [lpId, editable, variante, modelId, stylePreset]);
+    console.log('[S5.3 QA] ComoFuncionaEditable: mounted', { lpId, editable, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });

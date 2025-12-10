@@ -9,7 +9,7 @@ import { Quote, Star } from "lucide-react";
 import { trackSectionView } from "@/lib/tracking";
 import { EditableField, EditableImageField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset, getLayoutVariant } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -63,13 +63,15 @@ export const ProvasSociaisEditable = ({
   editable = true,
   onContentUpdate,
 }: ProvasSociaisEditableProps) => {
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S4.4 QA] ProvasSociaisEditable: mounted', { lpId, editable, variante });
-  }, [lpId, editable, variante]);
+    console.log('[S5.3 QA] ProvasSociaisEditable: mounted', { lpId, editable, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
