@@ -44,9 +44,19 @@ export const PlanLimitIndicator = ({
   const limits = PLAN_LIMITS[userPlan];
   const maxBlocks = limits.maxDynamicBlocks;
   const isMaster = userPlan === 'master';
-  const percentage = isMaster ? 0 : Math.min((currentBlocks / maxBlocks) * 100, 100);
-  const isAtLimit = !isMaster && currentBlocks >= maxBlocks;
-  const isNearLimit = !isMaster && currentBlocks >= maxBlocks - 1;
+  
+  // QA Log
+  console.log('[S4.2 QA] PlanLimitIndicator:', { userPlan, isMaster, currentBlocks, maxBlocks });
+
+  // CRITICAL: Master nunca vê indicador de limites
+  if (isMaster) {
+    console.log('[S4.2 QA] Master plan override: OK - hiding limit indicator');
+    return null;
+  }
+  
+  const percentage = Math.min((currentBlocks / maxBlocks) * 100, 100);
+  const isAtLimit = currentBlocks >= maxBlocks;
+  const isNearLimit = currentBlocks >= maxBlocks - 1;
 
   if (variant === 'compact') {
     return (
@@ -87,7 +97,7 @@ export const PlanLimitIndicator = ({
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={cn("text-xs border", PLAN_COLORS[userPlan])}>
-            {(userPlan === 'premium' || userPlan === 'master') && <Sparkles className="w-3 h-3 mr-1" />}
+            {userPlan === 'premium' && <Sparkles className="w-3 h-3 mr-1" />}
             Plano {PLAN_LABELS[userPlan]}
           </Badge>
           <TooltipProvider>
@@ -108,8 +118,8 @@ export const PlanLimitIndicator = ({
           </TooltipProvider>
         </div>
 
-        {/* Não mostrar upgrade para premium ou master */}
-        {userPlan !== 'premium' && userPlan !== 'master' && (
+        {/* Não mostrar upgrade para premium (master já foi filtrado) */}
+        {userPlan !== 'premium' && (
           <Button
             variant="ghost"
             size="sm"

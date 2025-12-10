@@ -129,14 +129,16 @@ export const BlockEditor = ({
   // Carregar dados iniciais
   useEffect(() => {
     loadEditorData();
+    // QA Log
+    console.log('[S4.2 QA] BlockEditor initialized:', { lpId, userPlan, isMaster: userPlan === 'master' });
   }, [lpId]);
 
-  // Track page view no modo preview
+  // Track page view no modo preview (somente se LP publicada para evitar erro RLS)
   useEffect(() => {
-    if (viewMode === 'preview') {
+    if (viewMode === 'preview' && lpData.publicado) {
       trackEvent({ event_type: 'view', lp_id: lpId, metadata: { context: 'editor_preview' } });
     }
-  }, [viewMode, lpId]);
+  }, [viewMode, lpId, lpData.publicado]);
 
   const loadEditorData = async () => {
     setLoading(true);

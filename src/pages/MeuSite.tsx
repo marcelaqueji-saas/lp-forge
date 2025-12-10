@@ -131,6 +131,12 @@ const MeuSite = () => {
     ? 'master' 
     : ((profile?.plan as PlanLevel) || 'free');
 
+  // QA Logs
+  console.log('[S4.2 QA] MeuSite loaded:', { lpId, isAdminMaster, userPlan, userRole, canEdit });
+  if (isAdminMaster) {
+    console.log('[S4.2 QA] Master plan override: OK - full access granted');
+  }
+
   if (!canEdit) {
     toast({ title: 'Você não tem permissão para editar esta página', variant: 'destructive' });
     navigate('/painel');
