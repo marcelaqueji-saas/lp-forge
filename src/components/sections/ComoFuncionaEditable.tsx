@@ -1,0 +1,233 @@
+/**
+ * ComoFuncionaEditable - Seção "Como Funciona" com edição inline
+ * Sprint 4.4: 100% do conteúdo editável inline
+ */
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { 
+  Rocket, 
+  Settings, 
+  CheckCircle2, 
+  Zap,
+  Target,
+  Sparkles,
+  MessageSquare,
+  Users,
+} from "lucide-react";
+import { trackSectionView } from "@/lib/tracking";
+import { EditableField } from "@/components/editor/InlineEditableSection";
+import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
+import { PlanLevel } from "@/lib/sectionModels";
+import { cn } from "@/lib/utils";
+
+interface Passo {
+  titulo: string;
+  descricao: string;
+  icone?: string;
+}
+
+interface ComoFuncionaEditableProps {
+  lpId: string;
+  content: LPContent;
+  variante?: string;
+  userPlan: PlanLevel | 'master';
+  editable?: boolean;
+  onContentUpdate?: (key: string, value: string) => void;
+}
+
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Rocket,
+  Settings,
+  CheckCircle2,
+  Zap,
+  Target,
+  Sparkles,
+  MessageSquare,
+  Users,
+};
+
+const defaultContent = {
+  titulo: "Como funciona",
+  subtitulo: "Siga estes passos simples para começar",
+  passos_json: JSON.stringify([
+    { titulo: "Escolha seu template", descricao: "Selecione um modelo pronto ou comece do zero", icone: "Rocket" },
+    { titulo: "Personalize tudo", descricao: "Edite textos, cores e imagens facilmente", icone: "Settings" },
+    { titulo: "Publique em um clique", descricao: "Coloque sua página no ar instantaneamente", icone: "CheckCircle2" },
+  ]),
+};
+
+export const ComoFuncionaEditable = ({
+  lpId,
+  content,
+  variante = "modelo_a",
+  userPlan,
+  editable = true,
+  onContentUpdate,
+}: ComoFuncionaEditableProps) => {
+  const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  // QA Log
+  useEffect(() => {
+    console.log('[S4.4 QA] ComoFuncionaEditable: mounted', { lpId, editable, variante });
+  }, [lpId, editable, variante]);
+
+  useEffect(() => {
+    setLocalContent({ ...defaultContent, ...content });
+  }, [content]);
+
+  // Tracking
+  useEffect(() => {
+    if (!lpId || hasTrackedViewRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          trackSectionView(lpId, "como_funciona", variante);
+          hasTrackedViewRef.current = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [lpId, variante]);
+
+  const handleUpdate = useCallback((key: string, value: string) => {
+    setLocalContent(prev => ({ ...prev, [key]: value }));
+    onContentUpdate?.(key, value);
+    console.log('[S4.4 QA] InlineText: OK -', key);
+  }, [onContentUpdate]);
+
+  const handlePassoUpdate = async (index: number, field: keyof Passo, value: string) => {
+    try {
+      const passos: Passo[] = JSON.parse(localContent.passos_json || '[]');
+      passos[index] = { ...passos[index], [field]: value };
+      const newJson = JSON.stringify(passos);
+      
+      const updated = { ...localContent, passos_json: newJson };
+      setLocalContent(updated);
+      await saveSectionContent(lpId, 'como_funciona', updated);
+      onContentUpdate?.('passos_json', newJson);
+      console.log('[S4.4 QA] InlineText: OK - passo', index, field);
+    } catch (error) {
+      console.error('[ComoFuncionaEditable] Error updating passo:', error);
+    }
+  };
+
+  const fc = localContent;
+  let passos: Passo[] = [];
+  try {
+    passos = JSON.parse(fc.passos_json || '[]');
+  } catch {
+    passos = [];
+  }
+
+  return (
+    <section
+      ref={sectionRef}
+      className="section-padding bg-muted/30"
+      id="como-funciona"
+      data-section-key="como_funciona"
+    >
+      <div className="section-container">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <EditableField
+            value={fc.titulo || ''}
+            fieldKey="titulo"
+            sectionKey="como_funciona"
+            lpId={lpId}
+            content={localContent}
+            onUpdate={handleUpdate}
+            as="h2"
+            editable={editable}
+            placeholder="Título da seção"
+            className="section-title mb-4"
+          />
+          <EditableField
+            value={fc.subtitulo || ''}
+            fieldKey="subtitulo"
+            sectionKey="como_funciona"
+            lpId={lpId}
+            content={localContent}
+            onUpdate={handleUpdate}
+            as="p"
+            editable={editable}
+            placeholder="Subtítulo"
+            className="section-subtitle max-w-2xl mx-auto"
+          />
+        </div>
+
+        {/* Passos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {passos.map((passo, idx) => {
+            const IconComp = iconMap[passo.icone || 'Rocket'] || Rocket;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="relative"
+              >
+                <div className="glass-card p-6 h-full text-center">
+                  {/* Número */}
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-lg font-bold text-primary">{idx + 1}</span>
+                  </div>
+                  
+                  {/* Ícone */}
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <IconComp className="w-7 h-7 text-primary" />
+                  </div>
+
+                  {/* Título do passo */}
+                  {editable ? (
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => handlePassoUpdate(idx, 'titulo', e.currentTarget.textContent || '')}
+                      className={cn(
+                        "font-semibold text-lg mb-2 outline-none",
+                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                        "focus:ring-2 focus:ring-primary/20"
+                      )}
+                    >
+                      {passo.titulo}
+                    </div>
+                  ) : (
+                    <h3 className="font-semibold text-lg mb-2">{passo.titulo}</h3>
+                  )}
+
+                  {/* Descrição */}
+                  {editable ? (
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => handlePassoUpdate(idx, 'descricao', e.currentTarget.textContent || '')}
+                      className={cn(
+                        "text-muted-foreground text-sm outline-none",
+                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                        "focus:ring-2 focus:ring-primary/20"
+                      )}
+                    >
+                      {passo.descricao}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">{passo.descricao}</p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ComoFuncionaEditable;
