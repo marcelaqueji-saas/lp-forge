@@ -3,16 +3,20 @@
  * Sprint 4: Mostra progresso de publicação
  */
 
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CheckCircle2,
   Circle,
   Rocket,
   ArrowRight,
+  Loader2,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getAllContent, getSettings, LPContent, LPSettings } from '@/lib/lpContentApi';
 
 interface ChecklistItemData {
   id: string;
@@ -22,21 +26,95 @@ interface ChecklistItemData {
 }
 
 interface DashboardChecklistProps {
-  items: ChecklistItemData[];
+  lpId: string;
   onPublish?: () => void;
-  canPublish?: boolean;
 }
 
 export const DashboardChecklist = ({
-  items,
+  lpId,
   onPublish,
-  canPublish = false,
 }: DashboardChecklistProps) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ChecklistItemData[]>([]);
+
+  useEffect(() => {
+    if (lpId) {
+      loadChecklistItems();
+    }
+  }, [lpId]);
+
+  const loadChecklistItems = async () => {
+    setLoading(true);
+    try {
+      const [content, settings] = await Promise.all([
+        getAllContent(lpId),
+        getSettings(lpId),
+      ]);
+
+      const heroContent = content.hero || {};
+      
+      const checklistItems: ChecklistItemData[] = [
+        {
+          id: 'hero_title',
+          label: 'Título do Hero preenchido',
+          completed: !!(heroContent as any)?.titulo && (heroContent as any)?.titulo !== 'Título Principal',
+          action: () => navigate(`/meu-site/${lpId}`),
+        },
+        {
+          id: 'hero_cta',
+          label: 'Botão CTA configurado',
+          completed: !!(heroContent as any)?.cta_primary_label && !!(heroContent as any)?.cta_primary_url,
+          action: () => navigate(`/meu-site/${lpId}`),
+        },
+        {
+          id: 'extra_block',
+          label: 'Pelo menos 1 bloco adicional',
+          completed: Object.keys(content).filter(k => 
+            !['menu', 'hero', 'rodape', '_initialized'].includes(k)
+          ).length > 0,
+          action: () => navigate(`/meu-site/${lpId}`),
+        },
+        {
+          id: 'seo',
+          label: 'SEO básico configurado',
+          completed: !!(settings as any)?.meta_title || !!(settings as any)?.meta_description,
+          action: () => navigate(`/admin/lp/${lpId}/estilos`),
+        },
+        {
+          id: 'contact',
+          label: 'Formulário de contato',
+          completed: !!content.lead_form || !!content.chamada_final,
+          action: () => navigate(`/meu-site/${lpId}`),
+        },
+      ];
+
+      setItems(checklistItems);
+    } catch (error) {
+      console.error('[DashboardChecklist] Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const completedCount = items.filter(i => i.completed).length;
-  const progress = (completedCount / items.length) * 100;
+  const progress = items.length > 0 ? (completedCount / items.length) * 100 : 0;
+  const canPublish = progress >= 80;
+
+  if (loading) {
+    return (
+      <div className="glass-card p-4 md:p-6 flex items-center justify-center min-h-[200px]">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="glass-card p-4 md:p-6 space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-card p-4 md:p-6 space-y-4"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Rocket className="w-5 h-5 text-primary" />
@@ -100,7 +178,7 @@ export const DashboardChecklist = ({
           Publicar página
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 };
 
