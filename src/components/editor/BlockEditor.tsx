@@ -34,6 +34,8 @@ import { BlockSeparator } from './BlockSeparator';
 import { AddBlockModal } from './AddBlockModal';
 import { ContentEditor } from './ContentEditor';
 import { PlanLimitIndicator } from './PlanLimitIndicator';
+import { SaveIndicator, useSaveStatus } from './SaveIndicator';
+import { PublishChecklist } from './PublishChecklist';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
 import { SectionLoader } from '@/components/sections/SectionLoader';
 import { SEOHead } from '@/components/SEOHead';
@@ -95,6 +97,10 @@ export const BlockEditor = ({
     sectionKey: SectionKey | null;
   }>({ open: false, sectionKey: null });
   const [upgradeModal, setUpgradeModal] = useState({ open: false, feature: '' });
+  const [publishChecklistOpen, setPublishChecklistOpen] = useState(false);
+
+  // Save status indicator
+  const { status: saveStatus, setSaving: setSaveStatusSaving, setSaved: setSaveStatusSaved, setError: setSaveStatusError } = useSaveStatus();
 
   const limits = PLAN_LIMITS[userPlan];
 
@@ -473,18 +479,25 @@ export const BlockEditor = ({
               <span className="hidden sm:inline">Abrir página</span>
             </Button>
             
-            {!lpData.publicado && (
-              <Button size="sm" onClick={onPublish} disabled={saving} className="h-9">
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Publicar</span>
-                  </>
-                )}
-              </Button>
-            )}
+            {/* Save status indicator */}
+            <SaveIndicator status={saveStatus} className="hidden sm:flex" />
+
+            <Button 
+              size="sm" 
+              onClick={() => setPublishChecklistOpen(true)} 
+              disabled={saving} 
+              className="h-9"
+              variant={lpData.publicado ? 'outline' : 'default'}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">{lpData.publicado ? 'Atualizar' : 'Publicar'}</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </header>
@@ -680,6 +693,15 @@ export const BlockEditor = ({
         feature={upgradeModal.feature}
         currentPlan={userPlan}
         requiredPlan={userPlan === 'free' ? 'pro' : 'premium'}
+      />
+
+      <PublishChecklist
+        open={publishChecklistOpen}
+        onClose={() => setPublishChecklistOpen(false)}
+        lpId={lpId}
+        isPublished={lpData.publicado}
+        slug={lpData.slug}
+        onPublish={onPublish}
       />
     </div>
   );

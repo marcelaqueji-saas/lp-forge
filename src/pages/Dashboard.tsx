@@ -16,20 +16,27 @@ import {
   Eye,
   Zap,
   UserCircle,
+  TrendingUp,
+  Target,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { getUserFirstLP, hasCompletedOnboarding } from '@/lib/userApi';
-import { LandingPage } from '@/lib/lpContentApi';
+import { LandingPage, getAllContent, getSettings } from '@/lib/lpContentApi';
 import { useAuth } from '@/hooks/useAuth';
 import { PlanLimitsBanner } from '@/components/client/PlanLimitsBanner';
+import { DashboardChecklist } from '@/components/client/DashboardChecklist';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [userLP, setUserLP] = useState<LandingPage | null>(null);
   const [userName, setUserName] = useState('');
+  const [analytics, setAnalytics] = useState({ views: 0, leads: 0, conversion: 0 });
   const navigate = useNavigate();
-  const { isAdminMaster } = useAuth();
+  const { isAdminMaster, profile } = useAuth();
 
   useEffect(() => {
     checkAuth();
@@ -60,7 +67,37 @@ const Dashboard = () => {
 
     const lp = await getUserFirstLP();
     setUserLP(lp);
+    
+    // Load basic analytics
+    if (lp) {
+      loadAnalytics(lp.id);
+    }
+    
     setLoading(false);
+  };
+
+  const loadAnalytics = async (lpId: string) => {
+    try {
+      const { data: events } = await supabase
+        .from('lp_events')
+        .select('event_type')
+        .eq('lp_id', lpId)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      const { data: leads } = await supabase
+        .from('lp_leads')
+        .select('id')
+        .eq('lp_id', lpId)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      const views = events?.filter(e => e.event_type === 'view').length || 0;
+      const leadsCount = leads?.length || 0;
+      const conversion = views > 0 ? (leadsCount / views) * 100 : 0;
+
+      setAnalytics({ views, leads: leadsCount, conversion });
+    } catch (error) {
+      console.error('[Dashboard] Error loading analytics:', error);
+    }
   };
 
   const handleLogout = async () => {
@@ -88,6 +125,9 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Determine plan display
+  const planLabel = isAdminMaster ? 'Master' : (profile?.plan === 'premium' ? 'Premium' : profile?.plan === 'pro' ? 'Pro' : 'Gratuito');
 
   const menuItems = [
     {
@@ -165,9 +205,16 @@ const Dashboard = () => {
               <h1 className="font-semibold text-sm md:text-base tracking-tight">
                 Meu Painel
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 truncate">
-                Olá, {userName}!
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs md:text-sm text-slate-500 truncate">
+                  Olá, {userName}!
+                </p>
+                {isAdminMaster && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">
+                    Master
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -187,57 +234,100 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-6 md:py-8 space-y-6 md:space-y-8">
         <PlanLimitsBanner />
 
-        {/* Status card */}
+        {/* Analytics Preview - últimos 7 dias */}
         {userLP && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-4 md:p-6 mb-2 md:mb-4"
+            className="glass-card p-4 md:p-6"
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="min-w-0">
-                <h2 className="text-lg md:text-xl font-semibold mb-1 truncate">
-                  {userLP.nome}
-                </h2>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
-                        userLP.publicado ? 'bg-green-500' : 'bg-yellow-500'
-                      }`}
-                    />
-                    {userLP.publicado ? 'Publicado' : 'Rascunho'}
-                  </span>
-                  {userLP.dominio && (
-                    <span className="flex items-center gap-1 truncate">
-                      <Globe className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{userLP.dominio}</span>
-                    </span>
-                  )}
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                Últimos 7 dias
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/admin/lp/${userLP.id}/analytics`)}
+              >
+                Ver detalhes
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">{analytics.views}</div>
+                <div className="text-xs text-muted-foreground">Visualizações</div>
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewPublic}
-                  className="flex-1 md:flex-none"
-                >
-                  <ExternalLink className="w-4 h-4 md:mr-2" />
-                  <span className="md:inline">Visualizar</span>
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleEditSite}
-                  className="flex-1 md:flex-none"
-                >
-                  <Edit3 className="w-4 h-4 md:mr-2" />
-                  <span className="md:inline">Editar</span>
-                </Button>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{analytics.leads}</div>
+                <div className="text-xs text-muted-foreground">Leads</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-600">{analytics.conversion.toFixed(1)}%</div>
+                <div className="text-xs text-muted-foreground">Conversão</div>
               </div>
             </div>
           </motion.div>
+        )}
+
+        {/* Status card + Checklist */}
+        {userLP && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Status card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card p-4 md:p-6"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg md:text-xl font-semibold mb-1 truncate">
+                    {userLP.nome}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          userLP.publicado ? 'bg-green-500' : 'bg-yellow-500'
+                        }`}
+                      />
+                      {userLP.publicado ? 'Publicado' : 'Rascunho'}
+                    </span>
+                    {userLP.dominio && (
+                      <span className="flex items-center gap-1 truncate">
+                        <Globe className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{userLP.dominio}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViewPublic}
+                    className="flex-1 md:flex-none"
+                  >
+                    <ExternalLink className="w-4 h-4 md:mr-2" />
+                    <span className="md:inline">Visualizar</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleEditSite}
+                    className="flex-1 md:flex-none"
+                  >
+                    <Edit3 className="w-4 h-4 md:mr-2" />
+                    <span className="md:inline">Editar</span>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Checklist de publicação */}
+            <DashboardChecklist lpId={userLP.id} />
+          </div>
         )}
 
         {/* Menu grid – tiles alinhados */}

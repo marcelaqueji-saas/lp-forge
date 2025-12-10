@@ -31,6 +31,7 @@ import OnboardingWizard from "./pages/OnboardingWizard";
 import Dashboard from "./pages/Dashboard";
 import MeuSite from "./pages/MeuSite";
 import LPBuilder from "./pages/LPBuilder";
+import CreateWizard from "./pages/CreateWizard";
 import Upgrade from "./pages/Upgrade";
 import Profile from "./pages/client/Profile";
 
@@ -170,6 +171,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Create Wizard - Assistente guiado */}
+            <Route
+              path="/painel/create-wizard/:lpId"
+              element={
+                <ProtectedRoute>
+                  <CreateWizard />
                 </ProtectedRoute>
               }
             />

@@ -13,6 +13,7 @@ import {
   Rocket,
   Copy,
   Check,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -26,6 +27,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { getAllContent, getSettings, LPContent, LPSettings } from '@/lib/lpContentApi';
 
 export interface ChecklistItem {
   id: string;
@@ -40,37 +42,127 @@ export interface ChecklistItem {
 interface PublishChecklistProps {
   open: boolean;
   onClose: () => void;
-  lpSlug: string;
+  lpId: string;
+  slug: string;
   isPublished: boolean;
-  onPublish: () => Promise<void>;
-  items: ChecklistItem[];
+  onPublish: () => void;
 }
 
 export const PublishChecklist = ({
   open,
   onClose,
-  lpSlug,
+  lpId,
+  slug,
   isPublished,
   onPublish,
-  items,
 }: PublishChecklistProps) => {
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+
+  const publicUrl = `${window.location.origin}/lp/${slug}`;
+
+  // Load checklist items based on LP content
+  useEffect(() => {
+    if (open && lpId) {
+      loadChecklistItems();
+    }
+  }, [open, lpId]);
+
+  const loadChecklistItems = async () => {
+    setLoading(true);
+    try {
+      const [content, settings] = await Promise.all([
+        getAllContent(lpId),
+        getSettings(lpId),
+      ]);
+
+      const checklistItems = generateChecklistItems(content, settings);
+      setItems(checklistItems);
+    } catch (error) {
+      console.error('[PublishChecklist] Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateChecklistItems = (
+    content: Record<string, LPContent>,
+    settings: LPSettings
+  ): ChecklistItem[] => {
+    const heroContent = content.hero || {};
+    const menuContent = content.menu || {};
+    
+    return [
+      {
+        id: 'hero_title',
+        label: 'Título do Hero',
+        description: 'Defina um título atrativo para sua página',
+        completed: !!(heroContent as any)?.titulo && (heroContent as any)?.titulo !== 'Título Principal',
+        required: true,
+      },
+      {
+        id: 'hero_cta',
+        label: 'Botão CTA configurado',
+        description: 'Configure o texto e link do botão principal',
+        completed: !!(heroContent as any)?.cta_primary_label && !!(heroContent as any)?.cta_primary_url,
+        required: true,
+      },
+      {
+        id: 'extra_block',
+        label: 'Bloco adicional',
+        description: 'Adicione pelo menos um bloco além do Hero',
+        completed: Object.keys(content).filter(k => 
+          !['menu', 'hero', 'rodape', '_initialized'].includes(k)
+        ).length > 0,
+        required: false,
+      },
+      {
+        id: 'seo_title',
+        label: 'SEO - Título',
+        description: 'Configure o título para mecanismos de busca',
+        completed: !!(settings as any)?.meta_title,
+        required: false,
+      },
+      {
+        id: 'seo_description',
+        label: 'SEO - Descrição',
+        description: 'Configure a descrição para mecanismos de busca',
+        completed: !!(settings as any)?.meta_description,
+        required: false,
+      },
+      {
+        id: 'contact_form',
+        label: 'Formulário de contato',
+        description: 'Adicione um formulário para capturar leads',
+        completed: !!content.lead_form || !!content.chamada_final,
+        required: false,
+      },
+    ];
+  };
 
   const completedCount = items.filter(i => i.completed).length;
   const totalCount = items.length;
-  const progress = (completedCount / totalCount) * 100;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
   const requiredIncomplete = items.filter(i => i.required && !i.completed);
   const canPublish = requiredIncomplete.length === 0;
 
-  const publicUrl = `${window.location.origin}/lp/${lpSlug}`;
-
   const handlePublish = async () => {
-    if (!canPublish) return;
+    if (!canPublish) {
+      toast({ 
+        title: 'Complete os itens obrigatórios', 
+        description: 'Há itens pendentes que precisam ser completados antes de publicar.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     setPublishing(true);
     try {
-      await onPublish();
+      await Promise.resolve(onPublish());
       toast({ title: 'Página publicada com sucesso!' });
+      onClose();
     } catch (error) {
       toast({ title: 'Erro ao publicar', variant: 'destructive' });
     } finally {
@@ -100,40 +192,38 @@ export const PublishChecklist = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
-          {/* Progress */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progresso</span>
-              <span className="font-medium">{Math.round(progress)}%</span>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-6 py-4">
+            {/* Progress bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progresso</span>
+                <span className="font-medium">{completedCount}/{totalCount} itens</span>
+              </div>
+              <Progress value={progress} className="h-2" />
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
 
-          {/* Status badge */}
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={isPublished ? 'default' : 'secondary'}
-              className={cn(
-                'text-xs',
-                isPublished && 'bg-green-500 hover:bg-green-600'
-              )}
-            >
-              {isPublished ? 'Publicado' : 'Rascunho'}
-            </Badge>
-            {canPublish && !isPublished && (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                Pronto para publicar
+            {/* Status badge */}
+            <div className="flex items-center gap-2">
+              <Badge variant={isPublished ? 'default' : 'secondary'}>
+                {isPublished ? 'Publicado' : 'Rascunho'}
               </Badge>
-            )}
-          </div>
+              {canPublish && !isPublished && (
+                <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                  Pronto para publicar
+                </Badge>
+              )}
+            </div>
 
-          {/* URL pública */}
-          {isPublished && (
-            <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-              <span className="text-xs text-muted-foreground">URL pública</span>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-sm truncate">{publicUrl}</code>
+            {/* Public URL */}
+            {isPublished && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate flex-1">{publicUrl}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -141,28 +231,17 @@ export const PublishChecklist = ({
                   className="shrink-0"
                 >
                   {copied ? (
-                    <Check className="w-4 h-4 text-green-500" />
+                    <Check className="w-4 h-4 text-green-600" />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(publicUrl, '_blank')}
-                  className="shrink-0"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Checklist items */}
-          <div className="space-y-2">
-            <span className="text-sm font-medium">Checklist de lançamento</span>
-            <div className="space-y-1.5">
-              <AnimatePresence>
+            {/* Checklist items */}
+            <div className="space-y-2">
+              <AnimatePresence mode="popLayout">
                 {items.map((item, index) => (
                   <motion.div
                     key={item.id}
@@ -170,31 +249,28 @@ export const PublishChecklist = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className={cn(
-                      'flex items-start gap-3 p-3 rounded-lg transition-colors',
+                      "flex items-start gap-3 p-3 rounded-lg border transition-colors",
                       item.completed
-                        ? 'bg-green-50 dark:bg-green-950/20'
-                        : 'bg-muted/30'
+                        ? "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800"
+                        : item.required
+                        ? "bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-800"
+                        : "bg-muted/50 border-border"
                     )}
                   >
-                    {item.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    ) : item.required ? (
-                      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                    )}
+                    <div className="mt-0.5">
+                      {item.completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : item.required ? (
+                        <AlertCircle className="w-5 h-5 text-amber-500" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'text-sm font-medium',
-                            item.completed && 'text-green-700 dark:text-green-400'
-                          )}
-                        >
-                          {item.label}
-                        </span>
+                        <span className="font-medium text-sm">{item.label}</span>
                         {item.required && !item.completed && (
-                          <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                             Obrigatório
                           </Badge>
                         )}
@@ -203,128 +279,118 @@ export const PublishChecklist = ({
                         {item.description}
                       </p>
                     </div>
-                    {item.action && !item.completed && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={item.action}
-                        className="shrink-0 text-xs"
-                      >
-                        {item.actionLabel || 'Configurar'}
-                      </Button>
-                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
-          </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Fechar
-          </Button>
-          {!isPublished && (
-            <Button
-              onClick={handlePublish}
-              disabled={!canPublish || publishing}
-              className={cn(
-                'gap-2',
-                canPublish && 'bg-green-600 hover:bg-green-700'
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={onClose} className="flex-1">
+                Fechar
+              </Button>
+              
+              {isPublished ? (
+                <Button onClick={() => window.open(publicUrl, '_blank')} className="flex-1">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Abrir página
+                </Button>
+              ) : (
+                <Button
+                  onClick={handlePublish}
+                  disabled={!canPublish || publishing}
+                  className="flex-1"
+                >
+                  {publishing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Rocket className="w-4 h-4 mr-2" />
+                  )}
+                  {publishing ? 'Publicando...' : 'Publicar agora'}
+                </Button>
               )}
-            >
-              <Rocket className="w-4 h-4" />
-              {publishing ? 'Publicando...' : 'Publicar agora'}
-            </Button>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 };
 
-// Hook para gerar checklist items baseado no conteúdo da LP
-export function usePublishChecklist(
-  content: Record<string, any>,
-  settings: Record<string, any>,
-  onNavigate: (section: string) => void
-): ChecklistItem[] {
-  const heroContent = content?.hero || {};
-  const menuContent = content?.menu || {};
-  
-  const hasHeroTitle = Boolean(heroContent?.titulo || heroContent?.title);
-  const hasHeroCTA = Boolean(heroContent?.cta_primary_label || heroContent?.cta_label);
-  const hasHeroImage = Boolean(heroContent?.imagem_url || heroContent?.image_url);
-  
-  const hasSEOTitle = Boolean(settings?.meta_title);
-  const hasSEODescription = Boolean(settings?.meta_description);
-  
-  const dynamicSections = Object.keys(content).filter(
-    k => !['menu', 'hero', 'rodape', '_initialized'].includes(k)
-  );
-  const hasExtraBlock = dynamicSections.length > 0;
+// Hook para usar o checklist de forma standalone
+export function usePublishChecklist(lpId: string) {
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const hasContactMethod = Boolean(
-    heroContent?.cta_primary_url ||
-    content?.chamada_final?.cta_url ||
-    content?.lead_form
-  );
+  useEffect(() => {
+    if (lpId) {
+      loadItems();
+    }
+  }, [lpId]);
 
-  return [
-    {
-      id: 'hero-title',
-      label: 'Título principal definido',
-      description: 'O Hero precisa de um título chamativo',
-      completed: hasHeroTitle,
-      required: true,
-      action: () => onNavigate('hero'),
-      actionLabel: 'Editar Hero',
-    },
-    {
-      id: 'hero-cta',
-      label: 'Botão de ação configurado',
-      description: 'Configure o CTA principal do Hero',
-      completed: hasHeroCTA,
-      required: true,
-      action: () => onNavigate('hero'),
-      actionLabel: 'Adicionar CTA',
-    },
-    {
-      id: 'extra-block',
-      label: 'Pelo menos 1 bloco adicional',
-      description: 'Adicione conteúdo além do Hero (benefícios, depoimentos, etc)',
-      completed: hasExtraBlock,
-      required: true,
-      action: () => onNavigate('add-block'),
-      actionLabel: 'Adicionar bloco',
-    },
-    {
-      id: 'seo-title',
-      label: 'Título SEO definido',
-      description: 'Configure o título para mecanismos de busca',
-      completed: hasSEOTitle,
-      required: false,
-      action: () => onNavigate('settings'),
-      actionLabel: 'Configurar SEO',
-    },
-    {
-      id: 'seo-description',
-      label: 'Descrição SEO definida',
-      description: 'Configure a descrição para mecanismos de busca',
-      completed: hasSEODescription,
-      required: false,
-      action: () => onNavigate('settings'),
-      actionLabel: 'Configurar SEO',
-    },
-    {
-      id: 'contact',
-      label: 'Forma de contato configurada',
-      description: 'Links de CTA ou formulário de contato',
-      completed: hasContactMethod,
-      required: false,
-      action: () => onNavigate('chamada_final'),
-      actionLabel: 'Configurar',
-    },
-  ];
+  const loadItems = async () => {
+    setLoading(true);
+    try {
+      const [content, settings] = await Promise.all([
+        getAllContent(lpId),
+        getSettings(lpId),
+      ]);
+
+      const heroContent = content.hero || {};
+      
+      const checklistItems: ChecklistItem[] = [
+        {
+          id: 'hero_title',
+          label: 'Título do Hero',
+          description: 'Defina um título atrativo',
+          completed: !!(heroContent as any)?.titulo,
+          required: true,
+        },
+        {
+          id: 'hero_cta',
+          label: 'Botão CTA',
+          description: 'Configure o botão principal',
+          completed: !!(heroContent as any)?.cta_primary_label,
+          required: true,
+        },
+        {
+          id: 'extra_block',
+          label: 'Bloco adicional',
+          description: 'Pelo menos um bloco extra',
+          completed: Object.keys(content).filter(k => 
+            !['menu', 'hero', 'rodape', '_initialized'].includes(k)
+          ).length > 0,
+          required: false,
+        },
+        {
+          id: 'seo',
+          label: 'SEO configurado',
+          description: 'Título e descrição para busca',
+          completed: !!(settings as any)?.meta_title,
+          required: false,
+        },
+      ];
+
+      setItems(checklistItems);
+    } catch (error) {
+      console.error('[usePublishChecklist] Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completedCount = items.filter(i => i.completed).length;
+  const totalCount = items.length;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const canPublish = items.filter(i => i.required && !i.completed).length === 0;
+
+  return {
+    items,
+    loading,
+    completedCount,
+    totalCount,
+    progress,
+    canPublish,
+    refresh: loadItems,
+  };
 }
