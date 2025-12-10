@@ -3,6 +3,8 @@ import { Menu as MenuIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { trackCTAClick, trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Link {
   label: string;
@@ -22,6 +24,7 @@ interface MenuSectionProps {
   content?: MenuContent;
   variante?: 'modelo_a' | 'modelo_b';
   previewOverride?: MenuContent;
+  stylePreset?: StylePreset;
 }
 
 const defaultContent: MenuContent = {
@@ -94,9 +97,11 @@ export const MenuSection = ({
   content = {},
   variante = 'modelo_a',
   previewOverride,
+  stylePreset = 'glass',
 }: MenuSectionProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
 
   let links: Link[] = [];
   try {

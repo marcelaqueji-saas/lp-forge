@@ -560,7 +560,8 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     onContentUpdate,
   }) => {
     // [S4.4 QA] Check if editable mode
-    console.log(`[S4.4 QA] SectionLoader: ${sectionKey}, editable=${editable}, context=${context}`);
+    const globalTheme = settings?.global_theme;
+    console.log(`[S4.4 QA] SectionLoader: ${sectionKey}, editable=${editable}, context=${context}, globalTheme=${globalTheme}`);
     const [templateMeta, setTemplateMeta] =
       useState<SectionTemplateRow | null>(null);
 
@@ -681,13 +682,16 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     );
     const cardClasses = getCardClasses(visualConfig.card_style);
 
+    // Use global_theme from settings if available, otherwise use model's stylePreset
+    const effectiveStylePreset = (settings?.global_theme as string) || sectionModel?.stylePreset || 'glass';
+    
     const componentProps = {
       lpId,
       content,
       previewOverride,
       variante: legacyVariant,
       modelId: variant, // Pass the actual model ID
-      stylePreset: sectionModel?.stylePreset || 'glass', // Pass style preset from model
+      stylePreset: effectiveStylePreset, // Use global theme override or model's preset
       motionPreset: sectionModel?.motionPreset || 'fade-stagger', // Pass motion preset from model
       disableAnimations: disableAnimations || reducedMotion,
       buttonStyle: visualConfig.button_style,
@@ -741,6 +745,11 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
 
     const renderComponent = () => <Component {...componentProps} />;
 
+    // Map stylePreset to CSS wrapper class for cascade
+    const presetWrapperClass = effectiveStylePreset && ['dark', 'neon', 'minimal'].includes(effectiveStylePreset)
+      ? `preset-${effectiveStylePreset}`
+      : '';
+
     let node: React.ReactNode = renderComponent();
 
     if (hasCustomStyles) {
@@ -759,6 +768,15 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
               position="after"
             />
           )}
+        </div>
+      );
+    }
+
+    // Wrap with preset class for CSS cascade
+    if (presetWrapperClass) {
+      node = (
+        <div className={presetWrapperClass}>
+          {node}
         </div>
       );
     }

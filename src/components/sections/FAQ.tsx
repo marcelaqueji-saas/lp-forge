@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, Plus, Minus } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Pergunta {
   pergunta: string;
@@ -20,6 +22,7 @@ interface FAQProps {
   previewOverride?: FAQContent;
   variante?: 'modelo_a' | 'modelo_b';
   cardStyle?: string;
+  stylePreset?: StylePreset;
 }
 
 const defaultContent: FAQContent = {
@@ -59,8 +62,10 @@ export const FAQ = ({
   previewOverride,
   variante = 'modelo_a',
   cardStyle = '',
+  stylePreset = 'glass',
 }: FAQProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   let perguntas: Pergunta[] = [];

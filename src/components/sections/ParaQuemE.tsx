@@ -11,6 +11,8 @@ import {
   Target,
 } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Perfil {
   titulo: string;
@@ -32,6 +34,7 @@ interface ParaQuemEProps {
   variante?: 'modelo_a' | 'modelo_b';
   disableAnimations?: boolean;
   cardStyle?: string;
+  stylePreset?: StylePreset;
 }
 
 const defaultContent: ParaQuemEContent = {
@@ -77,8 +80,10 @@ export const ParaQuemE = ({
   variante = 'modelo_a',
   disableAnimations = false,
   cardStyle = '',
+  stylePreset = 'glass',
 }: ParaQuemEProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
 
   let perfis: Perfil[] = [];
   try {

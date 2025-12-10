@@ -15,6 +15,8 @@ import {
   Heart,
 } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Passo {
   titulo: string;
@@ -36,6 +38,7 @@ interface ComoFuncionaProps {
   variante?: 'modelo_a' | 'modelo_b';
   disableAnimations?: boolean;
   cardStyle?: string;
+  stylePreset?: StylePreset;
 }
 
 const defaultContent: ComoFuncionaContent = {
@@ -85,8 +88,10 @@ export const ComoFunciona = ({
   variante = 'modelo_a',
   disableAnimations = false,
   cardStyle = '',
+  stylePreset = 'glass',
 }: ComoFuncionaProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
 
   let passos: Passo[] = [];
   try {
