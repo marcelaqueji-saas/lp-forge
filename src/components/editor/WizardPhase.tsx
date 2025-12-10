@@ -41,6 +41,7 @@ interface WizardPhaseProps {
   content: Record<string, LPContent>;
   settings: Record<string, any>;
   onAddSection: (sectionKey: SectionKey, modelId: string) => Promise<void>;
+  onChangeModel: (blockId: string, modelId: string) => Promise<void>;
   onContentUpdate: (sectionKey: SectionKey, newContent: LPContent) => void;
   onComplete: () => void;
   onUpgradeClick: () => void;
@@ -69,6 +70,7 @@ export const WizardPhase = ({
   content,
   settings,
   onAddSection,
+  onChangeModel,
   onContentUpdate,
   onComplete,
   onUpgradeClick,
@@ -137,11 +139,18 @@ export const WizardPhase = ({
 
     // Check if section already exists in blocks
     const existingBlock = blocks.find(b => b.sectionKey === sectionKey);
-    if (!existingBlock) {
-      // Add the section
+    if (existingBlock) {
+      // Change model for existing block
+      await onChangeModel(existingBlock.id, modelId);
+    } else {
+      // Add new section
       await onAddSection(sectionKey, modelId);
     }
-  }, [currentSection, blocks, canAddMoreDynamic, onAddSection, onUpgradeClick]);
+  }, [currentSection, blocks, canAddMoreDynamic, onAddSection, onChangeModel, onUpgradeClick]);
+
+  const handleStepClick = useCallback((stepIndex: number) => {
+    setCurrentStepIndex(stepIndex);
+  }, []);
 
   const handleContentUpdate = useCallback(async (key: string, value: string) => {
     const sectionKey = currentSection;
@@ -269,6 +278,7 @@ export const WizardPhase = ({
         steps={WIZARD_STEPS}
         currentStep={currentStepIndex}
         completedSteps={completedSteps}
+        onStepClick={handleStepClick}
       />
 
       {/* Navigation buttons */}

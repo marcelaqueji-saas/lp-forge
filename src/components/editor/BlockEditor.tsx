@@ -725,6 +725,7 @@ export const BlockEditor = ({
               content={content}
               settings={settings}
               onAddSection={handleAddSection}
+              onChangeModel={handleChangeModel}
               onContentUpdate={handleContentUpdate}
               onComplete={() => setPhase('preview')}
               onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'recursos premium' })}

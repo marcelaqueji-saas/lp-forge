@@ -12,12 +12,14 @@ interface WizardProgressProps {
   steps: SectionKey[];
   currentStep: number;
   completedSteps: Set<SectionKey>;
+  onStepClick?: (stepIndex: number) => void;
 }
 
 export const WizardProgress = ({
   steps,
   currentStep,
   completedSteps,
+  onStepClick,
 }: WizardProgressProps) => {
   const totalSteps = steps.length;
   const progress = ((currentStep + 1) / totalSteps) * 100;
@@ -44,26 +46,33 @@ export const WizardProgress = ({
         </span>
       </div>
 
-      {/* Step indicators - scrollable on mobile */}
+      {/* Step indicators - scrollable on mobile, clickable */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         {steps.map((step, index) => {
           const isCompleted = completedSteps.has(step);
           const isCurrent = index === currentStep;
           const isPast = index < currentStep;
+          const isClickable = !!onStepClick;
 
           return (
-            <motion.div
+            <motion.button
               key={step}
+              type="button"
+              onClick={() => onStepClick?.(index)}
+              disabled={!isClickable}
               className={cn(
-                "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs whitespace-nowrap flex-shrink-0 transition-colors",
-                isCompleted && "bg-green-500/20 text-green-700",
+                "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs whitespace-nowrap flex-shrink-0 transition-all",
+                isCompleted && "bg-green-500/20 text-green-700 hover:bg-green-500/30",
                 isCurrent && !isCompleted && "bg-primary/20 text-primary font-medium",
-                !isCompleted && !isCurrent && isPast && "bg-muted text-muted-foreground",
-                !isCompleted && !isCurrent && !isPast && "bg-muted/50 text-muted-foreground/60"
+                !isCompleted && !isCurrent && isPast && "bg-muted text-muted-foreground hover:bg-muted/80",
+                !isCompleted && !isCurrent && !isPast && "bg-muted/50 text-muted-foreground/60 hover:bg-muted/70",
+                isClickable && "cursor-pointer hover:scale-105 active:scale-95",
+                !isClickable && "cursor-default"
               )}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
+              title={`Ir para ${SECTION_NAMES[step]}`}
             >
               {isCompleted ? (
                 <Check className="w-3 h-3" />
@@ -74,7 +83,7 @@ export const WizardProgress = ({
               )}
               <span className="hidden sm:inline">{SECTION_NAMES[step]}</span>
               <span className="sm:hidden">{index + 1}</span>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
