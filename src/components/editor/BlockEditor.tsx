@@ -35,6 +35,7 @@ import { PublishChecklist } from './PublishChecklist';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
 import { SectionLoader } from '@/components/sections/SectionLoader';
+import { SectionSeparator } from '@/components/sections/SectionSeparator';
 import { SEOHead } from '@/components/SEOHead';
 import { StructurePhase } from './StructurePhase';
 import { ContentPhase } from './ContentPhase';
@@ -760,24 +761,41 @@ export const BlockEditor = ({
             <SEOHead settings={settings} />
             
             {/* Render sections in preview mode (read-only) */}
-            {blocks.map((block) => (
-              <section 
-                key={block.id}
-                data-section-key={block.sectionKey}
-                className="relative"
-              >
-                <SectionLoader
-                  sectionKey={block.sectionKey}
-                  lpId={lpId}
-                  content={content[block.sectionKey]}
-                  settings={settings}
-                  userPlan={userPlan}
-                  context="editor"
-                  editable={false}
-                  disableAnimations={false}
-                />
-              </section>
-            ))}
+            {blocks.map((block, index) => {
+              const showSeparator = 
+                settings.separators_enabled === 'true' && 
+                settings.separator_type && 
+                settings.separator_type !== 'none' &&
+                index > 0 && 
+                block.sectionKey !== 'rodape' &&
+                blocks[index - 1]?.sectionKey !== 'menu';
+              
+              return (
+                <section 
+                  key={block.id}
+                  data-section-key={block.sectionKey}
+                  className="relative"
+                >
+                  {showSeparator && (
+                    <SectionSeparator
+                      type={settings.separator_type as any}
+                      position="top"
+                      color={settings.separator_color}
+                    />
+                  )}
+                  <SectionLoader
+                    sectionKey={block.sectionKey}
+                    lpId={lpId}
+                    content={content[block.sectionKey]}
+                    settings={settings}
+                    userPlan={userPlan}
+                    context="editor"
+                    editable={false}
+                    disableAnimations={false}
+                  />
+                </section>
+              );
+            })}
 
             {/* WhatsApp Floating Button in Preview */}
             <WhatsAppFloatingButton settings={whatsAppConfig} />

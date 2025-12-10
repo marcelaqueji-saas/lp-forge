@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Link {
   label: string;
@@ -18,6 +20,7 @@ interface RodapeProps {
   content?: RodapeContent;
   variante?: 'modelo_a' | 'modelo_b';
   previewOverride?: RodapeContent;
+  stylePreset?: StylePreset;
 }
 
 const currentYear = new Date().getFullYear();
@@ -37,8 +40,10 @@ export const Rodape = ({
   content = {},
   variante = 'modelo_a',
   previewOverride,
+  stylePreset = 'glass',
 }: RodapeProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
 
   let links: Link[] = [];
   try {

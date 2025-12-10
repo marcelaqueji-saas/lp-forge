@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Quote, Star } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses } from '@/lib/styleTokens';
+import type { StylePreset } from '@/lib/sectionModels';
 
 interface Depoimento {
   nome: string;
@@ -21,6 +23,7 @@ interface ProvasSociaisProps {
   previewOverride?: ProvasSociaisContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
   cardStyle?: string;
+  stylePreset?: StylePreset;
 }
 
 const defaultContent: ProvasSociaisContent = {
@@ -53,8 +56,10 @@ export const ProvasSociais = ({
   previewOverride,
   variante = 'modelo_a',
   cardStyle = '',
+  stylePreset = 'glass',
 }: ProvasSociaisProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styleClasses = getStyleClasses(stylePreset);
 
   let depoimentos: Depoimento[] = [];
   try {
