@@ -548,4 +548,30 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+
+  /* Mobile-first utilities */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0); }
+  .touch-target { min-height: 44px; min-width: 44px; }
+  .overflow-wrap-anywhere { overflow-wrap: anywhere; }
+  
+  /* Section style variables */
+  .section-styled {
+    --section-primary: hsl(var(--primary));
+    --section-secondary: hsl(var(--secondary));
+    --section-accent: hsl(var(--accent));
+  }
+
+  /* WhatsApp button safe area */
+  .whatsapp-safe {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Responsive text utilities */
+  .text-responsive-sm { @apply text-xs sm:text-sm; }
+  .text-responsive-base { @apply text-sm sm:text-base; }
+  .text-responsive-lg { @apply text-base sm:text-lg md:text-xl; }
+  .text-responsive-xl { @apply text-lg sm:text-xl md:text-2xl; }
+  .text-responsive-2xl { @apply text-xl sm:text-2xl md:text-3xl; }
+  .text-responsive-3xl { @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl; }
 }

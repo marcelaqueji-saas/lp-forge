@@ -132,7 +132,7 @@ export const ParaQuemEEditable = ({
       data-section-key="para_quem_e"
     >
       <div className="section-container">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12 px-1">
           <EditableField
             value={fc.titulo || ''}
             fieldKey="titulo"
@@ -143,7 +143,7 @@ export const ParaQuemEEditable = ({
             as="h2"
             editable={editable}
             placeholder="Título da seção"
-            className="section-title mb-4"
+            className="section-title mb-3 sm:mb-4 break-words"
           />
           <EditableField
             value={fc.subtitulo || ''}
@@ -155,11 +155,12 @@ export const ParaQuemEEditable = ({
             as="p"
             editable={editable}
             placeholder="Subtítulo"
-            className="section-subtitle max-w-2xl mx-auto"
+            className="section-subtitle max-w-2xl mx-auto break-words"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Grid responsivo - mobile-first */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
           {perfis.map((perfil, idx) => {
             const IconComp = iconMap[perfil.icone || 'Users'] || Users;
             return (
@@ -170,9 +171,9 @@ export const ParaQuemEEditable = ({
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <div className="glass-card p-6 h-full text-center hover:shadow-lg transition-shadow">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <IconComp className="w-7 h-7 text-primary" />
+                <div className="glass-card p-4 sm:p-5 md:p-6 h-full text-center hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <IconComp className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                   </div>
 
                   {editable ? (
@@ -181,15 +182,15 @@ export const ParaQuemEEditable = ({
                       suppressContentEditableWarning
                       onBlur={(e) => handlePerfilUpdate(idx, 'titulo', e.currentTarget.textContent || '')}
                       className={cn(
-                        "font-semibold text-lg mb-2 outline-none",
-                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                        "font-semibold text-base sm:text-lg mb-1.5 sm:mb-2 outline-none break-words",
+                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text touch-manipulation",
                         "focus:ring-2 focus:ring-primary/20"
                       )}
                     >
                       {perfil.titulo}
                     </div>
                   ) : (
-                    <h3 className="font-semibold text-lg mb-2">{perfil.titulo}</h3>
+                    <h3 className="font-semibold text-base sm:text-lg mb-1.5 sm:mb-2 break-words">{perfil.titulo}</h3>
                   )}
 
                   {editable ? (
@@ -198,15 +199,15 @@ export const ParaQuemEEditable = ({
                       suppressContentEditableWarning
                       onBlur={(e) => handlePerfilUpdate(idx, 'descricao', e.currentTarget.textContent || '')}
                       className={cn(
-                        "text-muted-foreground text-sm outline-none",
-                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                        "text-muted-foreground text-xs sm:text-sm outline-none break-words",
+                        "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text touch-manipulation",
                         "focus:ring-2 focus:ring-primary/20"
                       )}
                     >
                       {perfil.descricao}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">{perfil.descricao}</p>
+                    <p className="text-muted-foreground text-xs sm:text-sm break-words">{perfil.descricao}</p>
                   )}
                 </div>
               </motion.div>

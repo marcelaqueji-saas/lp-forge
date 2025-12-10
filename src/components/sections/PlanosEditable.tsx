@@ -136,7 +136,7 @@ export const PlanosEditable = ({
       data-section-key="planos"
     >
       <div className="section-container">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12 px-1">
           <EditableField
             value={fc.titulo || ''}
             fieldKey="titulo"
@@ -147,7 +147,7 @@ export const PlanosEditable = ({
             as="h2"
             editable={editable}
             placeholder="Título da seção"
-            className="section-title mb-4"
+            className="section-title mb-3 sm:mb-4 break-words"
           />
           <EditableField
             value={fc.subtitulo || ''}
@@ -159,11 +159,12 @@ export const PlanosEditable = ({
             as="p"
             editable={editable}
             placeholder="Subtítulo"
-            className="section-subtitle max-w-2xl mx-auto"
+            className="section-subtitle max-w-2xl mx-auto break-words"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {/* Grid de planos - mobile-first */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 max-w-5xl mx-auto">
           {planos.map((plano, idx) => (
             <motion.div
               key={idx}
@@ -178,13 +179,13 @@ export const PlanosEditable = ({
             >
               <div
                 className={cn(
-                  "glass-card p-6 h-full flex flex-col",
+                  "glass-card p-4 sm:p-5 md:p-6 h-full flex flex-col",
                   plano.destaque && "ring-2 ring-primary shadow-xl"
                 )}
               >
                 {plano.destaque && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full">
+                    <span className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap">
                       Mais popular
                     </span>
                   </div>
@@ -197,15 +198,15 @@ export const PlanosEditable = ({
                     suppressContentEditableWarning
                     onBlur={(e) => handlePlanoUpdate(idx, 'nome', e.currentTarget.textContent || '')}
                     className={cn(
-                      "font-semibold text-lg mb-2 outline-none",
-                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                      "font-semibold text-base sm:text-lg mb-1.5 sm:mb-2 outline-none break-words",
+                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text touch-manipulation",
                       "focus:ring-2 focus:ring-primary/20"
                     )}
                   >
                     {plano.nome}
                   </div>
                 ) : (
-                  <h3 className="font-semibold text-lg mb-2">{plano.nome}</h3>
+                  <h3 className="font-semibold text-base sm:text-lg mb-1.5 sm:mb-2 break-words">{plano.nome}</h3>
                 )}
 
                 {/* Preço */}
@@ -215,15 +216,15 @@ export const PlanosEditable = ({
                     suppressContentEditableWarning
                     onBlur={(e) => handlePlanoUpdate(idx, 'preco', e.currentTarget.textContent || '')}
                     className={cn(
-                      "text-3xl font-bold mb-2 outline-none",
-                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                      "text-2xl sm:text-3xl font-bold mb-1.5 sm:mb-2 outline-none break-words",
+                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text touch-manipulation",
                       "focus:ring-2 focus:ring-primary/20"
                     )}
                   >
                     {plano.preco}
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold mb-2">{plano.preco}</p>
+                  <p className="text-2xl sm:text-3xl font-bold mb-1.5 sm:mb-2 break-words">{plano.preco}</p>
                 )}
 
                 {/* Descrição */}
@@ -233,22 +234,22 @@ export const PlanosEditable = ({
                     suppressContentEditableWarning
                     onBlur={(e) => handlePlanoUpdate(idx, 'descricao', e.currentTarget.textContent || '')}
                     className={cn(
-                      "text-muted-foreground mb-6 outline-none",
-                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text",
+                      "text-muted-foreground text-sm mb-4 sm:mb-6 outline-none break-words",
+                      "hover:bg-primary/5 px-2 -mx-2 rounded transition-colors cursor-text touch-manipulation",
                       "focus:ring-2 focus:ring-primary/20"
                     )}
                   >
                     {plano.descricao}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground mb-6">{plano.descricao}</p>
+                  <p className="text-muted-foreground text-sm mb-4 sm:mb-6 break-words">{plano.descricao}</p>
                 )}
 
                 {/* Itens */}
-                <ul className="space-y-3 mb-6 flex-1">
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-1">
                   {plano.itens?.map((item, itemIdx) => (
                     <li key={itemIdx} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0 mt-0.5" />
                       {editable ? (
                         <span
                           contentEditable
@@ -259,15 +260,15 @@ export const PlanosEditable = ({
                             handlePlanoUpdate(idx, 'itens', newItens);
                           }}
                           className={cn(
-                            "text-sm outline-none flex-1",
-                            "hover:bg-primary/5 px-1 -mx-1 rounded transition-colors cursor-text",
+                            "text-xs sm:text-sm outline-none flex-1 break-words",
+                            "hover:bg-primary/5 px-1 -mx-1 rounded transition-colors cursor-text touch-manipulation",
                             "focus:ring-2 focus:ring-primary/20"
                           )}
                         >
                           {item}
                         </span>
                       ) : (
-                        <span className="text-sm">{item}</span>
+                        <span className="text-xs sm:text-sm break-words">{item}</span>
                       )}
                     </li>
                   ))}
@@ -276,11 +277,11 @@ export const PlanosEditable = ({
                 {/* CTA */}
                 <Button
                   variant={plano.destaque ? "default" : "outline"}
-                  className="w-full"
+                  className="w-full h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
                   onClick={() => handlePlanClick(plano.nome)}
                 >
                   Começar agora
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2 flex-shrink-0" />
                 </Button>
               </div>
             </motion.div>
