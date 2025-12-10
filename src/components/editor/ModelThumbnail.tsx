@@ -502,12 +502,12 @@ export const ModelThumbnail = ({
       whileTap={{ scale: isLocked ? 1 : 0.98 }}
       onClick={onClick}
       className={cn(
-        "relative w-full aspect-[4/3] rounded-xl border-2 transition-all overflow-hidden",
-        "text-foreground",
+        "relative w-full aspect-[4/3] rounded-lg sm:rounded-xl border-2 transition-all overflow-hidden",
+        "text-foreground touch-manipulation",
         STYLE_PRESET_GRADIENTS[stylePreset],
         isSelected 
           ? "border-primary shadow-md ring-2 ring-primary/20" 
-          : "border-border hover:border-primary/50",
+          : "border-border hover:border-primary/50 active:border-primary/70",
         isLocked && "opacity-60 cursor-not-allowed"
       )}
     >
@@ -523,8 +523,8 @@ export const ModelThumbnail = ({
           animate={{ opacity: 1 }}
           className="absolute inset-0 bg-primary/10 flex items-center justify-center"
         >
-          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-            <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -534,29 +534,29 @@ export const ModelThumbnail = ({
       {/* Lock overlay */}
       {isLocked && (
         <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
-          <Lock className="w-5 h-5 text-muted-foreground" />
+          <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
         </div>
       )}
 
-      {/* Plan badge */}
+      {/* Plan badge - Responsive sizing */}
       {plan !== 'free' && (
-        <div className="absolute top-1.5 right-1.5">
+        <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
           <Badge 
             variant={plan === 'premium' ? 'default' : 'secondary'}
             className={cn(
-              "text-[9px] px-1.5 py-0.5 uppercase font-semibold",
+              "text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 sm:py-0.5 uppercase font-semibold",
               plan === 'premium' && "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0"
             )}
           >
-            {plan === 'premium' && <Sparkles className="w-2.5 h-2.5 mr-0.5" />}
+            {plan === 'premium' && <Sparkles className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />}
             {plan}
           </Badge>
         </div>
       )}
 
-      {/* Model name */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 via-background/80 to-transparent p-2 pt-4">
-        <span className="text-[11px] font-medium truncate block leading-tight">{name}</span>
+      {/* Model name - Mobile optimized */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 via-background/80 to-transparent p-1.5 sm:p-2 pt-3 sm:pt-4">
+        <span className="text-[10px] sm:text-[11px] font-medium line-clamp-1 leading-tight break-words">{name}</span>
       </div>
     </motion.button>
   );

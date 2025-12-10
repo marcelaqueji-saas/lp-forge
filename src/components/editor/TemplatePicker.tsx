@@ -256,23 +256,27 @@ export const TemplatePicker = ({
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className={isMobile ? "h-[85vh] rounded-t-3xl bg-card/95" : "w-[420px]"}
+        className={cn(
+          isMobile 
+            ? "h-[90vh] rounded-t-3xl bg-card/95 px-4" 
+            : "w-[420px] sm:w-[480px]"
+        )}
       >
-        <SheetHeader className="pb-4">
-          <SheetTitle>Layout — {sectionName}</SheetTitle>
-          <SheetDescription>Escolha um modelo diferente</SheetDescription>
+        <SheetHeader className="pb-3 sm:pb-4">
+          <SheetTitle className="text-base sm:text-lg">Layout — {sectionName}</SheetTitle>
+          <SheetDescription className="text-xs sm:text-sm">Escolha um modelo diferente</SheetDescription>
         </SheetHeader>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <div className="flex justify-center py-8 sm:py-10">
+            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-primary" />
           </div>
         ) : visibleVariants.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground py-10">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground py-8 sm:py-10">
             Nenhum modelo disponível para esta seção.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 gap-2.5 sm:gap-3 max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] overflow-y-auto pr-0.5 sm:pr-1 -mr-1">
             {visibleVariants.map((variant) => {
               const { model, template, config } = variant;
               const locked = isLockedForUserPlan(variant);
@@ -284,10 +288,10 @@ export const TemplatePicker = ({
                   type="button"
                   key={model.id}
                   className={cn(
-                    "relative rounded-xl border text-left p-3 transition-colors w-full",
+                    "relative rounded-lg sm:rounded-xl border text-left p-2.5 sm:p-3 transition-colors w-full touch-manipulation",
                     selected
                       ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50",
+                      : "border-border hover:border-primary/50 active:border-primary/70",
                     locked && "opacity-60 pointer-events-none",
                     isSaving && "opacity-70"
                   )}
@@ -300,47 +304,48 @@ export const TemplatePicker = ({
                         src={template.preview_thumbnail}
                         alt={model.name}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                   ) : (
-                    <div className="aspect-video flex items-center justify-center bg-muted rounded-md mb-2 text-xs text-muted-foreground">
+                    <div className="aspect-video flex items-center justify-center bg-muted rounded-md mb-2 text-[10px] sm:text-xs text-muted-foreground px-2 text-center">
                       {model.name}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mb-1 gap-2">
-                    <span className="text-sm font-medium truncate">
+                  <div className="flex items-center justify-between mb-0.5 sm:mb-1 gap-2">
+                    <span className="text-xs sm:text-sm font-medium line-clamp-1 break-words">
                       {model.name}
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {config.is_featured && (
-                        <Sparkles className="w-4 h-4 text-primary" />
+                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                       )}
                       {isSaving ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-muted-foreground" />
                       ) : selected ? (
-                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-3 h-3 text-primary-foreground" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
                         </div>
                       ) : null}
                     </div>
                   </div>
 
                   {model.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 break-words">
                       {model.description}
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between mt-2 gap-2">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-between mt-1.5 sm:mt-2 gap-2">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {model.plan && model.plan !== "free" && (
                         <Badge
                           variant={
                             model.plan === "premium" ? "default" : "secondary"
                           }
-                          className="text-[10px] px-1"
+                          className="text-[8px] sm:text-[10px] px-1 py-0"
                         >
                           {model.plan.toUpperCase()}
                         </Badge>
@@ -349,7 +354,7 @@ export const TemplatePicker = ({
                       {template?.category && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] capitalize"
+                          className="text-[8px] sm:text-[10px] capitalize px-1 py-0"
                         >
                           {template.category}
                         </Badge>
@@ -358,7 +363,7 @@ export const TemplatePicker = ({
 
                     <div className="flex items-center gap-1">
                       {locked && (
-                        <Lock className="w-4 h-4 text-muted-foreground" />
+                        <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                       )}
                     </div>
                   </div>

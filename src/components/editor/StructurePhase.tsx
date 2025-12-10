@@ -148,45 +148,46 @@ export const StructurePhase = ({
 
     return (
       <Card className={cn(
-        "border-2 transition-all duration-200",
+        "border-2 transition-all duration-200 overflow-hidden",
         isExpanded ? "border-primary shadow-lg" : "border-border hover:border-primary/50"
       )}>
-        <CardContent className="p-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <CardContent className="p-3 sm:p-4">
+          {/* Header - Mobile-first responsive layout */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 sm:justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               {definition.canReorder && canModify && (
-                <div className="cursor-grab text-muted-foreground hover:text-foreground">
+                <div className="cursor-grab text-muted-foreground hover:text-foreground flex-shrink-0">
                   <GripVertical className="w-4 h-4" />
                 </div>
               )}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-foreground">{definition.name}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-foreground text-sm sm:text-base truncate">{definition.name}</span>
                   {definition.isFixed && (
-                    <Badge variant="outline" className="text-[10px]">Fixo</Badge>
+                    <Badge variant="outline" className="text-[9px] sm:text-[10px] flex-shrink-0">Fixo</Badge>
                   )}
                 </div>
                 {currentModel && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Modelo: {currentModel.name}
+                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                    {currentModel.name}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Model selector toggle */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Model selector toggle - Compact on mobile */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setExpandedSection(isExpanded ? null : block.id)}
-                className="h-8"
+                className="h-8 px-2 sm:px-3 text-xs sm:text-sm"
               >
-                <Layout className="w-4 h-4 mr-1" />
-                Trocar modelo
+                <Layout className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Trocar modelo</span>
+                <span className="sm:hidden">Modelo</span>
                 <ChevronDown className={cn(
-                  "w-4 h-4 ml-1 transition-transform",
+                  "w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5 sm:ml-1 transition-transform",
                   isExpanded && "rotate-180"
                 )} />
               </Button>
@@ -202,7 +203,7 @@ export const StructurePhase = ({
                     disabled={!canAddMore}
                     title="Duplicar bloco"
                   >
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -211,14 +212,14 @@ export const StructurePhase = ({
                     className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     title="Remover bloco"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </>
               )}
             </div>
           </div>
 
-          {/* Model selector expanded */}
+          {/* Model selector expanded - Mobile-optimized grid */}
           <AnimatePresence>
             {isExpanded && (
               <motion.div
@@ -227,9 +228,9 @@ export const StructurePhase = ({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="pt-4 mt-4 border-t">
-                  <p className="text-sm font-medium mb-3 text-foreground">Escolher modelo:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t">
+                  <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-foreground">Escolher modelo:</p>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                     {models.map((model) => {
                       const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
                       const isSelected = block.modelId === model.id;
@@ -273,14 +274,14 @@ export const StructurePhase = ({
     if (isDynamic && !canAddMore) {
       return (
         <Card className="border-2 border-dashed border-muted-foreground/30 bg-muted/20">
-          <CardContent className="p-6 text-center">
-            <Lock className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground mb-3">
-              Limite de {limits.maxDynamicBlocks} blocos atingido no plano {userPlan}
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Lock className="w-6 h-6 sm:w-8 sm:h-8 mx-auto text-muted-foreground mb-2" />
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+              Limite de {limits.maxDynamicBlocks} blocos no plano {userPlan}
             </p>
             <Button variant="outline" size="sm" onClick={onUpgradeClick}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              Fazer upgrade
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              <span className="text-xs sm:text-sm">Fazer upgrade</span>
             </Button>
           </CardContent>
         </Card>
@@ -294,20 +295,20 @@ export const StructurePhase = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="border-2 border-dashed border-primary/50 bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-primary" />
+        <Card className="border-2 border-dashed border-primary/50 bg-primary/5 overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Adicionar: {definition.name}</h3>
-                <p className="text-sm text-muted-foreground">{definition.description}</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">Adicionar: {definition.name}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{definition.description}</p>
               </div>
             </div>
 
-            <p className="text-sm font-medium mb-3 text-foreground">Escolha um modelo:</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-foreground">Escolha um modelo:</p>
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               {models.map((model) => {
                 const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
                 const isSelected = previewModel?.modelId === model.id;
@@ -337,25 +338,27 @@ export const StructurePhase = ({
               })}
             </div>
 
-            {/* Preview and confirm */}
+            {/* Preview and confirm - Mobile responsive buttons */}
             {previewModel && previewModel.sectionKey === nextSectionToAdd && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mt-4 pt-4 border-t"
+                className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t"
               >
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setPreviewModel(null)}
+                    className="w-full sm:w-auto text-sm"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={() => handleSelectModel(nextSectionToAdd, previewModel.modelId)}
                     disabled={addingSection}
+                    className="w-full sm:w-auto text-sm"
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Adicionar seção
                   </Button>
                 </div>
@@ -368,23 +371,23 @@ export const StructurePhase = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Status */}
-      <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
-        <div>
-          <p className="font-medium text-foreground">Estrutura da página</p>
-          <p className="text-sm text-muted-foreground">
-            {blocks.length} seções • {dynamicBlockCount} blocos dinâmicos
+    <div className="space-y-3 sm:space-y-4">
+      {/* Status - Mobile responsive */}
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 p-3 sm:p-4 rounded-lg bg-muted/30 border">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-foreground text-sm sm:text-base">Estrutura da página</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {blocks.length} seções • {dynamicBlockCount} blocos
           </p>
         </div>
         {!isMaster && (
-          <Badge variant="outline">
+          <Badge variant="outline" className="text-[10px] sm:text-xs self-start xs:self-auto flex-shrink-0">
             {dynamicBlockCount}/{limits.maxDynamicBlocks} blocos
           </Badge>
         )}
         {isMaster && (
-          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-            Master - Ilimitado
+          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs self-start xs:self-auto flex-shrink-0">
+            Master
           </Badge>
         )}
       </div>

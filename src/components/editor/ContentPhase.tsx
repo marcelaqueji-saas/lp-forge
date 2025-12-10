@@ -224,44 +224,44 @@ export const ContentPhase = ({
         <Card className={cn(
           "border-2 transition-all duration-200 overflow-hidden",
           isEditing 
-            ? "border-primary shadow-xl ring-4 ring-primary/20" 
+            ? "border-primary shadow-xl ring-2 sm:ring-4 ring-primary/20" 
             : "border-border hover:border-primary/50"
         )}>
           <CardContent className="p-0">
-            {/* Header */}
+            {/* Header - Mobile-first responsive */}
             <div 
               className={cn(
-                "flex items-center justify-between p-4 cursor-pointer transition-colors",
+                "flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-0 xs:justify-between p-3 sm:p-4 cursor-pointer transition-colors",
                 isExpanded ? "bg-muted/30" : "hover:bg-muted/20"
               )}
               onClick={() => !isEditing && handleToggleExpand(block.id)}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <div className={cn(
-                  "w-2 h-2 rounded-full",
+                  "w-2 h-2 rounded-full flex-shrink-0",
                   contentStatus === 'edited' ? "bg-green-500" : "bg-muted-foreground/30"
                 )} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-foreground text-sm sm:text-base">
                       {SECTION_NAMES[block.sectionKey] || definition.name}
                     </span>
-                    <Badge variant="outline" className="text-[10px]">
-                      {currentModel?.name || 'Modelo básico'}
+                    <Badge variant="outline" className="text-[9px] sm:text-[10px] flex-shrink-0">
+                      {currentModel?.name || 'Básico'}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {contentTypes.map((type, i) => (
-                      <span key={i} className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-wrap">
+                    {contentTypes.slice(0, 3).map((type, i) => (
+                      <span key={i} className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-muted-foreground">
                         {type.icon}
-                        {type.label}
+                        <span className="hidden xs:inline">{type.label}</span>
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 self-end xs:self-auto">
                 {isEditing ? (
                   <Button
                     variant="default"
@@ -270,10 +270,11 @@ export const ContentPhase = ({
                       e.stopPropagation();
                       handleStopEditing();
                     }}
-                    className="h-8"
+                    className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    <Check className="w-4 h-4 mr-1" />
-                    Concluído
+                    <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden xs:inline">Concluído</span>
+                    <span className="xs:hidden">OK</span>
                   </Button>
                 ) : (
                   <Button
@@ -283,10 +284,11 @@ export const ContentPhase = ({
                       e.stopPropagation();
                       handleStartEditing(block.sectionKey, block.id);
                     }}
-                    className="h-8"
+                    className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    <Pencil className="w-4 h-4 mr-1" />
-                    Editar conteúdo
+                    <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden xs:inline">Editar conteúdo</span>
+                    <span className="xs:hidden">Editar</span>
                   </Button>
                 )}
                 <Button
@@ -296,10 +298,10 @@ export const ContentPhase = ({
                     e.stopPropagation();
                     handleToggleExpand(block.id);
                   }}
-                  className="h-8 w-8 p-0"
+                  className="h-7 sm:h-8 w-7 sm:w-8 p-0"
                 >
                   <ChevronDown className={cn(
-                    "w-4 h-4 transition-transform",
+                    "w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform",
                     isExpanded && "rotate-180"
                   )} />
                 </Button>
@@ -315,31 +317,31 @@ export const ContentPhase = ({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {/* Editing instructions */}
+                  {/* Editing instructions - Mobile friendly */}
                   {isEditing && (
-                    <div className="px-4 py-2 bg-primary/10 border-y border-primary/20">
-                      <p className="text-sm text-primary">
-                        <strong>Modo edição:</strong> Clique em qualquer texto ou imagem para editar diretamente
+                    <div className="px-3 sm:px-4 py-2 bg-primary/10 border-y border-primary/20">
+                      <p className="text-xs sm:text-sm text-primary">
+                        <strong>Edição:</strong> <span className="hidden xs:inline">Clique em qualquer texto ou imagem para editar</span><span className="xs:hidden">Toque para editar</span>
                       </p>
                     </div>
                   )}
 
-                  {/* Section preview/editor */}
+                  {/* Section preview/editor - Mobile optimized container */}
                   <div className={cn(
-                    "relative border-t bg-background",
-                    !isEditing && "max-h-[500px] overflow-y-auto"
+                    "relative border-t bg-background overflow-x-hidden",
+                    !isEditing && "max-h-[350px] sm:max-h-[500px] overflow-y-auto"
                   )}>
                     {renderEditableComponent(block)}
 
                     {/* Overlay when not editing */}
                     {!isEditing && (
                       <div 
-                        className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60 flex items-end justify-center pb-4 cursor-pointer"
+                        className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60 flex items-end justify-center pb-3 sm:pb-4 cursor-pointer"
                         onClick={() => handleStartEditing(block.sectionKey, block.id)}
                       >
-                        <Button variant="secondary" size="sm">
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Clique para editar
+                        <Button variant="secondary" size="sm" className="text-xs sm:text-sm h-8 sm:h-9">
+                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                          Editar
                         </Button>
                       </div>
                     )}
@@ -354,30 +356,30 @@ export const ContentPhase = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Status bar */}
-      <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
-        <div>
-          <p className="font-medium text-foreground">Edição de conteúdo</p>
-          <p className="text-sm text-muted-foreground">
-            Clique em qualquer seção para editar textos, imagens e listas
+    <div className="space-y-3 sm:space-y-4">
+      {/* Status bar - Mobile responsive */}
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 p-3 sm:p-4 rounded-lg bg-muted/30 border">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-foreground text-sm sm:text-base">Edição de conteúdo</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Toque em qualquer seção para editar
           </p>
         </div>
         {editingSection && (
-          <Badge className="bg-primary">
+          <Badge className="bg-primary text-[10px] sm:text-xs self-start xs:self-auto flex-shrink-0">
             Editando: {SECTION_NAMES[editingSection]}
           </Badge>
         )}
       </div>
 
-      {/* Editing tip */}
-      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-700 dark:text-blue-300">
-        <strong>Dica:</strong> Na edição inline, clique diretamente no texto ou imagem que deseja alterar. 
-        As alterações são salvas automaticamente.
+      {/* Editing tip - Mobile friendly */}
+      <div className="p-2.5 sm:p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+        <strong>Dica:</strong> <span className="hidden xs:inline">Na edição inline, clique diretamente no texto ou imagem que deseja alterar. As alterações são salvas automaticamente.</span>
+        <span className="xs:hidden">Toque no texto/imagem para editar. Salva automaticamente.</span>
       </div>
 
       {/* Section cards */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {blocks.map((block) => renderSectionCard(block))}
       </div>
     </div>

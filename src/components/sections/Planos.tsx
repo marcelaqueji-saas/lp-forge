@@ -151,9 +151,9 @@ export const Planos = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
           >
-            <h2 className="section-title mb-4">{finalContent.titulo}</h2>
+            <h2 className="section-title mb-3 sm:mb-4">{finalContent.titulo}</h2>
             <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
           </motion.div>
 
@@ -162,7 +162,7 @@ export const Planos = ({
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="flex flex-col lg:flex-row gap-6 items-stretch justify-center"
+            className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-stretch justify-center"
           >
             {planos.map((plano, index) => {
               let itens: string[] = [];
@@ -176,12 +176,12 @@ export const Planos = ({
                 <motion.div
                   key={index}
                   variants={itemVariants}
-                  className={`flex-1 max-w-sm ${
+                  className={`flex-1 max-w-sm mx-auto lg:mx-0 w-full ${
                     plano.destaque ? 'lg:-mt-4 lg:mb-4' : ''
                   }`}
                 >
                   <div
-                    className={`h-full rounded-2xl p-8 ${
+                    className={`h-full rounded-xl sm:rounded-2xl p-5 sm:p-8 ${
                       plano.destaque
                         ? 'gradient-bg text-primary-foreground shadow-glow-lg'
                         : cardStyle ||
@@ -189,43 +189,43 @@ export const Planos = ({
                     }`}
                   >
                     {plano.destaque && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <Sparkles className="w-4 h-4" />
-                        <span className="text-sm font-medium">
+                      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="text-xs sm:text-sm font-medium">
                           Mais popular
                         </span>
                       </div>
                     )}
-                    <h3 className="text-2xl font-bold mb-2">{plano.nome}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold mb-2 break-words">{plano.nome}</h3>
                     <p
-                      className={`text-sm mb-4 ${
+                      className={`text-xs sm:text-sm mb-3 sm:mb-4 ${
                         plano.destaque ? 'opacity-80' : 'text-muted-foreground'
                       }`}
                     >
                       {plano.descricao}
                     </p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">
+                    <div className="mb-4 sm:mb-6">
+                      <span className="text-3xl sm:text-4xl font-bold break-words">
                         {plano.preco}
                       </span>
                       <span
-                        className={
+                        className={`text-sm ${
                           plano.destaque ? 'opacity-80' : 'text-muted-foreground'
-                        }
+                        }`}
                       >
                         /mês
                       </span>
                     </div>
-                    <ul className="space-y-3 mb-8">
+                    <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                       {itens.map((item, i) => (
-                        <li key={i} className="flex items-center gap-3">
+                        <li key={i} className="flex items-start gap-2 sm:gap-3">
                           <Check
-                            className={`w-5 h-5 ${
+                            className={`w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0 ${
                               plano.destaque ? '' : 'text-success'
                             }`}
                           />
                           <span
-                            className={plano.destaque ? 'opacity-90' : ''}
+                            className={`text-sm sm:text-base break-words ${plano.destaque ? 'opacity-90' : ''}`}
                           >
                             {item}
                           </span>
@@ -234,7 +234,7 @@ export const Planos = ({
                     </ul>
                     <button
                       onClick={() => handlePlanClick(plano.nome)}
-                      className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+                      className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
                         plano.destaque
                           ? 'bg-card text-foreground hover:bg-card/90'
                           : 'btn-primary'
@@ -266,9 +266,9 @@ export const Planos = ({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
-          <h2 className="section-title mb-4">{finalContent.titulo}</h2>
+          <h2 className="section-title mb-3 sm:mb-4">{finalContent.titulo}</h2>
           <p className="section-subtitle mx-auto">{finalContent.subtitulo}</p>
         </motion.div>
 
@@ -277,7 +277,7 @@ export const Planos = ({
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto"
         >
           {planos.map((plano, index) => {
             let itens: string[] = [];
@@ -291,45 +291,45 @@ export const Planos = ({
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className={`relative rounded-2xl ${
+                className={`relative rounded-xl sm:rounded-2xl ${
                   plano.destaque ? 'gradient-border' : ''
                 }`}
               >
                 <div
-                  className={`h-full rounded-2xl p-8 ${
+                  className={`h-full rounded-xl sm:rounded-2xl p-5 sm:p-8 ${
                     plano.destaque
                       ? 'bg-card shadow-glow'
                       : cardStyle || 'premium-card-soft'
                   }`}
                 >
                   {plano.destaque && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 gradient-bg rounded-full text-primary-foreground text-sm font-medium">
+                    <div className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-0.5 sm:py-1 gradient-bg rounded-full text-primary-foreground text-xs sm:text-sm font-medium whitespace-nowrap">
                       Recomendado
                     </div>
                   )}
-                  <h3 className="text-xl font-bold mb-2">{plano.nome}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2 break-words">{plano.nome}</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
                     {plano.descricao}
                   </p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold">
+                  <div className="mb-4 sm:mb-6">
+                    <span className="text-3xl sm:text-4xl font-bold break-words">
                       {plano.preco}
                     </span>
-                    <span className="text-muted-foreground">/mês</span>
+                    <span className="text-muted-foreground text-sm">/mês</span>
                   </div>
-                  <ul className="space-y-3 mb-8">
+                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                     {itens.map((item, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-success" />
+                      <li key={i} className="flex items-start gap-2 sm:gap-3">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-success/10 flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-success" />
                         </div>
-                        <span className="text-sm">{item}</span>
+                        <span className="text-xs sm:text-sm break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
                   <button
                     onClick={() => handlePlanClick(plano.nome)}
-                    className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
                       plano.destaque ? 'btn-primary' : 'btn-secondary'
                     }`}
                   >
