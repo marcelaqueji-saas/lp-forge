@@ -1,6 +1,6 @@
 /**
  * MenuEditable - Menu/Header com edição inline
- * Sprint 4.4: 100% do conteúdo editável inline
+ * Sprint 5.2: Suporte a stylePreset e modelId
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -9,9 +9,10 @@ import { Menu, X, ChevronRight } from "lucide-react";
 import { trackSectionView, trackCTAClick } from "@/lib/tracking";
 import { EditableField, EditableImageField, EditableLink } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getStyleClasses } from "@/lib/styleTokens";
 
 interface Link {
   label: string;
@@ -22,6 +23,8 @@ interface MenuEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -40,10 +43,35 @@ const defaultContent = {
   cta_url: "#planos",
 };
 
+// Get style classes based on stylePreset
+const getMenuStyleClasses = (stylePreset: StylePreset = 'glass') => {
+  const baseClasses = "sticky top-0 z-50 overflow-x-hidden";
+  
+  switch (stylePreset) {
+    case 'dark':
+      return cn(baseClasses, "bg-zinc-900/95 backdrop-blur-lg border-b border-zinc-800 text-white");
+    case 'neon':
+      return cn(baseClasses, "bg-black/95 backdrop-blur-lg border-b border-cyan-500/30 text-white");
+    case 'visionos':
+      return cn(baseClasses, "bg-white/70 backdrop-blur-xl border-b border-white/20 text-foreground shadow-lg");
+    case 'aurora':
+      return cn(baseClasses, "bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 backdrop-blur-xl border-b border-white/20");
+    case 'minimal':
+      return cn(baseClasses, "bg-white border-b border-gray-200 text-gray-900");
+    case 'frosted':
+      return cn(baseClasses, "bg-white/50 backdrop-blur-2xl border-b border-white/30 shadow-sm");
+    case 'glass':
+    default:
+      return cn(baseClasses, "bg-background/95 backdrop-blur-lg border-b");
+  }
+};
+
 export const MenuEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -54,8 +82,8 @@ export const MenuEditable = ({
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S4.4 QA] MenuEditable: mounted', { lpId, editable, variante });
-  }, [lpId, editable, variante]);
+    console.log('[S5.2 QA] MenuEditable: mounted', { lpId, editable, variante, modelId, stylePreset });
+  }, [lpId, editable, variante, modelId, stylePreset]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
@@ -114,7 +142,7 @@ export const MenuEditable = ({
   return (
     <header
       ref={sectionRef}
-      className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b overflow-x-hidden"
+      className={getMenuStyleClasses(stylePreset)}
       id="menu"
       data-section-key="menu"
     >
