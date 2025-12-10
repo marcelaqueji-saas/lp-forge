@@ -381,6 +381,57 @@
     @apply scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent;
   }
 
+  /* ============================================================
+   * MOBILE-FIRST UTILITIES (Sprint 5.1)
+   * ============================================================ */
+  
+  /* Safe area padding for iOS */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Touch-friendly targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Overflow control */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Mobile-responsive grid utilities */
+  .grid-mobile-1 {
+    @apply grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3;
+  }
+
+  .grid-mobile-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* Card responsive padding */
+  .card-padding {
+    @apply p-4 sm:p-5 md:p-6;
+  }
+
+  /* Mobile text sizes */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+
   /* VisionOS Theme - Default para LPs */
   .visionos-theme {
     --background: 0 0% 100%;

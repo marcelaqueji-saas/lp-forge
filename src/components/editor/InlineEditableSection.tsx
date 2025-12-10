@@ -107,14 +107,16 @@ export const EditableField = ({
 
   return (
     <div
-      className="relative group/edit inline-block"
+      className="relative group/edit inline-block w-full max-w-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setTimeout(() => setIsHovered(false), 1000)}
       data-editable="text"
       data-section-key={sectionKey}
       data-field-key={fieldKey}
     >
-      {/* VisionGlass Tooltip */}
+      {/* VisionGlass Tooltip - Hidden on mobile, shown on hover for desktop */}
       <AnimatePresence>
         {isHovered && !isEditing && (
           <motion.div
@@ -122,7 +124,7 @@ export const EditableField = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden sm:block"
           >
             <div className="px-3 py-1.5 rounded-lg bg-background/95 backdrop-blur-xl border border-border/50 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
               <Pencil className="w-3 h-3 text-primary" />
@@ -132,7 +134,7 @@ export const EditableField = ({
         )}
       </AnimatePresence>
 
-      {/* VisionGlass Outline */}
+      {/* VisionGlass Outline - Mobile-optimized */}
       <div
         className={cn(
           "absolute -inset-1 rounded-lg transition-all duration-200 pointer-events-none",
@@ -141,7 +143,7 @@ export const EditableField = ({
         )}
       />
 
-      {/* Element */}
+      {/* Element - Mobile-first responsive */}
       <Tag
         ref={ref as any}
         contentEditable={isEditing}
@@ -152,26 +154,31 @@ export const EditableField = ({
         onInput={(e) => setLocalValue((e.target as HTMLElement).textContent || '')}
         className={cn(
           className,
-          "relative outline-none transition-all duration-200",
-          editable && !isEditing && "cursor-pointer",
-          isEditing && "px-2 py-1",
+          "relative outline-none transition-all duration-200 w-full max-w-full",
+          "break-words whitespace-normal overflow-wrap-anywhere",
+          "touch-manipulation", // Better touch handling
+          editable && !isEditing && "cursor-pointer active:bg-primary/5",
+          isEditing && "px-2 py-2 sm:py-1 text-base sm:text-inherit min-h-[44px] sm:min-h-[1em]", // Mobile touch target
           !value && !isEditing && "text-muted-foreground/50 italic"
         )}
-        style={{ minHeight: '1em' }}
+        style={{ 
+          minHeight: isEditing ? '44px' : '1em',
+          WebkitTapHighlightColor: 'transparent',
+        }}
       >
         {isEditing ? localValue : (value || placeholder)}
       </Tag>
 
-      {/* Saving indicator */}
+      {/* Saving indicator - Mobile-optimized position */}
       <AnimatePresence>
         {isSaving && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg"
+            className="absolute right-0 sm:-right-3 top-0 sm:-top-3 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shadow-lg"
           >
-            <Loader2 className="w-3.5 h-3.5 text-primary-foreground animate-spin" />
+            <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary-foreground animate-spin" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -298,9 +305,14 @@ export const EditableImageField = ({
       data-editable="image"
       data-section-key={sectionKey}
       data-field-key={fieldKey}
-      className={cn("relative group/edit-img cursor-pointer", className)}
+      className={cn(
+        "relative group/edit-img cursor-pointer w-full max-w-full touch-manipulation",
+        className
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setTimeout(() => setIsHovered(false), 1500)}
       onClick={() => fileInputRef.current?.click()}
     >
       <input
@@ -311,7 +323,7 @@ export const EditableImageField = ({
         className="hidden"
       />
 
-      {/* VisionGlass Tooltip */}
+      {/* VisionGlass Tooltip - Desktop only */}
       <AnimatePresence>
         {isHovered && !isUploading && (
           <motion.div
@@ -319,7 +331,7 @@ export const EditableImageField = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden sm:block"
           >
             <div className="px-3 py-1.5 rounded-lg bg-background/95 backdrop-blur-xl border border-border/50 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
               <ImageIcon className="w-3 h-3 text-primary" />
@@ -331,29 +343,31 @@ export const EditableImageField = ({
         )}
       </AnimatePresence>
 
-      {/* Image or placeholder */}
+      {/* Image or placeholder - Mobile responsive */}
       {src ? (
         <img
           src={src}
           alt={alt}
           className={cn(
-            "object-cover w-full h-full rounded-xl transition-all",
+            "object-cover w-full h-auto max-w-full rounded-xl transition-all",
             aspectClasses[aspectRatio]
           )}
+          loading="lazy"
         />
       ) : (
         <div
           className={cn(
             "bg-muted/30 rounded-xl flex flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/20",
+            "min-h-[120px] sm:min-h-[150px]",
             aspectClasses[aspectRatio]
           )}
         >
-          <ImageIcon className="w-8 h-8 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{placeholder}</span>
+          <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+          <span className="text-xs sm:text-sm text-muted-foreground text-center px-2">{placeholder}</span>
         </div>
       )}
 
-      {/* VisionGlass Overlay */}
+      {/* VisionGlass Overlay - Always visible on mobile when hovered */}
       <div
         className={cn(
           "absolute inset-0 rounded-xl transition-all flex items-center justify-center",
@@ -362,12 +376,12 @@ export const EditableImageField = ({
         )}
       >
         {isUploading ? (
-          <Loader2 className="w-8 h-8 text-white animate-spin" />
+          <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-white animate-spin" />
         ) : isHovered ? (
-          <div className="text-center text-white">
-            <ImageIcon className="w-6 h-6 mx-auto mb-1" />
-            <span className="text-sm font-medium">
-              {src ? 'Trocar imagem' : 'Adicionar imagem'}
+          <div className="text-center text-white p-2">
+            <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1" />
+            <span className="text-xs sm:text-sm font-medium">
+              {src ? 'Trocar' : 'Adicionar'}
             </span>
           </div>
         ) : null}
@@ -469,14 +483,14 @@ export const EditableLink = ({
       data-editable="link"
       data-section-key={sectionKey}
     >
-      {/* VisionGlass Tooltip */}
+      {/* VisionGlass Tooltip - Desktop only */}
       <AnimatePresence>
         {isHovered && !isEditing && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden sm:block"
           >
             <div className="px-3 py-1.5 rounded-lg bg-background/95 backdrop-blur-xl border border-border/50 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
               <Link2 className="w-3 h-3 text-primary" />
@@ -486,69 +500,96 @@ export const EditableLink = ({
         )}
       </AnimatePresence>
 
-      {/* Edit popup */}
+      {/* Edit popup - Mobile-optimized: fixed bottom on mobile, absolute on desktop */}
       <AnimatePresence>
         {isEditing && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-64 p-3 rounded-xl bg-background/95 backdrop-blur-xl border border-border shadow-xl"
-          >
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Texto do botão</label>
-                <input
-                  type="text"
-                  value={editLabel}
-                  onChange={(e) => setEditLabel(e.target.value)}
-                  className="w-full mt-1 px-2 py-1.5 text-sm rounded-md border bg-background"
-                  placeholder="Ex: Saiba mais"
-                />
+          <>
+            {/* Backdrop for mobile */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setEditLabel(label);
+                setEditUrl(url);
+                setIsEditing(false);
+              }}
+              className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40 sm:hidden"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={cn(
+                "z-50 p-4 sm:p-3 rounded-t-2xl sm:rounded-xl bg-background/98 backdrop-blur-xl border border-border shadow-2xl sm:shadow-xl",
+                // Mobile: fixed at bottom, full-width
+                "fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto sm:left-auto sm:right-auto",
+                // Desktop: absolute positioned below element
+                "sm:absolute sm:top-full sm:left-1/2 sm:-translate-x-1/2 sm:mt-2 sm:w-72"
+              )}
+            >
+              <div className="space-y-4 sm:space-y-3">
+                {/* Mobile handle */}
+                <div className="sm:hidden flex justify-center pb-2">
+                  <div className="w-12 h-1 bg-muted rounded-full" />
+                </div>
+                <div>
+                  <label className="text-sm sm:text-xs text-muted-foreground">Texto do botão</label>
+                  <input
+                    type="text"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    className="w-full mt-1.5 sm:mt-1 px-3 sm:px-2 py-2.5 sm:py-1.5 text-base sm:text-sm rounded-lg sm:rounded-md border bg-background touch-manipulation"
+                    placeholder="Ex: Saiba mais"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-sm sm:text-xs text-muted-foreground">URL de destino</label>
+                  <input
+                    type="url"
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    className="w-full mt-1.5 sm:mt-1 px-3 sm:px-2 py-2.5 sm:py-1.5 text-base sm:text-sm rounded-lg sm:rounded-md border bg-background touch-manipulation"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2 sm:pt-0 pb-safe">
+                  <button
+                    onClick={() => {
+                      setEditLabel(label);
+                      setEditUrl(url);
+                      setIsEditing(false);
+                    }}
+                    className="px-4 sm:px-2 py-2.5 sm:py-1 text-sm sm:text-xs rounded-lg sm:rounded-md hover:bg-muted touch-manipulation min-h-[44px] sm:min-h-0"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-4 sm:px-2 py-2.5 sm:py-1 text-sm sm:text-xs rounded-lg sm:rounded-md bg-primary text-primary-foreground hover:bg-primary/90 touch-manipulation min-h-[44px] sm:min-h-0"
+                  >
+                    {isSaving ? 'Salvando...' : 'Salvar'}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground">URL de destino</label>
-                <input
-                  type="text"
-                  value={editUrl}
-                  onChange={(e) => setEditUrl(e.target.value)}
-                  className="w-full mt-1 px-2 py-1.5 text-sm rounded-md border bg-background"
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setEditLabel(label);
-                    setEditUrl(url);
-                    setIsEditing(false);
-                  }}
-                  className="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-2 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  {isSaving ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      {/* Clickable element */}
+      {/* Clickable element - Touch optimized */}
       <div
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setIsEditing(true);
         }}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setTimeout(() => setIsHovered(false), 800)}
         className={cn(
-          "cursor-pointer transition-all",
+          "cursor-pointer transition-all touch-manipulation",
           isHovered && !isEditing && "ring-2 ring-primary/20 ring-offset-2 rounded-lg",
           className
         )}
