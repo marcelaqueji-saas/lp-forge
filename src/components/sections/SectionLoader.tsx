@@ -11,7 +11,8 @@ import {
   getSectionModel,
   SectionKey,
   SECTION_MODELS_BY_SECTION,
-  SECTION_MODEL_KEY, // <-- NOVO: importa a chave de modelo
+  SECTION_MODEL_KEY,
+  StylePreset,
 } from '@/lib/sectionModels';
 import { LPContent } from '@/lib/lpContentApi';
 import {
@@ -626,11 +627,14 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     let Component: ComponentType<any> | null = null;
     let componentKey = '';
 
+    // Get effective style preset from settings or model
+    const effectiveStylePreset = (settings?.global_theme as StylePreset) || sectionModel?.stylePreset || 'glass';
+
     // [S4.4] If editable mode, use editable component directly
     if (editable && lpId) {
       const EditableComponent = EDITABLE_COMPONENT_REGISTRY[sectionKey];
       if (EditableComponent) {
-        console.log(`[S4.4 QA] Using editable component for: ${sectionKey}`);
+        console.log(`[S5.2 QA] Using editable component for: ${sectionKey}, modelId=${variant}, stylePreset=${effectiveStylePreset}`);
         return (
           <SectionErrorBoundary sectionName={sectionKey}>
             <EditableComponent
@@ -639,6 +643,8 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
               userPlan={userPlan}
               editable={true}
               variante={mapVariantToLegacy(variant)}
+              modelId={variant}
+              stylePreset={effectiveStylePreset}
             />
           </SectionErrorBoundary>
         );
@@ -681,9 +687,7 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
       reducedMotion || disableAnimations
     );
     const cardClasses = getCardClasses(visualConfig.card_style);
-
-    // Use global_theme from settings if available, otherwise use model's stylePreset
-    const effectiveStylePreset = (settings?.global_theme as string) || sectionModel?.stylePreset || 'glass';
+    
     
     const componentProps = {
       lpId,

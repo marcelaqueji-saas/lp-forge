@@ -9,13 +9,16 @@ import { ArrowRight, Play } from "lucide-react";
 import { trackCTAClick, trackSectionView } from "@/lib/tracking";
 import { EditableField, EditableImageField, EditableLink } from "@/components/editor/InlineEditableSection";
 import { LPContent, saveSectionContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { cn } from "@/lib/utils";
 import heroImage from "@/assets/hero-dashboard.png";
 
 interface HeroEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -60,10 +63,33 @@ function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c
   }
 }
 
+// Get hero style classes based on stylePreset (only visual styles, not layout)
+const getHeroStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark':
+      return "bg-zinc-900 text-white";
+    case 'neon':
+      return "bg-black text-white";
+    case 'aurora':
+      return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos':
+      return "bg-white/80";
+    case 'minimal':
+      return "bg-gray-50";
+    case 'frosted':
+      return "bg-white/30 backdrop-blur-xl";
+    case 'glass':
+    default:
+      return "";
+  }
+};
+
 export const HeroEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -74,8 +100,8 @@ export const HeroEditable = ({
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S5.1 QA] HeroEditable: mounted', { lpId, editable, variante, normalizedVariant });
-  }, [lpId, editable, variante, normalizedVariant]);
+    console.log('[S5.2 QA] HeroEditable: mounted', { lpId, editable, variante, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, variante, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
@@ -118,7 +144,7 @@ export const HeroEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden"
+        className={cn("relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden", getHeroStyleModifiers(stylePreset))}
         id="hero"
         data-section-key="hero"
       >
@@ -266,7 +292,7 @@ export const HeroEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding relative overflow-hidden"
+        className={cn("section-padding relative overflow-hidden", getHeroStyleModifiers(stylePreset))}
         id="hero"
         data-section-key="hero"
       >
@@ -418,7 +444,7 @@ export const HeroEditable = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding relative overflow-hidden overflow-x-hidden"
+      className={cn("section-padding relative overflow-hidden overflow-x-hidden", getHeroStyleModifiers(stylePreset))}
       id="hero"
       data-section-key="hero"
     >
