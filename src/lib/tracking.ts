@@ -231,9 +231,13 @@ const flushEvents = async (): Promise<void> => {
   eventQueue = [];
 
   try {
+    // Filtrar eventos com lp_id válido
+    const validEvents = eventsToSend.filter(e => e.lp_id);
+    if (validEvents.length === 0) return;
+
     // Enviar em batch
     const { error } = await supabase.from('lp_events').insert(
-      eventsToSend.map((event) => ({
+      validEvents.map((event) => ({
         lp_id: event.lp_id,
         event_type: event.event_type,
         section: event.section || null,
@@ -252,9 +256,12 @@ const flushEvents = async (): Promise<void> => {
     );
 
     if (error) {
+      // RLS error for unpublished LP - silently ignore in editor context
+      if (error.code === '42501') {
+        console.log('[Tracking] Skipping events for unpublished LP (RLS policy)');
+        return;
+      }
       console.error('[Tracking] Error sending events:', error);
-      // Re-adicionar eventos à queue em caso de erro
-      eventQueue = [...eventsToSend, ...eventQueue];
     }
   } catch (e) {
     console.error('[Tracking] Network error:', e);

@@ -1,6 +1,6 @@
 /**
  * DashboardChecklist - Componente de checklist para o Dashboard
- * Sprint 4: Mostra progresso de publicação
+ * Sprint 4.2: Mostra progresso de publicação com validação QA
  */
 
 import { useState, useEffect } from 'react';
@@ -90,6 +90,14 @@ export const DashboardChecklist = ({
       ];
 
       setItems(checklistItems);
+      
+      // QA Log
+      const completedCount = checklistItems.filter(i => i.completed).length;
+      console.log('[S4.2 QA] Publish checklist:', { 
+        total: checklistItems.length, 
+        completed: completedCount,
+        percentage: Math.round((completedCount / checklistItems.length) * 100)
+      });
     } catch (error) {
       console.error('[DashboardChecklist] Error:', error);
     } finally {

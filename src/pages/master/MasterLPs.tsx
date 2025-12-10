@@ -56,7 +56,7 @@ const MasterLPs = () => {
 
   const loadData = async () => {
     const [lpsRes, usersData] = await Promise.all([
-      supabase.from('landing_pages').select('*').order('created_at', { ascending: false }),
+      supabase.from('landing_pages').select('*, lp_content(updated_at)').order('created_at', { ascending: false }),
       getAllUsers()
     ]);
 
@@ -187,7 +187,18 @@ const MasterLPs = () => {
           ) : filteredLPs.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhuma LP encontrada</div>
           ) : (
-            filteredLPs.map((lp) => (
+            filteredLPs.map((lp) => {
+              // Get last updated date from lp_content or created_at
+              const lastUpdated = (lp as any).lp_content?.[0]?.updated_at || lp.created_at;
+              const formattedDate = lastUpdated ? new Date(lastUpdated).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : '-';
+              
+              return (
               <div key={lp.id} className="glass-card p-4 flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -204,6 +215,7 @@ const MasterLPs = () => {
                   <p className="text-sm text-muted-foreground">/{lp.slug}</p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span>Dono: {getOwnerName(lp.owner_id)}</span>
+                    <span>Atualizado: {formattedDate}</span>
                     {lp.dominio && (
                       <span className="flex items-center gap-1">
                         <Globe className="w-3 h-3" />
@@ -238,7 +250,7 @@ const MasterLPs = () => {
                   </Button>
                 </div>
               </div>
-            ))
+            );})
           )}
         </div>
       </main>
