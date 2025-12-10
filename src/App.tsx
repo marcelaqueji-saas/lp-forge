@@ -418,6 +418,16 @@ const App = () => (
               }
             />
 
+            {/* QA/Development routes - internal only */}
+            <Route
+              path="/qa/sections"
+              element={
+                <AdminMasterRoute>
+                  <SectionsQA />
+                </AdminMasterRoute>
+              }
+            />
+
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
