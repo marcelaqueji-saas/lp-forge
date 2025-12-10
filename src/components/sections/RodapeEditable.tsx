@@ -1,6 +1,6 @@
 /**
  * RodapeEditable - Footer com edição inline
- * Sprint 4.4: 100% do conteúdo editável inline
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { trackSectionView } from "@/lib/tracking";
 import { EditableField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 
 interface Link {
@@ -20,6 +20,8 @@ interface RodapeEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
@@ -34,10 +36,25 @@ const defaultContent = {
   ]),
 };
 
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-950 text-zinc-400 border-t border-zinc-800";
+    case 'neon': return "bg-black text-cyan-400 border-t border-cyan-500/30";
+    case 'aurora': return "bg-gradient-to-r from-purple-900/30 to-pink-900/30 text-white/80";
+    case 'visionos': return "bg-white/60 text-gray-600";
+    case 'minimal': return "bg-gray-100 text-gray-600";
+    case 'frosted': return "bg-white/20 backdrop-blur-xl text-gray-600";
+    default: return "bg-muted/30 text-muted-foreground";
+  }
+};
+
 export const RodapeEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -103,7 +120,7 @@ export const RodapeEditable = ({
   return (
     <footer
       ref={sectionRef}
-      className="border-t bg-muted/30"
+      className={cn("border-t", getSectionStyleModifiers(stylePreset) || "bg-muted/30")}
       id="rodape"
       data-section-key="rodape"
     >

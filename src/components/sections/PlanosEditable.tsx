@@ -1,6 +1,6 @@
 /**
  * PlanosEditable - Seção de Planos/Pricing com edição inline
- * Sprint 5.1: Suporte a múltiplas variantes (modelo_a, modelo_b)
+ * Sprint 5.2: Suporte a stylePreset
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -9,7 +9,7 @@ import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { trackSectionView, trackCTAClick } from "@/lib/tracking";
 import { EditableField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -25,10 +25,25 @@ interface PlanosEditableProps {
   lpId: string;
   content: LPContent;
   variante?: string;
+  modelId?: string;
+  stylePreset?: StylePreset;
   userPlan: PlanLevel | 'master';
   editable?: boolean;
   onContentUpdate?: (key: string, value: string) => void;
 }
+
+// Get section style modifiers based on stylePreset
+const getSectionStyleModifiers = (stylePreset: StylePreset = 'glass') => {
+  switch (stylePreset) {
+    case 'dark': return "bg-zinc-900 text-white";
+    case 'neon': return "bg-black text-white";
+    case 'aurora': return "bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-orange-900/20";
+    case 'visionos': return "bg-white/80";
+    case 'minimal': return "bg-gray-50";
+    case 'frosted': return "bg-white/30 backdrop-blur-xl";
+    default: return "";
+  }
+};
 
 const defaultContent = {
   titulo: "Escolha seu plano",
@@ -69,6 +84,8 @@ export const PlanosEditable = ({
   lpId,
   content,
   variante = "modelo_a",
+  modelId,
+  stylePreset = "glass",
   userPlan,
   editable = true,
   onContentUpdate,
@@ -79,8 +96,8 @@ export const PlanosEditable = ({
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S5.1 QA] PlanosEditable: mounted', { lpId, editable, variante, normalizedVariant });
-  }, [lpId, editable, variante, normalizedVariant]);
+    console.log('[S5.2 QA] PlanosEditable: mounted', { lpId, editable, variante, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, variante, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
@@ -276,7 +293,7 @@ export const PlanosEditable = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding bg-background"
+        className={cn("section-padding", getSectionStyleModifiers(stylePreset) || "bg-background")}
         id="planos"
         data-section-key="planos"
       >
@@ -320,7 +337,7 @@ export const PlanosEditable = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding bg-background"
+      className={cn("section-padding", getSectionStyleModifiers(stylePreset) || "bg-background")}
       id="planos"
       data-section-key="planos"
     >
