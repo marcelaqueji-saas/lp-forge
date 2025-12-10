@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Zap, Crown, Sparkles, Loader2, Check } from 'lucide-react';
+import { Lock, Zap, Crown, Sparkles, Loader2, Check, Shield } from 'lucide-react';
 import { PlanTier } from '@/lib/authApi';
+import type { PlanLevelWithMaster } from '@/lib/sectionModels';
 import { initiateCheckout, PLAN_INFO } from '@/lib/billingApi';
 import { toast } from 'sonner';
 
@@ -12,19 +13,21 @@ interface UpgradeModalProps {
   onClose: () => void;
   feature: string;
   requiredPlan?: PlanTier;
-  currentPlan?: PlanTier;
+  currentPlan?: PlanLevelWithMaster;
 }
 
-const PLAN_NAMES: Record<PlanTier, string> = {
+const PLAN_NAMES: Record<PlanLevelWithMaster, string> = {
   free: 'Gratuito',
   pro: 'Pro',
-  premium: 'Premium'
+  premium: 'Premium',
+  master: 'Master',
 };
 
-const PLAN_ICONS: Record<PlanTier, React.ReactNode> = {
+const PLAN_ICONS: Record<PlanLevelWithMaster, React.ReactNode> = {
   free: <Sparkles className="w-5 h-5" />,
   pro: <Zap className="w-5 h-5" />,
-  premium: <Crown className="w-5 h-5" />
+  premium: <Crown className="w-5 h-5" />,
+  master: <Shield className="w-5 h-5" />,
 };
 
 export const UpgradeModal = ({ 
@@ -36,6 +39,11 @@ export const UpgradeModal = ({
 }: UpgradeModalProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Master plan users should never see upgrade modal
+  if (currentPlan === 'master') {
+    return null;
+  }
 
   const handleUpgrade = async () => {
     if (requiredPlan === 'free') return;
@@ -64,6 +72,7 @@ export const UpgradeModal = ({
   };
 
   const planInfo = PLAN_INFO[requiredPlan as keyof typeof PLAN_INFO];
+  const displayCurrentPlan = currentPlan as PlanTier;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

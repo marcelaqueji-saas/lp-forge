@@ -14,12 +14,12 @@ import { toast } from '@/hooks/use-toast';
 import { BlockEditor } from '@/components/editor/BlockEditor';
 import { useAuth } from '@/hooks/useAuth';
 import type { PlanTier } from '@/lib/authApi';
-import type { PlanLevel } from '@/lib/sectionModels';
+import type { PlanLevel, PlanLevelWithMaster } from '@/lib/sectionModels';
 
 const MeuSite = () => {
   const { lpId } = useParams();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, isAdminMaster } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [lpData, setLpData] = useState<any>(null);
@@ -44,14 +44,24 @@ const MeuSite = () => {
       return;
     }
 
-    // Check user role
+    // Check user role for this LP
     const role = await getUserRoleForLP(lpId);
-    if (!role) {
+    
+    // Admin master always has access
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    
+    const isAdmin = roleData?.role === 'admin_master';
+    
+    if (!role && !isAdmin) {
       toast({ title: 'Acesso negado', variant: 'destructive' });
       navigate('/painel');
       return;
     }
-    setUserRole(role);
+    setUserRole(isAdmin ? 'owner' : role);
 
     // Load LP data
     await loadLP();
@@ -115,8 +125,11 @@ const MeuSite = () => {
 
   const canEdit = userRole === 'owner' || userRole === 'editor';
   
-  // Obter plano do usuário
-  const userPlan: PlanLevel = (profile?.plan as PlanLevel) || 'free';
+  // CRITICAL: Se o usuário é admin_master, usar plano "master" com tudo liberado
+  // Caso contrário, usar o plano do profile
+  const userPlan: PlanLevelWithMaster = isAdminMaster 
+    ? 'master' 
+    : ((profile?.plan as PlanLevel) || 'free');
 
   if (!canEdit) {
     toast({ title: 'Você não tem permissão para editar esta página', variant: 'destructive' });

@@ -22,6 +22,7 @@ import {
 } from '@/lib/premiumPresets';
 
 import type { PlanTier } from '@/lib/authApi';
+import type { PlanLevelWithMaster } from '@/lib/sectionModels';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -441,7 +442,7 @@ interface SectionLoaderProps {
   previewOverride?: LPContent;
   settings?: Record<string, string | undefined>;
   disableAnimations?: boolean;
-  userPlan?: PlanTier;
+  userPlan?: PlanLevelWithMaster;
   context?: 'editor' | 'public';
 }
 
