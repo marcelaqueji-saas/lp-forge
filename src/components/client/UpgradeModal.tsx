@@ -31,8 +31,8 @@ export const UpgradeModal = ({
   currentPlan = 'free' 
 }: UpgradeModalProps) => {
   const handleUpgrade = () => {
-    // In a real implementation, this would redirect to a payment page
-    window.open('/upgrade', '_blank');
+    // Navega para a página de upgrade
+    window.location.href = '/upgrade';
     onClose();
   };
 

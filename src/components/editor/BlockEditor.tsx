@@ -8,12 +8,12 @@ import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { 
   ArrowLeft, 
   Eye, 
-  Edit3,
-  Save, 
   Loader2, 
   ExternalLink,
   Sparkles,
-  LayoutGrid
+  LayoutGrid,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/tracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
+import { useEditHistory } from '@/hooks/useEditHistory';
+import { useLiveSync } from '@/hooks/useLiveSync';
 import { SECTION_NAMES } from '@/lib/lpContentApi';
 
 interface BlockEditorProps {
@@ -98,6 +100,25 @@ export const BlockEditor = ({
 
   // Scroll tracking no modo preview
   useScrollTracking({ lpId, enabled: viewMode === 'preview' });
+
+  // Histórico de edições (Undo/Redo)
+  const { pushHistory, undo, redo, canUndo, canRedo, isSaving: isHistorySaving } = useEditHistory({
+    lpId,
+    maxHistorySize: 50,
+    backupInterval: 5,
+  });
+
+  // Live sync via Supabase Realtime
+  const { markLocalUpdate } = useLiveSync({
+    lpId,
+    enabled: true,
+    onContentUpdate: (sectionKey, newContent) => {
+      setContent(prev => ({ ...prev, [sectionKey]: newContent }));
+    },
+    onSettingsUpdate: (key, value) => {
+      setSettings(prev => ({ ...prev, [key]: value }));
+    },
+  });
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -423,6 +444,30 @@ export const BlockEditor = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Undo/Redo buttons */}
+            <div className="hidden sm:flex items-center gap-1 mr-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={undo}
+                disabled={!canUndo || isHistorySaving}
+                className="h-8 w-8 p-0"
+                title="Desfazer (Ctrl+Z)"
+              >
+                <Undo2 className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={redo}
+                disabled={!canRedo || isHistorySaving}
+                className="h-8 w-8 p-0"
+                title="Refazer (Ctrl+Shift+Z)"
+              >
+                <Redo2 className="w-4 h-4" />
+              </Button>
+            </div>
+
             <Button variant="outline" size="sm" onClick={onViewPublic} className="h-9">
               <ExternalLink className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Abrir página</span>
