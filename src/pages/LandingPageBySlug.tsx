@@ -10,7 +10,7 @@ import {
   LPContent, 
   LPSettings, 
 } from '@/lib/lpContentApi';
-import { initGA4, initMetaPixel } from '@/lib/analytics';
+import { initGA4, initMetaPixel, trackPageView } from '@/lib/tracking';
 import { captureUTMParams } from '@/lib/utm';
 import { Loader2 } from 'lucide-react';
 import { SectionLoader } from '@/components/sections/SectionLoader';
@@ -18,7 +18,8 @@ import { SectionKey } from '@/lib/sectionModels';
 import { LeadForm } from '@/components/sections/LeadForm';
 import { SEOHead } from '@/components/SEOHead';
 import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
-import { trackPageView } from '@/lib/tracking';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
+import { CanonicalUrl } from '@/components/seo/CanonicalUrl';
 
 const LandingPageBySlug = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -84,6 +85,9 @@ const LandingPageBySlug = () => {
     };
   }, [settings]);
 
+  // Track scroll depth
+  useScrollTracking({ lpId: lp?.id, enabled: !loading && !!lp });
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -134,7 +138,8 @@ const LandingPageBySlug = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead settings={settings} />
+      <SEOHead settings={settings} canonicalPath={`/lp/${slug}`} />
+      <CanonicalUrl path={`/lp/${slug}`} />
 
       {sectionsToRender.map((section) => {
         if (section === 'planos') {

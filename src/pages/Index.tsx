@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { SEOHead } from '@/components/SEOHead';
+import { CanonicalUrl } from '@/components/seo/CanonicalUrl';
 import { supabase } from '@/integrations/supabase/client';
 import {
   getDefaultLP,
@@ -13,8 +14,9 @@ import {
   LPSettings,
   DEFAULT_SECTION_ORDER,
 } from '@/lib/lpContentApi';
-import { initGA4, initMetaPixel, trackPageView } from '@/lib/analytics';
+import { initGA4, initMetaPixel, trackPageView } from '@/lib/tracking';
 import { captureUTMParams } from '@/lib/utm';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { SectionLoader } from '@/components/sections/SectionLoader';
@@ -51,6 +53,9 @@ const Index = () => {
       trackLPEvent(lpId, 'cta_click', { section: 'chamada_final', cta_type: 'primary' });
     }
   }, [lpId]);
+
+  // Track scroll depth
+  useScrollTracking({ lpId: lpId || undefined, enabled: !loading && !!lpId });
 
   useEffect(() => {
     captureUTMParams();
@@ -290,14 +295,18 @@ const Index = () => {
   return (
     <div className="min-h-screen lp-container">
       <SEOHead settings={settings} />
+      <CanonicalUrl path="/" />
 
       {sectionOrder.map((section) => (
         <SectionLoader
           key={section}
           sectionKey={section as SectionKey}
+          lpId={lpId || undefined}
           content={content[section] || {}}
           settings={settings}
           disableAnimations={false}
+          userPlan="free"
+          context="public"
         />
       ))}
     </div>
