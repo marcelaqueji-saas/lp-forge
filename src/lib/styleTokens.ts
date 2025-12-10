@@ -318,11 +318,15 @@ export const SECTION_IMAGE_TOKENS: Record<string, { key: string; label: string }
 
 // ============================================================
 // STYLE PRESET CLASSES (for stylePreset prop)
+// Extended with more presets
 // ============================================================
 
 import type { StylePreset, MotionPreset } from './sectionModels';
 
-export const STYLE_PRESET_CLASSES: Record<StylePreset, {
+// Extended StylePreset type with additional presets
+export type ExtendedStylePreset = StylePreset | 'dark' | 'neon' | 'minimal' | 'gradient' | 'frosted';
+
+export const STYLE_PRESET_CLASSES: Record<string, {
   container: string;
   card: string;
   title: string;
@@ -361,6 +365,47 @@ export const STYLE_PRESET_CLASSES: Record<StylePreset, {
     subtitle: 'text-muted-foreground',
     accent: 'bg-primary/10 text-primary shadow-inner',
     badge: 'bg-muted shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] text-foreground',
+  },
+  // New presets
+  dark: {
+    container: 'bg-zinc-900',
+    card: 'bg-zinc-800/90 border border-zinc-700/50 shadow-xl',
+    title: 'text-zinc-100',
+    subtitle: 'text-zinc-400',
+    accent: 'bg-zinc-700 text-zinc-100',
+    badge: 'bg-zinc-700 text-zinc-200 border border-zinc-600',
+  },
+  neon: {
+    container: 'bg-zinc-950 relative',
+    card: 'bg-zinc-900/80 border border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.3)]',
+    title: 'text-white',
+    subtitle: 'text-zinc-400',
+    accent: 'bg-primary text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.5)]',
+    badge: 'bg-primary/20 text-primary border border-primary/40 shadow-[0_0_10px_hsl(var(--primary)/0.3)]',
+  },
+  minimal: {
+    container: 'bg-white',
+    card: 'bg-white border border-zinc-200 shadow-sm',
+    title: 'text-zinc-900 font-medium',
+    subtitle: 'text-zinc-500',
+    accent: 'bg-zinc-100 text-zinc-900',
+    badge: 'bg-zinc-100 text-zinc-600 border border-zinc-200',
+  },
+  gradient: {
+    container: 'bg-gradient-to-br from-primary/10 via-background to-accent/10',
+    card: 'bg-white/80 backdrop-blur border border-white/50 shadow-lg',
+    title: 'text-foreground',
+    subtitle: 'text-muted-foreground',
+    accent: 'bg-gradient-to-r from-primary to-accent text-white',
+    badge: 'bg-gradient-to-r from-primary to-accent text-white',
+  },
+  frosted: {
+    container: 'bg-white/40 backdrop-blur-3xl',
+    card: 'bg-white/60 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.08)]',
+    title: 'text-foreground',
+    subtitle: 'text-muted-foreground/90',
+    accent: 'bg-white/80 text-primary backdrop-blur-sm',
+    badge: 'bg-white/70 text-primary border border-white/50 backdrop-blur-sm',
   },
 };
 

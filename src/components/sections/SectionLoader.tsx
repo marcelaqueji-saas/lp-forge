@@ -66,6 +66,10 @@ import { MenuEditable } from './MenuEditable';
 import { RodapeEditable } from './RodapeEditable';
 import HeroCenter from './HeroCenter';
 import HeroSplitBasic from './HeroSplitBasic';
+import HeroCarousel from './HeroCarousel';
+import StoriesCarousel from './StoriesCarousel';
+import LogosInfiniteScroll from './LogosInfiniteScroll';
+import { SectionSeparator, SeparatorType } from './SectionSeparator';
 
 // Premium components (lazy loaded)
 const HeroParallax = lazy(() => import('./premium/HeroParallax'));
@@ -92,6 +96,7 @@ const SECTION_COMPONENT_REGISTRY: Record<
     Hero,
     HeroCenter,
     HeroSplitBasic,
+    HeroCarousel,
     HeroParallax,
     HeroSplit,
   },
@@ -104,6 +109,8 @@ const SECTION_COMPONENT_REGISTRY: Record<
   provas_sociais: {
     default: ProvasSociais,
     ProvasSociais,
+    StoriesCarousel,
+    LogosInfiniteScroll,
     TestimonialCinematic,
   },
   como_funciona: {
