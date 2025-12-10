@@ -107,12 +107,12 @@ export const RodapeEditable = ({
       id="rodape"
       data-section-key="rodape"
     >
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="flex flex-col md:flex-row items-center justify-between gap-4"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           {/* Copyright */}
           <EditableField
@@ -125,11 +125,11 @@ export const RodapeEditable = ({
             as="p"
             editable={editable}
             placeholder="Texto de copyright"
-            className="text-sm text-muted-foreground"
+            className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left break-words order-2 sm:order-1"
           />
 
-          {/* Links */}
-          <nav className="flex flex-wrap items-center gap-4 md:gap-6">
+          {/* Links - mobile-first */}
+          <nav className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 order-1 sm:order-2">
             {links.map((link, idx) => (
               <div key={idx}>
                 {editable ? (
@@ -138,7 +138,7 @@ export const RodapeEditable = ({
                     suppressContentEditableWarning
                     onBlur={(e) => handleLinkUpdate(idx, 'label', e.currentTarget.textContent || '')}
                     className={cn(
-                      "text-sm text-muted-foreground hover:text-foreground transition-colors outline-none cursor-text",
+                      "text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors outline-none cursor-text touch-manipulation",
                       "hover:bg-primary/5 px-2 -mx-2 py-1 rounded",
                       "focus:ring-2 focus:ring-primary/20"
                     )}
@@ -148,7 +148,7 @@ export const RodapeEditable = ({
                 ) : (
                   <a
                     href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </a>
