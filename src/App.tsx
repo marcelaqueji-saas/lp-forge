@@ -69,6 +69,9 @@ import MasterSectionModels from "./pages/master/MasterSectionModels";
 
 import InteresseNoBron from "./pages/marketing/InteresseNoBron";
 
+// QA pages (internal/dev)
+import SectionsQA from "./pages/qa/SectionsQA";
+
 const queryClient = new QueryClient();
 
 // Componente para decidir quando mostrar o banner de cookies
