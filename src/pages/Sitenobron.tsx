@@ -1,19 +1,28 @@
+import { Suspense, lazy } from 'react';
+
 import { SEOHead } from '@/components/SEOHead';
 import { MenuSection } from '@/components/sections/MenuSection';
 import { Rodape } from '@/components/sections/Rodape';
-import HeroParallax from '@/components/sections/premium/HeroParallax';
-import { Cards3DShowcase } from '@/components/sections/premium/Cards3DShowcase';
-import { FeaturesFloat } from '@/components/sections/premium/FeaturesFloat';
-import { TestimonialCinematic } from '@/components/sections/premium/TestimonialCinematic';
-import { CTAFinal } from '@/components/sections/premium/CTAFinal';
 import { SectionSeparator } from '@/components/sections/premium/SectionSeparator';
+
+// Premium components em lazy (para não conflitar com SectionLoader)
+const HeroParallax = lazy(() => import('@/components/sections/premium/HeroParallax'));
+const Cards3DShowcase = lazy(
+  () => import('@/components/sections/premium/Cards3DShowcase')
+);
+const FeaturesFloat = lazy(() => import('@/components/sections/premium/FeaturesFloat'));
+const TestimonialCinematic = lazy(
+  () => import('@/components/sections/premium/TestimonialCinematic')
+);
+const CTAFinal = lazy(() => import('@/components/sections/premium/CTAFinal'));
 
 // Static content for the nobron institutional site
 const heroContent = {
   badge: 'Lançamento 2024',
   titulo: 'Crie Landing Pages e Sites',
   destaque: 'profissionais em minutos',
-  subtitulo: 'Editor visual, templates animados e alto poder de conversão. Sem código, sem complicação.',
+  subtitulo:
+    'Editor visual, templates animados e alto poder de conversão. Sem código, sem complicação.',
   texto_botao_primario: 'Começar agora grátis',
   url_botao_primario: '/auth/register',
   texto_botao_secundario: 'Ver demonstração',
@@ -24,18 +33,18 @@ const showcaseContent = {
   titulo: 'Templates premium, sem limites',
   subtitulo: 'Escolha entre dezenas de modelos profissionais com animações reais',
   cards: [
-    { 
-      titulo: 'Animações Reais', 
+    {
+      titulo: 'Animações Reais',
       descricao: 'Templates com Motion e GSAP para impressionar seus visitantes',
       icone: 'sparkles',
     },
-    { 
-      titulo: 'Alta Conversão', 
+    {
+      titulo: 'Alta Conversão',
       descricao: 'Designs otimizados com base em dados de milhares de páginas',
       icone: 'zap',
     },
-    { 
-      titulo: '100% Editável', 
+    {
+      titulo: '100% Editável',
       descricao: 'Personalize cores, textos e imagens sem tocar em código',
       icone: 'edit',
     },
@@ -57,16 +66,20 @@ const testimonialContent = {
   titulo: 'O que nossos clientes dizem',
   depoimentos: [
     {
-      texto: 'O SaaS-LP transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
+      texto:
+        'O noBRon transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
       nome: 'Maria Silva',
       cargo: 'CEO, TechStartup',
-      foto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
+      foto:
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
     },
     {
-      texto: 'Os templates premium com animações fizeram toda a diferença nas nossas taxas de conversão. Recomendo para qualquer empresa.',
+      texto:
+        'Os templates premium com animações fizeram toda a diferença nas nossas taxas de conversão. Recomendo para qualquer empresa.',
       nome: 'João Santos',
       cargo: 'Marketing Director, Growth Co',
-      foto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
+      foto:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
     },
   ],
   autoplay: true,
@@ -80,7 +93,7 @@ const ctaContent = {
 };
 
 const menuContent = {
-  brand_name: 'SaaS-LP',
+  brand_name: 'noBRon',
   links_json: JSON.stringify([
     { label: 'Recursos', url: '#features' },
     { label: 'Templates', url: '#showcase' },
@@ -91,7 +104,7 @@ const menuContent = {
 };
 
 const footerContent = {
-  copyright: '© 2024 SaaS-LP. Todos os direitos reservados.',
+  copyright: '© 2024 noBRon. Todos os direitos reservados.',
   links_json: JSON.stringify([
     { label: 'Termos de Uso', url: '/termos' },
     { label: 'Privacidade', url: '/privacidade' },
@@ -104,8 +117,9 @@ const Sitenobron = () => {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         settings={{
-          meta_title: 'SaaS-LP | Crie Landing Pages Profissionais em Minutos',
-          meta_description: 'Editor visual, templates animados e alto poder de conversão. Crie landing pages e sites profissionais sem código.',
+          meta_title: 'noBRon | Crie Landing Pages Profissionais em Minutos',
+          meta_description:
+            'Editor visual, templates animados e alto poder de conversão. Crie landing pages e sites profissionais sem código.',
         }}
       />
 
@@ -113,7 +127,15 @@ const Sitenobron = () => {
       <MenuSection content={menuContent} variante="modelo_a" />
 
       {/* Hero */}
-      <HeroParallax content={heroContent} />
+      <Suspense
+        fallback={
+          <div className="py-16 text-center text-muted-foreground">
+            Carregando destaque principal...
+          </div>
+        }
+      >
+        <HeroParallax content={heroContent} />
+      </Suspense>
 
       {/* Separator */}
       <div className="relative h-20 bg-muted/30">
@@ -122,7 +144,15 @@ const Sitenobron = () => {
 
       {/* 3D Showcase */}
       <section id="showcase">
-        <Cards3DShowcase content={showcaseContent} />
+        <Suspense
+          fallback={
+            <div className="py-16 text-center text-muted-foreground">
+              Carregando templates premium...
+            </div>
+          }
+        >
+          <Cards3DShowcase content={showcaseContent} />
+        </Suspense>
       </section>
 
       {/* Separator */}
@@ -132,21 +162,50 @@ const Sitenobron = () => {
 
       {/* Features */}
       <section id="features">
-        <FeaturesFloat content={featuresContent} />
+        <Suspense
+          fallback={
+            <div className="py-16 text-center text-muted-foreground">
+              Carregando recursos...
+            </div>
+          }
+        >
+          <FeaturesFloat content={featuresContent} />
+        </Suspense>
       </section>
 
       {/* Separator */}
       <div className="relative h-16 bg-muted/30">
-        <SectionSeparator type="wave" position="top" color="hsl(var(--background))" flip />
+        <SectionSeparator
+          type="wave"
+          position="top"
+          color="hsl(var(--background))"
+          flip
+        />
       </div>
 
       {/* Testimonials */}
       <section id="testimonials">
-        <TestimonialCinematic content={testimonialContent} />
+        <Suspense
+          fallback={
+            <div className="py-16 text-center text-muted-foreground">
+              Carregando depoimentos...
+            </div>
+          }
+        >
+          <TestimonialCinematic content={testimonialContent} />
+        </Suspense>
       </section>
 
       {/* CTA Final */}
-      <CTAFinal content={ctaContent} />
+      <Suspense
+        fallback={
+          <div className="py-16 text-center text-muted-foreground">
+            Carregando chamada final...
+          </div>
+        }
+      >
+        <CTAFinal content={ctaContent} />
+      </Suspense>
 
       {/* Footer */}
       <Rodape content={footerContent} variante="modelo_b" />

@@ -1,5 +1,5 @@
 ================================================================================
-                      DOCUMENTAÇÃO COMPLETA - SAAS-LP
+                      DOCUMENTAÇÃO COMPLETA - noBRon
                          Mini SaaS de Landing Pages
 ================================================================================
 
@@ -24,7 +24,7 @@ Versão: 2.0
                         1. VISÃO GERAL DO PROJETO
 ================================================================================
 
-O saas-lp é um mini SaaS para criação e gerenciamento de Landing Pages com:
+O noBRon é um mini SaaS para criação e gerenciamento de Landing Pages com:
 
 ✅ IMPLEMENTADO (v2.0):
 - Landing Page pública 100% editável via painel admin

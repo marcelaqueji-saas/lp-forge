@@ -218,11 +218,6 @@ export const CARD_CLASSES: Record<CardStyle, string> = {
 // UTILITY FUNCTIONS
 // ============================================================
 
-/**
- * Interno: tenta extrair visual_config de:
- * - content.visual_config (objeto ou string JSON)
- * - content._visual_config (caso você use uma key especial vinda do banco)
- */
 function readVisualConfigFromContent(
   content: Record<string, any>
 ): Partial<PremiumVisualConfig> {
@@ -241,16 +236,13 @@ function readVisualConfigFromContent(
         return parsed as Partial<PremiumVisualConfig>;
       }
     } catch {
-      // se der erro de JSON, ignora e cai no fallback
+      // ignore JSON errors
     }
   }
 
   return {};
 }
 
-/**
- * Get all CSS classes for a visual config
- */
 export function getVisualClasses(
   config: PremiumVisualConfig,
   reducedMotion = false
@@ -272,16 +264,10 @@ export function getVisualClasses(
   return classes.filter(Boolean).join(' ');
 }
 
-/**
- * Get button classes
- */
 export function getButtonClasses(style: ButtonStyle = 'default'): string {
   return BUTTON_CLASSES[style] || '';
 }
 
-/**
- * Get separator classes
- */
 export function getSeparatorClasses(
   style: SeparatorStyle = 'none',
   position: 'before' | 'after'
@@ -290,21 +276,10 @@ export function getSeparatorClasses(
   return `${SEPARATOR_CLASSES[style]} separator-${position}`;
 }
 
-/**
- * Get card classes
- */
 export function getCardClasses(style: CardStyle = 'default'): string {
   return CARD_CLASSES[style] || '';
 }
 
-/**
- * Parse visual config from content object.
- *
- * Ordem de prioridade (por campo):
- * 1. JSON em content.visual_config / content._visual_config
- * 2. Campo solto (background_style, ornament_style...)
- * 3. DEFAULT_VISUAL_CONFIG
- */
 export function parseVisualConfig(content: Record<string, any>): PremiumVisualConfig {
   const fromJson = readVisualConfigFromContent(content);
 
@@ -351,14 +326,6 @@ export function parseVisualConfig(content: Record<string, any>): PremiumVisualCo
   };
 }
 
-/**
- * Helper para montar um JSON limpinho de visual_config
- * antes de salvar no banco.
- *
- * Você pode usar isso no editor assim:
- *   const payload = buildVisualConfigPayload(partialConfig);
- *   // salvar como JSON em lp_content.value, key = '_visual_config'
- */
 export function buildVisualConfigPayload(
   partial: Partial<PremiumVisualConfig>
 ): PremiumVisualConfig {
@@ -374,9 +341,6 @@ export function buildVisualConfigPayload(
   };
 }
 
-/**
- * Check if user prefers reduced motion
- */
 export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;

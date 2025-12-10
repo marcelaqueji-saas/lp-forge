@@ -8,24 +8,79 @@ export const PlanLimitsBanner = () => {
 
   if (!profile || !planLimits) return null;
 
-  const sitesUsedPercent = (siteCount / planLimits.max_sites) * 100;
-  const storageUsedPercent = (profile.storage_used_mb / planLimits.max_storage_mb) * 100;
+  // 🔹 Acessos extras do profile via any para não quebrar o tipo UserProfile
+  const profileAny = profile as any;
 
-  const PLAN_LABELS = {
+  const isMaster =
+    profileAny?.role === 'admin_master' ||
+    profileAny?.role === 'master' ||
+    profileAny?.is_admin_master === true ||
+    profileAny?.is_master === true;
+
+  const PLAN_LABELS: Record<string, string> = {
     free: 'Gratuito',
     pro: 'Pro',
-    premium: 'Premium'
+    premium: 'Premium',
+    master: 'Master',
   };
+
+  const planKey = (isMaster ? 'master' : profile.plan) ?? 'free';
+  const planLabel = PLAN_LABELS[planKey] ?? planKey;
+
+  // 🔹 Sites
+  const rawSiteCount = siteCount ?? 0;
+  const rawMaxSites = planLimits.max_sites ?? 0;
+
+  const maxSitesForDisplay =
+    isMaster || rawMaxSites === 999 ? '∞' : rawMaxSites;
+
+  const effectiveSiteCount =
+    !isMaster && rawMaxSites && rawMaxSites !== 999
+      ? Math.min(rawSiteCount, rawMaxSites)
+      : rawSiteCount;
+
+  const sitesUsedPercent =
+    !isMaster && rawMaxSites && rawMaxSites > 0 && rawMaxSites !== 999
+      ? (effectiveSiteCount / rawMaxSites) * 100
+      : 0;
+
+  // 🔹 Armazenamento
+  const storageUsedMb = profile.storage_used_mb ?? 0;
+  const maxStorageMb = planLimits.max_storage_mb ?? 0;
+  const storageUsedPercent =
+    maxStorageMb > 0
+      ? Math.min((storageUsedMb / maxStorageMb) * 100, 100)
+      : 0;
+
+  const maxStorageLabel =
+    isMaster || maxStorageMb >= 999_999
+      ? '∞'
+      : maxStorageMb >= 1000
+      ? `${(maxStorageMb / 1000).toFixed(1)} GB`
+      : `${maxStorageMb} MB`;
+
+  // 🔹 Domínios
+  const customDomainLimit = planLimits.custom_domain_limit ?? 0;
+  const domainLabel = isMaster
+    ? 'Ilimitado'
+    : customDomainLimit === 0
+    ? 'Não disponível'
+    : `Até ${customDomainLimit}`;
 
   return (
     <div className="glass-card p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
-          <span className="font-semibold">Plano {PLAN_LABELS[profile.plan]}</span>
+          <span className="font-semibold">Plano {planLabel}</span>
         </div>
-        {profile.plan !== 'premium' && (
-          <Button size="sm" variant="outline" className="text-primary border-primary/30">
+
+        {!isMaster && planKey !== 'premium' && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-primary border-primary/30"
+          >
             <Zap className="w-4 h-4 mr-1" />
             Upgrade
           </Button>
@@ -41,10 +96,14 @@ export const PlanLimitsBanner = () => {
               <span>Sites</span>
             </div>
             <span className="text-muted-foreground">
-              {siteCount} / {planLimits.max_sites === 999 ? '∞' : planLimits.max_sites}
+              {effectiveSiteCount} / {maxSitesForDisplay}
             </span>
           </div>
-          <Progress value={Math.min(sitesUsedPercent, 100)} className="h-2" />
+          {!isMaster && rawMaxSites > 0 && rawMaxSites !== 999 ? (
+            <Progress value={Math.min(sitesUsedPercent, 100)} className="h-2" />
+          ) : (
+            <div className="h-2 w-full rounded-full bg-muted/40" />
+          )}
         </div>
 
         {/* Storage limit */}
@@ -55,12 +114,17 @@ export const PlanLimitsBanner = () => {
               <span>Armazenamento</span>
             </div>
             <span className="text-muted-foreground">
-              {profile.storage_used_mb} MB / {planLimits.max_storage_mb >= 1000 
-                ? `${(planLimits.max_storage_mb / 1000).toFixed(1)} GB` 
-                : `${planLimits.max_storage_mb} MB`}
+              {isMaster ? '∞' : `${storageUsedMb} MB`} / {maxStorageLabel}
             </span>
           </div>
-          <Progress value={Math.min(storageUsedPercent, 100)} className="h-2" />
+          {isMaster || maxStorageMb === 0 ? (
+            <div className="h-2 w-full rounded-full bg-muted/40" />
+          ) : (
+            <Progress
+              value={Math.min(storageUsedPercent, 100)}
+              className="h-2"
+            />
+          )}
         </div>
 
         {/* Domains limit */}
@@ -70,14 +134,12 @@ export const PlanLimitsBanner = () => {
               <Globe className="w-4 h-4 text-muted-foreground" />
               <span>Domínios</span>
             </div>
-            <span className="text-muted-foreground">
-              {planLimits.custom_domain_limit === 0 
-                ? 'Não disponível' 
-                : `Até ${planLimits.custom_domain_limit}`}
-            </span>
+            <span className="text-muted-foreground">{domainLabel}</span>
           </div>
-          {planLimits.custom_domain_limit > 0 && (
-            <Progress value={0} className="h-2" />
+          {(!isMaster && customDomainLimit > 0) || isMaster ? (
+            <div className="h-2 w-full rounded-full bg-muted/40" />
+          ) : (
+            <div className="h-2 w-full rounded-full bg-muted/20" />
           )}
         </div>
       </div>

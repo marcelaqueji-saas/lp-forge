@@ -1,5 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 
+import {
+  SECTION_MODEL_KEY,
+  SECTION_MODELS_BY_SECTION,
+  SectionKey,
+} from '@/lib/sectionModels';
+
 export interface LPContent {
   [key: string]: string | undefined;
 }
@@ -378,7 +384,11 @@ export const removeUserRoleFromLP = async (lpId: string, userId: string): Promis
 // ====================================================================
 
 // Get content for a specific section
-export const getSectionContent = async (lpId: string, section: string): Promise<LPContent> => {
+// Get content for a specific section
+export const getSectionContent = async (
+  lpId: string,
+  section: SectionKey
+): Promise<LPContent> => {
   const { data, error } = await supabase
     .from('lp_content')
     .select('key, value')
@@ -397,6 +407,7 @@ export const getSectionContent = async (lpId: string, section: string): Promise<
 
   return content;
 };
+
 
 // Get all content for an LP (ordered by section_order, mas agrupado por seção)
 export const getAllContent = async (lpId: string): Promise<Record<string, LPContent>> => {
@@ -474,13 +485,21 @@ export const updateSectionOrder = async (lpId: string, sections: string[]): Prom
   }
 };
 
-// Save section content
 export const saveSectionContent = async (
   lpId: string,
-  section: string,
+  section: SectionKey,
   content: LPContent,
   sectionOrder?: number
 ): Promise<boolean> => {
+  if (!lpId) {
+    console.error('[saveSectionContent] lpId ausente ou inválido', {
+      lpId,
+      section,
+      content,
+    });
+    return false;
+  }
+
   const entries = Object.entries(content).filter(([, value]) => value !== undefined);
 
   // Definir um section_order efetivo consistente
@@ -544,6 +563,7 @@ export const saveSectionContent = async (
 
   return true;
 };
+
 
 // ====================================================================
 // SETTINGS
@@ -1199,12 +1219,21 @@ export const createLPFromTemplate = async (
     return null;
   }
 
-  const templateContent = template === 'conversao_direta' 
-    ? TEMPLATE_CONVERSAO_DIRETA 
-    : TEMPLATE_LEAD_MAGNET;
+  const templateContent =
+    template === 'conversao_direta'
+      ? TEMPLATE_CONVERSAO_DIRETA
+      : TEMPLATE_LEAD_MAGNET;
 
+  // Conteúdo + __model_id por seção
   for (const [section, content] of Object.entries(templateContent.content)) {
-    const sectionOrder = DEFAULT_SECTION_ORDER.indexOf(section) + 1;
+    const sectionKey = section as SectionKey;
+
+    // calcula ordem da seção com base no DEFAULT_SECTION_ORDER
+    const defaultIndex = DEFAULT_SECTION_ORDER.indexOf(section);
+    const sectionOrder =
+      defaultIndex >= 0 ? defaultIndex + 1 : DEFAULT_SECTION_ORDER.length + 1;
+
+    // 1) grava os campos normais da seção
     for (const [key, value] of Object.entries(content)) {
       await supabase.from('lp_content').insert({
         lp_id: newLP.id,
@@ -1214,8 +1243,21 @@ export const createLPFromTemplate = async (
         section_order: sectionOrder,
       });
     }
+
+    // 2) grava o __model_id com base no primeiro modelo cadastrado para essa seção
+    const models = SECTION_MODELS_BY_SECTION[sectionKey];
+    if (models && models.length > 0) {
+      await supabase.from('lp_content').insert({
+        lp_id: newLP.id,
+        section,
+        key: SECTION_MODEL_KEY,
+        value: models[0].id, // ex: 'hero_basic', 'benefits_bento', etc.
+        section_order: sectionOrder,
+      });
+    }
   }
 
+  // SETTINGS (mantém como já estava)
   for (const [key, value] of Object.entries(templateContent.settings)) {
     await supabase.from('lp_settings').insert({
       lp_id: newLP.id,
@@ -1366,4 +1408,23 @@ export const getUptimeChecks = async (limit = 50) => {
     .limit(limit);
 
   return data || [];
+};
+
+export const setSectionModel = async (
+  lpId: string,
+  section: SectionKey,
+  modelId: string
+): Promise<boolean> => {
+  if (!lpId) {
+    console.error('[setSectionModel] lpId ausente ao trocar modelo', {
+      lpId,
+      section,
+      modelId,
+    });
+    return false;
+  }
+
+  return saveSectionContent(lpId, section, {
+    [SECTION_MODEL_KEY]: modelId,
+  });
 };

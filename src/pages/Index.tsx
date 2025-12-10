@@ -210,10 +210,8 @@ const Index = () => {
             className="mb-8"
           >
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-semibold tracking-tight">SaaS-LP</span>
+              <span className="text-xl font-semibold tracking-tight">noBRon</span>
+              
             </div>
           </motion.div>
 

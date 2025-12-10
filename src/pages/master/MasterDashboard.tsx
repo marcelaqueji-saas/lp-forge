@@ -121,7 +121,7 @@ const MasterDashboard = () => {
                   Painel Master
                 </h1>
                 <p className="text-[11px] sm:text-xs text-slate-500">
-                  Administração do saas-lp
+                  Administração do noBRon
                 </p>
               </div>
             </div>

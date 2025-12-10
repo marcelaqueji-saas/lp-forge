@@ -12,25 +12,57 @@ import { Loader2, Check, Lock, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/lib/authApi";
-
-export interface LayoutOption {
-  id: string;
-  name: string;
-  description?: string;
-  category?: string;
-  minPlan?: PlanTier;
-  thumbnail?: string | null;
-  componenteFront?: string | null;
-}
+import {
+  SECTION_MODELS_BY_SECTION,
+  SectionKey,
+  SectionModel,
+} from "@/lib/sectionModels";
+import type { Tables } from "@/integrations/supabase/types";
+import { toast } from "@/hooks/use-toast";
+import { setSectionModel } from "@/lib/lpContentApi";
 
 interface TemplatePickerProps {
   open: boolean;
   onClose: () => void;
   sectionName: string;
-  sectionKey: string;
+  sectionKey: SectionKey;
   currentVariant: string;
-  onSelect: (variantId: string) => void;
+  onSelect: (variantId: string) => void | Promise<void>;
   userPlan?: PlanTier;
+  lpId: string;
+  // novo: admin master enxerga tudo como no tier máximo,
+  // mas ainda respeita se o modelo está habilitado ou não
+  isAdminMaster?: boolean;
+}
+
+type SectionTemplateRow = Tables<"section_templates">;
+
+interface ModelConfig {
+  id: string;
+  enabled: boolean;
+  visible_for_free: boolean;
+  visible_for_pro: boolean;
+  visible_for_premium: boolean;
+  is_featured: boolean;
+  sort_order: number;
+}
+
+const DEFAULT_CONFIG: Omit<ModelConfig, "id"> = {
+  enabled: true,
+  visible_for_free: true,
+  visible_for_pro: true,
+  visible_for_premium: true,
+  is_featured: false,
+  sort_order: 0,
+};
+
+interface MergedVariant {
+  model: SectionModel;
+  config: ModelConfig;
+  template?: Pick<
+    SectionTemplateRow,
+    "variant_id" | "category" | "preview_thumbnail" | "min_plan_tier"
+  >;
 }
 
 const PLAN_ORDER: PlanTier[] = ["free", "pro", "premium"];
@@ -43,46 +75,181 @@ export const TemplatePicker = ({
   currentVariant,
   onSelect,
   userPlan = "free",
+  lpId,
+  isAdminMaster = false,
 }: TemplatePickerProps) => {
   const isMobile = useIsMobile();
-  const [dbTemplates, setDbTemplates] = useState<LayoutOption[]>([]);
+  const [variants, setVariants] = useState<MergedVariant[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) loadDbTemplates();
+    if (open) {
+      loadVariants();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, sectionKey]);
 
-  const loadDbTemplates = async () => {
+  const loadVariants = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("section_templates")
-      .select("*")
-      .eq("section", sectionKey)
-      .eq("is_active", true)
-      .order("min_plan_tier", { ascending: true })
-      .order("created_at", { ascending: true });
 
-    if (data) {
-      const mapped = data.map((t) => ({
-        id: t.variant_id,
-        name: t.name,
-        description: t.description,
-        minPlan: (t.min_plan_tier as PlanTier) || "free",
-        category: t.category,
-        thumbnail: t.preview_thumbnail,
-        componenteFront: t.componente_front,
-      }));
-      setDbTemplates(mapped);
+    const typedSectionKey = sectionKey as SectionKey;
+    const baseModels = SECTION_MODELS_BY_SECTION[typedSectionKey] || [];
+
+    if (baseModels.length === 0) {
+      setVariants([]);
+      setLoading(false);
+      return;
     }
 
+    const ids = baseModels.map((m) => m.id);
+
+    const [configsRes, templatesRes] = await Promise.all([
+      supabase.from("section_model_configs").select("*").in("id", ids),
+      supabase
+        .from("section_templates")
+        .select(
+          "variant_id, category, preview_thumbnail, min_plan_tier, section, is_active"
+        )
+        .eq("section", sectionKey)
+        .eq("is_active", true),
+    ]);
+
+    const configMap: Record<string, ModelConfig> = {};
+    if (configsRes.data) {
+      configsRes.data.forEach((row: any) => {
+        configMap[row.id] = {
+          id: row.id,
+          enabled: row.enabled ?? true,
+          visible_for_free: row.visible_for_free ?? true,
+          visible_for_pro: row.visible_for_pro ?? true,
+          visible_for_premium: row.visible_for_premium ?? true,
+          is_featured: row.is_featured ?? false,
+          sort_order: row.sort_order ?? 0,
+        };
+      });
+    }
+
+    const templateMap: Record<string, MergedVariant["template"]> = {};
+    if (templatesRes.data) {
+      templatesRes.data.forEach((row: any) => {
+        templateMap[row.variant_id] = {
+          variant_id: row.variant_id,
+          category: row.category,
+          preview_thumbnail: row.preview_thumbnail,
+          min_plan_tier: row.min_plan_tier,
+        };
+      });
+    }
+
+    const merged: MergedVariant[] = baseModels.map((model: SectionModel) => ({
+      model,
+      config: {
+        id: model.id,
+        ...(configMap[model.id] ?? DEFAULT_CONFIG),
+      },
+      template: templateMap[model.id],
+    }));
+
+    // Ordenação: destaque → plano → sort_order → nome
+    merged.sort((a, b) => {
+      if (a.config.is_featured !== b.config.is_featured) {
+        return a.config.is_featured ? -1 : 1;
+      }
+
+      const planIndexA = PLAN_ORDER.indexOf(a.model.plan as PlanTier);
+      const planIndexB = PLAN_ORDER.indexOf(b.model.plan as PlanTier);
+      if (planIndexA !== planIndexB) {
+        return planIndexA - planIndexB;
+      }
+
+      const orderA = a.config.sort_order ?? 0;
+      const orderB = b.config.sort_order ?? 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return a.model.name.localeCompare(b.model.name);
+    });
+
+    setVariants(merged);
     setLoading(false);
   };
 
-  const allVariants: LayoutOption[] = dbTemplates;
+  const isVisibleForUserPlan = (variant: MergedVariant): boolean => {
+    const cfg = variant.config;
+    if (!cfg.enabled) return false;
 
-  const canUse = (variant: LayoutOption): boolean => {
-    if (!variant.minPlan) return true;
-    return PLAN_ORDER.indexOf(userPlan) >= PLAN_ORDER.indexOf(variant.minPlan);
+    // admin master ainda respeita enabled/visible,
+    // mas não sofre bloqueio de plano
+    const effectivePlan: PlanTier = isAdminMaster ? "premium" : userPlan;
+
+    const key: keyof ModelConfig =
+      effectivePlan === "free"
+        ? "visible_for_free"
+        : effectivePlan === "pro"
+        ? "visible_for_pro"
+        : "visible_for_premium";
+
+    return cfg[key] !== false;
+  };
+
+  const isLockedForUserPlan = (variant: MergedVariant): boolean => {
+    // admin master nunca vê cadeado / trava
+    if (isAdminMaster) return false;
+
+    const minPlan = variant.model.plan as PlanTier;
+    return PLAN_ORDER.indexOf(userPlan) < PLAN_ORDER.indexOf(minPlan);
+  };
+
+  const visibleVariants = variants.filter(isVisibleForUserPlan);
+
+  const handleSelect = async (variantId: string) => {
+    try {
+      if (!lpId) {
+        console.error("[TemplatePicker] lpId vazio/undefined ao trocar modelo", {
+          variantId,
+          sectionKey,
+          sectionName,
+        });
+        toast({
+          title: "Erro ao atualizar layout",
+          description: "Não foi possível identificar a página desta seção.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSavingId(variantId);
+
+      const ok = await setSectionModel(lpId, sectionKey, variantId);
+      if (!ok) {
+        toast({
+          title: "Erro ao atualizar layout",
+          description: "Não foi possível salvar o modelo. Tente novamente.",
+          variant: "destructive",
+        });
+        setSavingId(null);
+        return;
+      }
+
+      await onSelect(variantId);
+
+      toast({
+        title: "Layout atualizado",
+        description: "O modelo da seção foi alterado com sucesso.",
+      });
+      onClose();
+    } catch (err) {
+      console.error("Error selecting template", err);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um problema ao atualizar o layout.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -100,87 +267,102 @@ export const TemplatePicker = ({
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
-        ) : allVariants.length === 0 ? (
+        ) : visibleVariants.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-10">
-            Nenhum template disponível para esta seção.
+            Nenhum modelo disponível para esta seção.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-            {allVariants.map((variant) => {
-              const locked = !canUse(variant);
-              const selected = currentVariant === variant.id;
+            {visibleVariants.map((variant) => {
+              const { model, template, config } = variant;
+              const locked = isLockedForUserPlan(variant);
+              const selected = currentVariant === model.id;
+              const isSaving = savingId === model.id;
 
               return (
-                <div
-                  key={variant.id}
+                <button
+                  type="button"
+                  key={model.id}
                   className={cn(
-                    "relative rounded-xl border cursor-pointer p-3",
+                    "relative rounded-xl border text-left p-3 transition-colors w-full",
                     selected
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50",
-                    locked && "opacity-50 pointer-events-none"
+                    locked && "opacity-60 pointer-events-none",
+                    isSaving && "opacity-70"
                   )}
-                  onClick={() => onSelect(variant.id)}
+                  onClick={() => handleSelect(model.id)}
+                  disabled={isSaving}
                 >
-                  {variant.thumbnail ? (
+                  {template?.preview_thumbnail ? (
                     <div className="aspect-video rounded-md overflow-hidden bg-muted mb-2">
                       <img
-                        src={variant.thumbnail}
-                        alt={variant.name}
+                        src={template.preview_thumbnail}
+                        alt={model.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
                   ) : (
                     <div className="aspect-video flex items-center justify-center bg-muted rounded-md mb-2 text-xs text-muted-foreground">
-                      {variant.name}
+                      {model.name}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">
-                      {variant.name}
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <span className="text-sm font-medium truncate">
+                      {model.name}
                     </span>
 
-                    {selected && (
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                    )}
-
-                    {variant.minPlan === "premium" && (
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      {config.is_featured && (
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      )}
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      ) : selected ? (
+                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {variant.description}
-                  </p>
+                  {model.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {model.description}
+                    </p>
+                  )}
 
-                  <div className="flex justify-between mt-2">
-                    {variant.minPlan && variant.minPlan !== "free" && (
-                      <Badge
-                        variant={
-                          variant.minPlan === "premium"
-                            ? "default"
-                            : "secondary"
-                        }
-                        className="text-[10px] px-1"
-                      >
-                        {variant.minPlan.toUpperCase()}
-                      </Badge>
-                    )}
+                  <div className="flex items-center justify-between mt-2 gap-2">
+                    <div className="flex items-center gap-1">
+                      {model.plan && model.plan !== "free" && (
+                        <Badge
+                          variant={
+                            model.plan === "premium" ? "default" : "secondary"
+                          }
+                          className="text-[10px] px-1"
+                        >
+                          {model.plan.toUpperCase()}
+                        </Badge>
+                      )}
 
-                    {variant.category && (
-                      <Badge variant="outline" className="text-[10px] capitalize">
-                        {variant.category}
-                      </Badge>
-                    )}
+                      {template?.category && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] capitalize"
+                        >
+                          {template.category}
+                        </Badge>
+                      )}
+                    </div>
 
-                    {locked && (
-                      <Lock className="w-4 h-4 text-muted-foreground" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      {locked && (
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

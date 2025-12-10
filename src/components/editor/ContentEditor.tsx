@@ -29,13 +29,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { getSectionModel, SectionKey, FieldConfig, ImageConfig } from '@/lib/sectionModels';
+import {
+  getSectionModel,
+  SectionKey,
+  FieldConfig,
+  ImageConfig,
+  SECTION_MODEL_KEY,
+} from '@/lib/sectionModels';
 
 interface ContentEditorProps {
   open: boolean;
   onClose: () => void;
   lpId: string;
-  sectionKey: string;
+  sectionKey: SectionKey;
   sectionName: string;
   onSave: () => void;
 }
@@ -57,6 +63,7 @@ export const ContentEditor = ({
     if (open && lpId && sectionKey) {
       loadContent();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lpId, sectionKey]);
 
   const loadContent = async () => {
@@ -70,36 +77,47 @@ export const ContentEditor = ({
     setContent(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    const success = await saveSectionContent(lpId, sectionKey, content);
-    
-    if (success) {
-      toast({ title: 'Salvo!', description: 'Conteúdo atualizado com sucesso.' });
-      onSave();
-      onClose();
-    } else {
-      toast({ title: 'Erro', description: 'Não foi possível salvar.', variant: 'destructive' });
-    }
-    
-    setSaving(false);
-  };
+  // Usa o sistema centralizado de modelos
+  const modelId = (content?.[SECTION_MODEL_KEY] as string | undefined) || undefined;
+  const sectionModel = getSectionModel(sectionKey, modelId);
 
-  // Usar o sistema centralizado de modelos
-  const variant = (content?.variant as string) || undefined;
-  const sectionModel = getSectionModel(sectionKey as SectionKey, variant);
-  
   const fields: FieldConfig[] = sectionModel?.fields ?? [];
   const hasJsonEditor = sectionModel?.hasJsonEditor ?? false;
   const sectionImages: ImageConfig[] = sectionModel?.images ?? [];
   const hasImages = sectionImages.length > 0;
 
-  const renderJsonEditor = () => {
-    const editorProps = {
-      content,
-      onChange: handleChange,
-    };
+  const handleSave = async () => {
+    setSaving(true);
 
+    // Garante que o ID do modelo da seção seja salvo junto
+    const payload: LPContent = sectionModel?.id
+      ? { ...content, [SECTION_MODEL_KEY]: sectionModel.id }
+      : content;
+
+    const success = await saveSectionContent(lpId, sectionKey, payload);
+
+    if (success) {
+      toast({ title: 'Salvo!', description: 'Conteúdo atualizado com sucesso.' });
+      setContent(payload);
+      onSave();
+      onClose();
+    } else {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar.',
+        variant: 'destructive',
+      });
+    }
+
+    setSaving(false);
+  };
+
+  const editorProps = {
+    content,
+    onChange: handleChange,
+  };
+
+  const renderJsonEditor = () => {
     switch (sectionKey) {
       case 'menu':
         return <MenuEditor {...editorProps} />;
@@ -124,38 +142,42 @@ export const ContentEditor = ({
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent 
-        side={isMobile ? "bottom" : "right"} 
+      <SheetContent
+        side={isMobile ? 'bottom' : 'right'}
         className={
-          isMobile 
-            ? "h-[85vh] rounded-t-2xl flex flex-col p-0" 
-            : "w-full sm:max-w-lg overflow-y-auto"
+          isMobile
+            ? 'h-[85vh] rounded-t-2xl flex flex-col p-0'
+            : 'w-full sm:max-w-lg overflow-y-auto'
         }
       >
         {/* Header */}
-        <div className={isMobile ? "px-4 pt-4 pb-2 border-b shrink-0" : ""}>
-          <SheetHeader className={isMobile ? "space-y-1" : ""}>
-            <SheetTitle className={isMobile ? "text-lg" : ""}>
+        <div className={isMobile ? 'px-4 pt-4 pb-2 border-b shrink-0' : ''}>
+          <SheetHeader className={isMobile ? 'space-y-1' : ''}>
+            <SheetTitle className={isMobile ? 'text-lg' : ''}>
               Editar - {sectionName}
             </SheetTitle>
-            <SheetDescription className={isMobile ? "text-sm" : ""}>
+            <SheetDescription className={isMobile ? 'text-sm' : ''}>
               Altere os textos, imagens e conteúdo desta seção
             </SheetDescription>
           </SheetHeader>
         </div>
-        
+
         {/* Content area */}
-        <div className={
-          isMobile 
-            ? "flex-1 overflow-y-auto px-4 py-4" 
-            : "mt-6 space-y-6"
-        }>
+        <div
+          className={
+            isMobile ? 'flex-1 overflow-y-auto px-4 py-4' : 'mt-6 space-y-6'
+          }
+        >
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Accordion type="multiple" defaultValue={['texts', 'content']} className="space-y-2">
+            <Accordion
+              type="multiple"
+              defaultValue={['texts', 'content']}
+              className="space-y-2"
+            >
               {/* Text fields */}
               {fields.length > 0 && (
                 <AccordionItem value="texts" className="border rounded-lg px-3">
@@ -163,28 +185,46 @@ export const ContentEditor = ({
                     Textos e Links
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className={isMobile ? "space-y-3 pb-2" : "space-y-4 pb-3"}>
-                      {fields.map((field) => (
-                        <div key={field.key} className={isMobile ? "space-y-1.5" : "space-y-2"}>
-                          <Label htmlFor={field.key} className={isMobile ? "text-sm" : ""}>
+                    <div
+                      className={
+                        isMobile ? 'space-y-3 pb-2' : 'space-y-4 pb-3'
+                      }
+                    >
+                      {fields.map(field => (
+                        <div
+                          key={field.key}
+                          className={isMobile ? 'space-y-1.5' : 'space-y-2'}
+                        >
+                          <Label
+                            htmlFor={field.key}
+                            className={isMobile ? 'text-sm' : ''}
+                          >
                             {field.label}
                           </Label>
                           {field.type === 'textarea' ? (
                             <Textarea
                               id={field.key}
                               value={content[field.key] || ''}
-                              onChange={(e) => handleChange(field.key, e.target.value)}
+                              onChange={e =>
+                                handleChange(field.key, e.target.value)
+                              }
                               rows={isMobile ? 2 : 3}
-                              className={isMobile ? "text-base min-h-[60px]" : ""}
+                              className={
+                                isMobile ? 'text-base min-h-[60px]' : ''
+                              }
                             />
                           ) : (
                             <Input
                               id={field.key}
                               type={field.type === 'url' ? 'url' : 'text'}
                               value={content[field.key] || ''}
-                              onChange={(e) => handleChange(field.key, e.target.value)}
-                              placeholder={field.type === 'url' ? 'https://...' : ''}
-                              className={isMobile ? "text-base h-11" : ""}
+                              onChange={e =>
+                                handleChange(field.key, e.target.value)
+                              }
+                              placeholder={
+                                field.type === 'url' ? 'https://...' : ''
+                              }
+                              className={isMobile ? 'text-base h-11' : ''}
                             />
                           )}
                         </div>
@@ -193,7 +233,7 @@ export const ContentEditor = ({
                   </AccordionContent>
                 </AccordionItem>
               )}
-              
+
               {/* Images */}
               {hasImages && sectionImages.length > 0 && (
                 <AccordionItem value="images" className="border rounded-lg px-3">
@@ -205,25 +245,27 @@ export const ContentEditor = ({
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-4 pb-3">
-                      {sectionImages.map((img) => (
+                      {sectionImages.map(img => (
                         <div key={img.key} className="space-y-2">
                           <Label>{img.label}</Label>
                           <ImageUpload
                             lpId={lpId}
                             value={content[img.key] || ''}
-                            onChange={(url) => handleChange(img.key, url)}
+                            onChange={url => handleChange(img.key, url)}
                             compact={isMobile}
                           />
                         </div>
                       ))}
-                      {/* Also check for legacy image field */}
+                      {/* Campo legado opcional para hero antiga */}
                       {sectionKey === 'hero' && (
                         <div className="space-y-2">
                           <Label>Imagem principal (legado)</Label>
                           <ImageUpload
                             lpId={lpId}
                             value={content['imagem_principal'] || ''}
-                            onChange={(url) => handleChange('imagem_principal', url)}
+                            onChange={url =>
+                              handleChange('imagem_principal', url)
+                            }
                             compact={isMobile}
                           />
                         </div>
@@ -232,7 +274,7 @@ export const ContentEditor = ({
                   </AccordionContent>
                 </AccordionItem>
               )}
-              
+
               {/* JSON list editors */}
               {hasJsonEditor && (
                 <AccordionItem value="content" className="border rounded-lg px-3">
@@ -240,39 +282,40 @@ export const ContentEditor = ({
                     Conteúdo Avançado
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="pb-3">
-                      {renderJsonEditor()}
-                    </div>
+                    <div className="pb-3">{renderJsonEditor()}</div>
                   </AccordionContent>
                 </AccordionItem>
               )}
-              
+
               {fields.length === 0 && !hasJsonEditor && !hasImages && (
                 <p className="text-sm text-muted-foreground py-4">
-                  Para editar conteúdos avançados desta seção, acesse o painel completo.
+                  Para editar conteúdos avançados desta seção, acesse o painel
+                  completo.
                 </p>
               )}
             </Accordion>
           )}
         </div>
-        
-        {/* Footer - fixed on mobile */}
-        <div className={
-          isMobile 
-            ? "shrink-0 px-4 py-3 border-t bg-card flex gap-2" 
-            : "mt-6 flex gap-2 justify-end"
-        }>
-          <Button 
-            variant="outline" 
+
+        {/* Footer */}
+        <div
+          className={
+            isMobile
+              ? 'shrink-0 px-4 py-3 border-t bg-card flex gap-2'
+              : 'mt-6 flex gap-2 justify-end'
+          }
+        >
+          <Button
+            variant="outline"
             onClick={onClose}
-            className={isMobile ? "flex-1 h-11" : ""}
+            className={isMobile ? 'flex-1 h-11' : ''}
           >
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={saving || loading}
-            className={isMobile ? "flex-1 h-11" : ""}
+            className={isMobile ? 'flex-1 h-11' : ''}
           >
             {saving ? (
               <>

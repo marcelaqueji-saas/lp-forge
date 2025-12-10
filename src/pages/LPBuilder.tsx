@@ -124,7 +124,8 @@ interface SectionState {
 }
 
 const LPBuilder = () => {
-  const { lpId } = useParams();
+   const { lpId: lpIdParam } = useParams<{ lpId: string }>();
+  const lpId = lpIdParam || '';
   const navigate = useNavigate();
   const { user, profile, planLimits, isAdminMaster } = useAuth();
   const isMobile = useIsMobile();
@@ -142,16 +143,18 @@ const LPBuilder = () => {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, [lpId]);
-
-  const loadData = async () => {
-    if (!lpId) {
+    useEffect(() => {
+    // Se não tiver lpId na URL, volta para o onboarding
+    if (!lpIdParam) {
       navigate('/onboarding');
       return;
     }
 
+    // Carrega dados usando o lpId garantido da URL
+    loadData(lpIdParam);
+  }, [lpIdParam]);
+
+  const loadData = async (lpId: string) => {
     // Load LP data
     const { data: lp, error: lpError } = await supabase
       .from('landing_pages')
@@ -188,15 +191,21 @@ const LPBuilder = () => {
 
     // Garante que só usamos seções conhecidas e preenchendo as que faltarem
     const orderedKeys = [
-      ...dbSectionOrder.filter((key) => AVAILABLE_SECTIONS.some((s) => s.key === key)),
-      ...AVAILABLE_SECTIONS.map((s) => s.key).filter((key) => !dbSectionOrder.includes(key)),
+      ...dbSectionOrder.filter((key) =>
+        AVAILABLE_SECTIONS.some((s) => s.key === key)
+      ),
+      ...AVAILABLE_SECTIONS.map((s) => s.key).filter(
+        (key) => !dbSectionOrder.includes(key)
+      ),
     ];
 
     const initialSections: SectionState[] = orderedKeys.map((key) => {
       const config = AVAILABLE_SECTIONS.find((s) => s.key === key)!;
       return {
         key,
-        enabled: config.required || ['hero', 'beneficios', 'chamada_final', 'rodape'].includes(key),
+        enabled:
+          config.required ||
+          ['hero', 'beneficios', 'chamada_final', 'rodape'].includes(key),
         variant: 'modelo_a',
       };
     });
@@ -204,6 +213,7 @@ const LPBuilder = () => {
     setSections(initialSections);
     setLoading(false);
   };
+
 
   const getVariantsForSection = (sectionKey: string) => {
     // First check DB templates

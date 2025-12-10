@@ -28,7 +28,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   SECTION_MODELS,
-  SECTION_KEYS,
   SECTION_DISPLAY_NAMES,
   SectionModel,
   SectionKey,
@@ -64,6 +63,9 @@ const PLAN_LABELS: Record<PlanLevel, string> = {
   premium: 'Premium',
 };
 
+// Lista de seções derivada da fonte única de nomes amigáveis
+const SECTION_KEY_LIST = Object.keys(SECTION_DISPLAY_NAMES) as SectionKey[];
+
 const MasterSectionModels = () => {
   const navigate = useNavigate();
   const [configs, setConfigs] = useState<Record<string, ModelConfig>>({});
@@ -72,7 +74,9 @@ const MasterSectionModels = () => {
   const [search, setSearch] = useState('');
   const [filterSection, setFilterSection] = useState<string>('all');
   const [filterPlan, setFilterPlan] = useState<string>('all');
-  const [pendingChanges, setPendingChanges] = useState<Record<string, Partial<ModelConfig>>>({});
+  const [pendingChanges, setPendingChanges] = useState<
+    Record<string, Partial<ModelConfig>>
+  >({});
 
   useEffect(() => {
     loadConfigs();
@@ -121,7 +125,11 @@ const MasterSectionModels = () => {
     groupedModels[m.section].push(m);
   });
 
-  const handleConfigChange = (modelId: string, field: keyof ModelConfig, value: any) => {
+  const handleConfigChange = (
+    modelId: string,
+    field: keyof ModelConfig,
+    value: any
+  ) => {
     setPendingChanges((prev) => ({
       ...prev,
       [modelId]: {
@@ -151,8 +159,17 @@ const MasterSectionModels = () => {
     for (const [modelId, updates] of changes) {
       const existingConfig = configs[modelId];
       const fullConfig = existingConfig
-        ? { ...existingConfig, ...updates, updated_at: new Date().toISOString() }
-        : { id: modelId, ...DEFAULT_CONFIG, ...updates, updated_at: new Date().toISOString() };
+        ? {
+            ...existingConfig,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          }
+        : {
+            id: modelId,
+            ...DEFAULT_CONFIG,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          };
 
       const { error } = await supabase
         .from('section_model_configs')
@@ -237,7 +254,7 @@ const MasterSectionModels = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas Seções</SelectItem>
-              {SECTION_KEYS.map((s) => (
+              {SECTION_KEY_LIST.map((s) => (
                 <SelectItem key={s} value={s}>
                   {SECTION_DISPLAY_NAMES[s]}
                 </SelectItem>
@@ -305,7 +322,10 @@ const MasterSectionModels = () => {
                                 <div>
                                   <span className="font-medium">{model.name}</span>
                                   {hasChanges && (
-                                    <Badge variant="outline" className="ml-2 text-[10px]">
+                                    <Badge
+                                      variant="outline"
+                                      className="ml-2 text-[10px]"
+                                    >
                                       Editado
                                     </Badge>
                                   )}
@@ -341,7 +361,11 @@ const MasterSectionModels = () => {
                                 <Switch
                                   checked={config.visible_for_free}
                                   onCheckedChange={(v) =>
-                                    handleConfigChange(model.id, 'visible_for_free', v)
+                                    handleConfigChange(
+                                      model.id,
+                                      'visible_for_free',
+                                      v
+                                    )
                                   }
                                   disabled={model.plan !== 'free'}
                                 />
@@ -350,7 +374,11 @@ const MasterSectionModels = () => {
                                 <Switch
                                   checked={config.visible_for_pro}
                                   onCheckedChange={(v) =>
-                                    handleConfigChange(model.id, 'visible_for_pro', v)
+                                    handleConfigChange(
+                                      model.id,
+                                      'visible_for_pro',
+                                      v
+                                    )
                                   }
                                   disabled={model.plan === 'premium'}
                                 />
@@ -359,7 +387,11 @@ const MasterSectionModels = () => {
                                 <Switch
                                   checked={config.visible_for_premium}
                                   onCheckedChange={(v) =>
-                                    handleConfigChange(model.id, 'visible_for_premium', v)
+                                    handleConfigChange(
+                                      model.id,
+                                      'visible_for_premium',
+                                      v
+                                    )
                                   }
                                 />
                               </td>
@@ -426,21 +458,24 @@ const MasterSectionModels = () => {
             <h4 className="font-medium mb-2">Como funciona a governança?</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li>
-                • <strong>Ativo:</strong> Se desabilitado, o modelo não aparece como opção
-                para novos usos (LPs existentes continuam funcionando)
+                • <strong>Ativo:</strong> Se desabilitado, o modelo não aparece como
+                opção para novos usos (LPs existentes continuam funcionando)
               </li>
               <li>
-                • <strong>Free/Pro/Premium:</strong> Controla quais planos podem usar o modelo
+                • <strong>Free/Pro/Premium:</strong> Controla quais planos podem usar
+                o modelo
               </li>
               <li>
-                • <strong>Destaque:</strong> Modelos destacados aparecem primeiro no picker
+                • <strong>Destaque:</strong> Modelos destacados aparecem primeiro no
+                picker
               </li>
               <li>
-                • <strong>Ordem:</strong> Define a posição de exibição (menor = primeiro)
+                • <strong>Ordem:</strong> Define a posição de exibição (menor =
+                primeiro)
               </li>
               <li>
-                • Os modelos são definidos em código (sectionModels.ts) e as configs de
-                visibilidade são salvas no banco
+                • Os modelos são definidos em código (sectionModels.ts) e as configs
+                de visibilidade são salvas no banco
               </li>
             </ul>
           </CardContent>

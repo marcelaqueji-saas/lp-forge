@@ -11,12 +11,12 @@ BEGIN
     END IF;
 END $$;
 
--- Create official SaaS-LP landing page
+-- Create official noBRon landing page
 INSERT INTO public.landing_pages (id, slug, nome, publicado, is_official, owner_id)
 SELECT 
     gen_random_uuid(),
     'nobron',
-    'Site Oficial SaaS-LP',
+    'Site Oficial noBRon',
     true,
     true,
     (SELECT user_id FROM public.user_roles WHERE role = 'admin_master' LIMIT 1)
@@ -35,13 +35,13 @@ BEGIN
         -- Insert minimal content for each section
         INSERT INTO public.lp_content (lp_id, section, key, value, section_order)
         VALUES 
-            (lp_uuid, 'menu', 'brand_name', 'SaaS-LP', 1),
+            (lp_uuid, 'menu', 'brand_name', 'noBRon', 1),
             (lp_uuid, 'hero', 'titulo', 'Crie Landing Pages e Sites profissionais em minutos', 2),
             (lp_uuid, 'hero', 'subtitulo', 'Editor visual, templates animados e alto poder de conversão', 2),
             (lp_uuid, 'beneficios', '_initialized', 'true', 3),
             (lp_uuid, 'provas_sociais', '_initialized', 'true', 4),
             (lp_uuid, 'chamada_final', 'titulo', 'Pronto para publicar ainda hoje?', 5),
-            (lp_uuid, 'rodape', 'copyright', '© 2024 SaaS-LP. Todos os direitos reservados.', 6)
+            (lp_uuid, 'rodape', 'copyright', '© 2024 noBRon. Todos os direitos reservados.', 6)
         ON CONFLICT DO NOTHING;
         
         -- Insert settings with premium variants
@@ -51,7 +51,7 @@ BEGIN
             (lp_uuid, 'beneficios_variante', 'features_float'),
             (lp_uuid, 'provas_sociais_variante', 'testimonial_cinematic'),
             (lp_uuid, 'chamada_final_variante', 'cta_final_animated'),
-            (lp_uuid, 'meta_title', 'SaaS-LP | Crie Landing Pages Profissionais em Minutos'),
+            (lp_uuid, 'meta_title', 'noBRon | Crie Landing Pages Profissionais em Minutos'),
             (lp_uuid, 'meta_description', 'Editor visual, templates animados e alto poder de conversão. Crie landing pages e sites profissionais sem código.')
         ON CONFLICT DO NOTHING;
         

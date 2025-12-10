@@ -58,12 +58,12 @@ serve(async (req) => {
 
     // Method 1: Try to fetch verification file
     try {
-      const verifyUrl = `https://${domain}/.well-known/saas-lp-verify.txt`;
+      const verifyUrl = `https://${domain}/.well-known/noBRon-verify.txt`;
       console.log(`Checking verification URL: ${verifyUrl}`);
       
       const response = await fetch(verifyUrl, { 
         method: 'GET',
-        headers: { 'User-Agent': 'SaaS-LP-Verifier/1.0' }
+        headers: { 'User-Agent': 'noBRon-Verifier/1.0' }
       });
       
       if (response.ok) {
@@ -83,7 +83,7 @@ serve(async (req) => {
       try {
         const response = await fetch(`https://${domain}/`, { 
           method: 'HEAD',
-          headers: { 'User-Agent': 'SaaS-LP-Verifier/1.0' }
+          headers: { 'User-Agent': 'noBRon-Verifier/1.0' }
         });
         
         if (response.ok || response.status === 301 || response.status === 302) {

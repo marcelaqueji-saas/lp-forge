@@ -62,6 +62,8 @@ import MasterAudit from "./pages/master/MasterAudit";
 import MasterHomepage from "./pages/master/MasterHomepage";
 import MasterSectionModels from "./pages/master/MasterSectionModels";
 
+import InteresseNoBron from "./pages/marketing/InteresseNoBron";
+
 const queryClient = new QueryClient();
 
 // Componente para decidir quando mostrar o banner de cookies
@@ -90,6 +92,7 @@ const App = () => (
             <Route path="/health" element={<Health />} />
             <Route path="/healthz" element={<Health />} />
             <Route path="/nobron" element={<Sitenobron />} />
+            <Route path="/interesse-nobron" element={<InteresseNoBron />}/>
             <Route path="/lp/:slug" element={<LandingPageBySlug />} />
             <Route path="/site/:siteSlug" element={<SitePublic />} />
             <Route path="/site/:siteSlug/:pageSlug" element={<SitePublic />} />

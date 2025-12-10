@@ -27,7 +27,7 @@ interface TestimonialCinematicProps {
 const defaultTestimonials: TestimonialItem[] = [
   {
     texto:
-      'O SaaS-LP transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
+      'O noBRon transformou completamente como criamos landing pages. O que levava dias agora fazemos em horas, com resultados muito melhores.',
     nome: 'Maria Silva',
     cargo: 'CEO, TechStartup',
     foto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',

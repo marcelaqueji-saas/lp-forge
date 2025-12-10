@@ -110,7 +110,7 @@ const applyDefaultTemplate = async (lpId: string, userName: string) => {
     { section: 'menu', key: 'cta_url', value: '#contato' },
     
     // Hero
-    { section: 'hero', key: 'badge', value: '✨ Novo' },
+    { section: 'hero', key: 'badge', value: 'Novo' },
     { section: 'hero', key: 'titulo', value: 'Olá! Eu sou' },
     { section: 'hero', key: 'destaque', value: userName || 'Seu Nome' },
     { section: 'hero', key: 'subtitulo', value: 'Bem-vindo à minha página. Aqui você encontra informações sobre meu trabalho e como posso ajudar você.' },

@@ -2,24 +2,31 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { SEOHead } from '@/components/SEOHead';
-import { 
-  getLPById, 
-  getAllContent, 
-  getSettings, 
-  getSectionOrder, 
-  saveSettings, 
-  saveSectionContent, 
-  LPContent, 
-  LPSettings, 
-  getUserRoleForLP, 
+import {
+  getLPById,
+  getAllContent,
+  getSettings,
+  getSectionOrder,
+  saveSettings,
+  saveSectionContent,
+  LPContent,
+  LPSettings,
+  getUserRoleForLP,
   DEFAULT_SECTION_ORDER,
-  SECTION_NAMES
+  SECTION_NAMES,
 } from '@/lib/lpContentApi';
 import { hasCompletedEditorTour, markOnboardingCompleted } from '@/lib/userApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Eye, Loader2, ExternalLink, Edit3, ChevronDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  Eye,
+  Loader2,
+  ExternalLink,
+  Edit3,
+  ChevronDown,
+} from 'lucide-react';
 import { SectionOverlay } from '@/components/editor/SectionOverlay';
 import { TemplatePicker } from '@/components/editor/TemplatePicker';
 import { ContentEditor } from '@/components/editor/ContentEditor';
@@ -32,15 +39,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SectionLoader, resolveVariant } from '@/components/sections/SectionLoader';
-import { SectionKey } from '@/lib/sectionModels';
+import type { SectionKey } from '@/lib/sectionModels';
 import { applyThemeToLP, removeThemeFromLP } from '@/lib/themeUtils';
 import { parseVisualConfig, PremiumVisualConfig } from '@/lib/premiumPresets';
+import { useAuth } from '@/hooks/useAuth';
+import type { PlanTier } from '@/lib/authApi';
 
 const MeuSite = () => {
   const { lpId } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>(
+    {} as Record<SectionKey, HTMLDivElement | null>
+  );
+  const { profile } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,17 +63,18 @@ const MeuSite = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // Editor state
-  const [editMode, setEditMode] = useState(true);
+  const [editMode] = useState(true);
   const [runTour, setRunTour] = useState(false);
   const [TemplatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [contentEditorOpen, setContentEditorOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
 
   // Disable animations in editor for performance
   const disableAnimations = editMode;
 
   useEffect(() => {
     checkAuthAndLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lpId]);
 
   // Apply theme when settings change
@@ -69,15 +82,17 @@ const MeuSite = () => {
     if (Object.keys(settings).length > 0) {
       applyThemeToLP(settings);
     }
-    
+
     return () => {
       removeThemeFromLP();
     };
   }, [settings]);
 
   const checkAuthAndLoad = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session) {
       navigate('/auth/login');
       return;
@@ -110,7 +125,7 @@ const MeuSite = () => {
     if (!lpId) return;
 
     setLoading(true);
-    
+
     const [lp, contentData, settingsData, order] = await Promise.all([
       getLPById(lpId),
       getAllContent(lpId),
@@ -136,13 +151,22 @@ const MeuSite = () => {
     markOnboardingCompleted();
   };
 
-  const handleChangeLayout = (sectionKey: string) => {
+  const scrollToSection = (sectionKey: SectionKey) => {
+    const element = sectionRefs.current[sectionKey];
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleChangeLayout = (sectionKey: SectionKey) => {
     setActiveSection(sectionKey);
+    scrollToSection(sectionKey);
     setTemplatePickerOpen(true);
   };
 
-  const handleEditContent = (sectionKey: string) => {
+  const handleEditContent = (sectionKey: SectionKey) => {
     setActiveSection(sectionKey);
+    scrollToSection(sectionKey);
     setContentEditorOpen(true);
   };
 
@@ -150,28 +174,25 @@ const MeuSite = () => {
     if (!lpId || !activeSection) return;
 
     try {
-      // Get current content for the section
       const currentContent = content[activeSection] || {};
-      
-      // Update content with new variant
-      const updatedContent = {
+
+      const updatedContent: LPContent = {
         ...currentContent,
         variant: variantId,
       };
 
-      // Save to database
+      // saveSectionContent agora espera SectionKey, então usamos activeSection,
+      // que já é SectionKey
       await saveSectionContent(lpId, activeSection, updatedContent);
 
-      // Also update settings for backwards compatibility
       const settingKey = `${activeSection}_variante`;
       await saveSettings(lpId, { [settingKey]: variantId });
 
-      // Update local state immediately for instant preview
       setContent(prev => ({
         ...prev,
         [activeSection]: updatedContent,
       }));
-      
+
       setSettings(prev => ({
         ...prev,
         [settingKey]: variantId,
@@ -179,7 +200,7 @@ const MeuSite = () => {
 
       toast({ title: 'Layout atualizado!' });
       setTemplatePickerOpen(false);
-      
+
       console.log(`[MeuSite] Variant changed: ${activeSection} → ${variantId}`);
     } catch (error) {
       console.error('[MeuSite] Error saving variant:', error);
@@ -187,29 +208,29 @@ const MeuSite = () => {
     }
   };
 
-  const handleStyleChange = async (sectionKey: string, styles: Record<string, string | undefined>) => {
+  const handleStyleChange = async (
+    sectionKey: SectionKey,
+    styles: Record<string, string | undefined>,
+  ) => {
     if (!lpId) return;
 
     try {
       const currentContent = content[sectionKey] || {};
-      
-      // Merge new styles with existing content
-      const updatedContent = {
+
+      const updatedContent: LPContent = {
         ...currentContent,
         ...styles,
       };
 
-      // Remove undefined values (reset to global)
+      // Remove undefined values (reset para global)
       Object.keys(styles).forEach(key => {
         if (styles[key] === undefined) {
           delete updatedContent[key];
         }
       });
 
-      // Save to database
       await saveSectionContent(lpId, sectionKey, updatedContent);
 
-      // Update local state immediately for instant preview
       setContent(prev => ({
         ...prev,
         [sectionKey]: updatedContent,
@@ -223,36 +244,55 @@ const MeuSite = () => {
     }
   };
 
-  const handlePremiumConfigChange = async (sectionKey: string, partialConfig: Partial<PremiumVisualConfig>) => {
+  const handlePremiumConfigChange = async (
+    sectionKey: SectionKey,
+    partialConfig: Partial<PremiumVisualConfig>,
+  ) => {
     if (!lpId) return;
 
     try {
       const currentContent = content[sectionKey] || {};
-      
-      // Merge premium config fields with existing content
-      const updatedContent = {
+
+      const updatedContent: LPContent = {
         ...currentContent,
-        ...(partialConfig.background_style !== undefined && { background_style: partialConfig.background_style }),
-        ...(partialConfig.ornament_style !== undefined && { ornament_style: partialConfig.ornament_style }),
-        ...(partialConfig.animation_preset !== undefined && { animation_preset: partialConfig.animation_preset }),
-        ...(partialConfig.button_style !== undefined && { button_style: partialConfig.button_style }),
-        ...(partialConfig.cursor_effect !== undefined && { cursor_effect: partialConfig.cursor_effect }),
-        ...(partialConfig.separator_before !== undefined && { separator_before: partialConfig.separator_before }),
-        ...(partialConfig.separator_after !== undefined && { separator_after: partialConfig.separator_after }),
-        ...(partialConfig.card_style !== undefined && { card_style: partialConfig.card_style }),
+        ...(partialConfig.background_style !== undefined && {
+          background_style: partialConfig.background_style,
+        }),
+        ...(partialConfig.ornament_style !== undefined && {
+          ornament_style: partialConfig.ornament_style,
+        }),
+        ...(partialConfig.animation_preset !== undefined && {
+          animation_preset: partialConfig.animation_preset,
+        }),
+        ...(partialConfig.button_style !== undefined && {
+          button_style: partialConfig.button_style,
+        }),
+        ...(partialConfig.cursor_effect !== undefined && {
+          cursor_effect: partialConfig.cursor_effect,
+        }),
+        ...(partialConfig.separator_before !== undefined && {
+          separator_before: partialConfig.separator_before,
+        }),
+        ...(partialConfig.separator_after !== undefined && {
+          separator_after: partialConfig.separator_after,
+        }),
+        ...(partialConfig.card_style !== undefined && {
+          card_style: partialConfig.card_style,
+        }),
       };
 
-      // Save to database
       await saveSectionContent(lpId, sectionKey, updatedContent);
 
-      // Update local state immediately for instant preview
       setContent(prev => ({
         ...prev,
         [sectionKey]: updatedContent,
       }));
 
       toast({ title: 'Efeitos visuais atualizados!' });
-      console.log(`[MeuSite] Premium config changed for ${sectionKey}:`, partialConfig);
+      console.log(
+        `[MeuSite] Premium config changed for ${sectionKey}:`,
+        partialConfig,
+      );
     } catch (error) {
       console.error('[MeuSite] Error saving premium config:', error);
       toast({ title: 'Erro ao salvar efeitos', variant: 'destructive' });
@@ -260,14 +300,14 @@ const MeuSite = () => {
   };
 
   const handleContentSave = () => {
-    loadLP(); // Reload to get updated content
+    loadLP();
   };
 
   const handlePublish = async () => {
     if (!lpId) return;
-    
+
     setSaving(true);
-    
+
     const { error } = await supabase
       .from('landing_pages')
       .update({ publicado: true })
@@ -277,9 +317,12 @@ const MeuSite = () => {
       toast({ title: 'Erro ao publicar', variant: 'destructive' });
     } else {
       setLpData((prev: any) => ({ ...prev, publicado: true }));
-      toast({ title: 'Página publicada!', description: 'Sua página está no ar.' });
+      toast({
+        title: 'Página publicada!',
+        description: 'Sua página está no ar.',
+      });
     }
-    
+
     setSaving(false);
   };
 
@@ -290,22 +333,11 @@ const MeuSite = () => {
   };
 
   const getVariante = (section: string): string => {
-    return resolveVariant(
-      section as SectionKey, 
-      content[section], 
-      settings
-    );
+    return resolveVariant(section as SectionKey, content[section], settings);
   };
 
   const getSectionName = (section: string): string => {
     return SECTION_NAMES[section] || section;
-  };
-
-  const scrollToSection = (sectionKey: string) => {
-    const element = sectionRefs.current[sectionKey];
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   };
 
   if (loading) {
@@ -324,53 +356,53 @@ const MeuSite = () => {
 
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
-  // 🔹 NOVO: ordem base (respeitando DB ou padrão) e exclusão de lead_form
+  // =========================
+  // CÁLCULO CENTRAL:
+  // baseOrder + enabled_sections → sectionsToRender
+  // =========================
+
   const baseOrder = (
-    sectionOrder && sectionOrder.length > 0
-      ? sectionOrder
-      : DEFAULT_SECTION_ORDER
-  ).filter((s) => s !== 'lead_form');
+    sectionOrder && sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER
+  ).filter(s => s !== 'lead_form');
 
-  // 🔹 NOVO: ler enabled_sections do settings
-  let enabledSectionsFromSettings: string[] | null = null;
-  const rawEnabled = settings.enabled_sections as string | undefined;
+  let enabledSections: string[] | null = null;
 
+  const rawEnabled = (settings as any)?.enabled_sections as string | undefined;
   if (rawEnabled) {
     try {
-      enabledSectionsFromSettings = JSON.parse(rawEnabled) as string[];
-    } catch (e) {
-      console.warn('[MeuSite] enabled_sections inválido:', rawEnabled);
-      enabledSectionsFromSettings = null;
+      const parsed = JSON.parse(rawEnabled);
+      if (Array.isArray(parsed)) {
+        enabledSections = parsed as string[];
+      }
+    } catch {
+      enabledSections = null;
     }
   }
 
-  // 🔹 NOVO: se tiver enabled_sections, filtra; senão, renderiza tudo (LPs antigas)
-  const sectionsToRender = baseOrder.filter((section) => {
-    if (!enabledSectionsFromSettings || enabledSectionsFromSettings.length === 0) {
-      return true;
-    }
-    return enabledSectionsFromSettings.includes(section);
-  });
+  const sectionsToRender =
+    enabledSections && enabledSections.length > 0
+      ? baseOrder.filter(section => enabledSections!.includes(section))
+      : baseOrder;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Editor Header */}
-      <div 
+      <div
         className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur border-b"
         data-tour-id="editor-top-actions"
       >
         <div className="container mx-auto px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/painel')}
               className="shrink-0 h-8 md:h-9 px-2 md:px-3"
             >
               <ArrowLeft className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Painel</span>
             </Button>
-            
+
             <div className="hidden md:block min-w-0">
               <h1 className="font-medium text-sm truncate">{lpData?.nome}</h1>
               <p className="text-xs text-muted-foreground">
@@ -378,10 +410,10 @@ const MeuSite = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1.5 md:gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleViewPublic}
               className="h-8 md:h-9 px-2 md:px-3"
@@ -389,9 +421,9 @@ const MeuSite = () => {
               <Eye className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">Ver como visitante</span>
             </Button>
-            
+
             {canEdit && !lpData?.publicado && (
-              <Button 
+              <Button
                 size="sm"
                 onClick={handlePublish}
                 disabled={saving}
@@ -410,21 +442,28 @@ const MeuSite = () => {
           </div>
         </div>
 
-        {/* Mobile section navigator - agora usando sectionsToRender */}
+        {/* Mobile section navigator */}
         {isMobile && canEdit && (
           <div className="px-3 pb-2 border-t pt-2 bg-card/80">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between h-9 text-sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between h-9 text-sm"
+                >
                   <span>Ir para seção...</span>
                   <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[calc(100vw-24px)]" align="center">
-                {sectionsToRender.map((section) => (
-                  <DropdownMenuItem 
-                    key={section} 
-                    onClick={() => scrollToSection(section)}
+              <DropdownMenuContent
+                className="w-[calc(100vw-24px)]"
+                align="center"
+              >
+                {sectionsToRender.map(section => (
+                  <DropdownMenuItem
+                    key={section}
+                    onClick={() => scrollToSection(section as SectionKey)}
                     className="py-2.5"
                   >
                     {getSectionName(section)}
@@ -437,18 +476,22 @@ const MeuSite = () => {
       </div>
 
       {/* Main content with sections */}
-      <div className={isMobile && canEdit ? "pt-28" : "pt-14 md:pt-16"}>
+      <div className={isMobile && canEdit ? 'pt-28' : 'pt-14 md:pt-16'}>
         <SEOHead settings={settings} />
-        
+
         {sectionsToRender.map((section, index) => {
+          const sectionKey = section as SectionKey;
+          const hasVariants = true;
           const sectionContent = content[section] || {};
           const premiumConfig = parseVisualConfig(sectionContent);
 
           return (
-            <div 
-              key={section} 
+            <div
+              key={section}
               className="relative"
-              ref={(el) => { sectionRefs.current[section] = el; }}
+              ref={el => {
+                sectionRefs.current[sectionKey] = el;
+              }}
               data-section-key={section}
             >
               {editMode && canEdit && (
@@ -456,24 +499,25 @@ const MeuSite = () => {
                   sectionKey={section}
                   sectionName={getSectionName(section)}
                   isFirst={index === 0}
-                  canChangeLayout={true}
+                  canChangeLayout={hasVariants}
                   currentStyles={{
                     style_bg: sectionContent.style_bg as string,
                     style_text: sectionContent.style_text as string,
                     style_gradient: sectionContent.style_gradient as string,
                   }}
                   premiumConfig={premiumConfig}
-                  userPlan="premium"
-                  onChangeLayout={() => handleChangeLayout(section)}
-                  onEditContent={() => handleEditContent(section)}
-                  onStyleChange={(styles) => handleStyleChange(section, styles)}
-                  onPremiumConfigChange={(config) => handlePremiumConfigChange(section, config)}
+                  userPlan={(profile?.plan as PlanTier) || 'free'}
+                  onChangeLayout={() => handleChangeLayout(sectionKey)}
+                  onEditContent={() => handleEditContent(sectionKey)}
+                  onStyleChange={styles => handleStyleChange(sectionKey, styles)}
+                  onPremiumConfigChange={config =>
+                    handlePremiumConfigChange(sectionKey, config)
+                  }
                 />
               )}
-              
-              {/* Dynamic section rendering via SectionLoader */}
+
               <SectionLoader
-                sectionKey={section as SectionKey}
+                sectionKey={sectionKey}
                 content={sectionContent}
                 settings={settings}
                 disableAnimations={disableAnimations}
@@ -492,7 +536,7 @@ const MeuSite = () => {
             onClick={() => {
               const firstSection = sectionsToRender[0];
               if (firstSection) {
-                scrollToSection(firstSection);
+                scrollToSection(firstSection as SectionKey);
               }
             }}
           >
@@ -501,7 +545,8 @@ const MeuSite = () => {
         </div>
       )}
 
-      {activeSection && (
+      {/* Template Picker */}
+      {activeSection && lpId && (
         <TemplatePicker
           open={TemplatePickerOpen}
           onClose={() => setTemplatePickerOpen(false)}
@@ -509,7 +554,8 @@ const MeuSite = () => {
           sectionKey={activeSection}
           currentVariant={getVariante(activeSection)}
           onSelect={handleSelectVariant}
-          userPlan="premium"
+          userPlan={(profile?.plan as PlanTier) || 'free'}
+          lpId={lpId}
         />
       )}
 
