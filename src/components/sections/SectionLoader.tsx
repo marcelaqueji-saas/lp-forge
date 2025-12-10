@@ -679,6 +679,9 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
       content,
       previewOverride,
       variante: legacyVariant,
+      modelId: variant, // Pass the actual model ID
+      stylePreset: sectionModel?.stylePreset || 'glass', // Pass style preset from model
+      motionPreset: sectionModel?.motionPreset || 'fade-stagger', // Pass motion preset from model
       disableAnimations: disableAnimations || reducedMotion,
       buttonStyle: visualConfig.button_style,
       cardStyle: cardClasses,
