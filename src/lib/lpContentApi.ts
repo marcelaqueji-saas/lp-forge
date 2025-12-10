@@ -384,10 +384,9 @@ export const removeUserRoleFromLP = async (lpId: string, userId: string): Promis
 // ====================================================================
 
 // Get content for a specific section
-// Get content for a specific section
 export const getSectionContent = async (
   lpId: string,
-  section: SectionKey
+  section: string
 ): Promise<LPContent> => {
   const { data, error } = await supabase
     .from('lp_content')
@@ -487,7 +486,7 @@ export const updateSectionOrder = async (lpId: string, sections: string[]): Prom
 
 export const saveSectionContent = async (
   lpId: string,
-  section: SectionKey,
+  section: string,
   content: LPContent,
   sectionOrder?: number
 ): Promise<boolean> => {
