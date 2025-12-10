@@ -33,6 +33,8 @@ import MeuSite from "./pages/MeuSite";
 import LPBuilder from "./pages/LPBuilder";
 import CreateWizard from "./pages/CreateWizard";
 import Upgrade from "./pages/Upgrade";
+import LeadsExport from "./pages/client/LeadsExport";
+import AnalyticsDashboard from "./pages/client/AnalyticsDashboard";
 import Profile from "./pages/client/Profile";
 
 // Admin LP pages (legacy - accessible to both)
@@ -181,6 +183,26 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CreateWizard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Leads Export - Sprint 4.3 */}
+            <Route
+              path="/painel/leads/:lpId"
+              element={
+                <ProtectedRoute>
+                  <LeadsExport />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Analytics Dashboard - Sprint 4.3 */}
+            <Route
+              path="/painel/analytics/:lpId"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsDashboard />
                 </ProtectedRoute>
               }
             />
