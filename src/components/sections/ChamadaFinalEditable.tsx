@@ -88,11 +88,11 @@ export const ChamadaFinalEditable = ({
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-3xl mx-auto text-center"
+          className="max-w-3xl mx-auto text-center px-1"
         >
           {/* Badge opcional */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Comece grátis
           </div>
 
@@ -107,7 +107,7 @@ export const ChamadaFinalEditable = ({
             as="h2"
             editable={editable}
             placeholder="Título do CTA"
-            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 break-words"
           />
 
           {/* Subtítulo */}
@@ -121,7 +121,7 @@ export const ChamadaFinalEditable = ({
             as="p"
             editable={editable}
             placeholder="Descrição do CTA"
-            className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
+            className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto break-words"
             multiline
           />
 
@@ -142,31 +142,32 @@ export const ChamadaFinalEditable = ({
                 href={editable ? undefined : fc.url_botao}
                 onClick={handleCTAClick}
                 className={cn(
-                  "inline-flex items-center gap-2 px-8 py-4 rounded-xl",
-                  "bg-primary text-primary-foreground font-semibold text-lg",
+                  "inline-flex items-center gap-2 px-5 sm:px-6 md:px-8 py-3 sm:py-3.5 md:py-4 rounded-xl",
+                  "bg-primary text-primary-foreground font-semibold text-sm sm:text-base md:text-lg",
                   "hover:bg-primary/90 transition-all hover:scale-105",
-                  "shadow-lg shadow-primary/25"
+                  "shadow-lg shadow-primary/25 touch-manipulation",
+                  "w-full sm:w-auto justify-center"
                 )}
               >
-                {fc.texto_botao}
-                <ArrowRight className="w-5 h-5" />
+                <span className="break-words">{fc.texto_botao}</span>
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               </a>
             </EditableLink>
           </div>
 
-          {/* Trust badges */}
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          {/* Trust badges - mobile-first */}
+          <div className="mt-6 sm:mt-8 flex flex-col xs:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              Sem cartão de crédito
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">Sem cartão de crédito</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              Configure em minutos
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">Configure em minutos</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              Cancele quando quiser
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="whitespace-nowrap">Cancele quando quiser</span>
             </span>
           </div>
         </motion.div>

@@ -140,9 +140,9 @@ export const BeneficiosEditable = ({
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <h2 className="section-title mb-4">
+          <h2 className="section-title mb-3 sm:mb-4 break-words">
             <EditableField
               value={fc.titulo || 'Por que escolher nossa plataforma?'}
               fieldKey="titulo"
@@ -155,7 +155,7 @@ export const BeneficiosEditable = ({
               placeholder="Título da seção"
             />
           </h2>
-          <p className="section-subtitle mx-auto">
+          <p className="section-subtitle mx-auto break-words">
             <EditableField
               value={fc.subtitulo || 'Tudo que você precisa para criar páginas de alta conversão'}
               fieldKey="subtitulo"
@@ -170,7 +170,7 @@ export const BeneficiosEditable = ({
           </p>
         </motion.div>
 
-        {/* Grid de benefícios */}
+        {/* Grid de benefícios - mobile-first */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -179,7 +179,7 @@ export const BeneficiosEditable = ({
             hidden: { opacity: 0 },
             visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
           }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
         >
           {beneficios.map((beneficio, index) => {
             const Icon = iconMap[beneficio.icone || 'Check'] || Check;
@@ -190,43 +190,43 @@ export const BeneficiosEditable = ({
                   hidden: { opacity: 0, scale: 0.95 },
                   visible: { opacity: 1, scale: 1 }
                 }}
-                className="p-6 premium-card-soft relative group"
+                className="p-4 sm:p-5 md:p-6 premium-card-soft relative group"
               >
-                {/* Remove button */}
+                {/* Remove button - touch-friendly */}
                 {editable && (
                   <button
                     onClick={() => removeBeneficio(index)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                    className="absolute top-2 right-2 p-2 sm:p-1.5 rounded-full bg-destructive/10 text-destructive opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20 touch-manipulation"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                   </button>
                 )}
 
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Icon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
                 
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2 break-words">
                   {editable ? (
                     <input
                       type="text"
                       value={beneficio.titulo}
                       onChange={(e) => handleBeneficioChange(index, 'titulo', e.target.value)}
                       onBlur={() => handleBeneficioChange(index, 'titulo', beneficio.titulo)}
-                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1"
+                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 text-base sm:text-lg touch-manipulation"
                     />
                   ) : (
                     beneficio.titulo
                   )}
                 </h3>
                 
-                <p className="text-muted-foreground">
+                <p className="text-sm sm:text-base text-muted-foreground break-words">
                   {editable ? (
                     <textarea
                       value={beneficio.descricao}
                       onChange={(e) => handleBeneficioChange(index, 'descricao', e.target.value)}
                       onBlur={() => handleBeneficioChange(index, 'descricao', beneficio.descricao)}
-                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 resize-none"
+                      className="w-full bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -mx-1 resize-none text-sm sm:text-base touch-manipulation"
                       rows={2}
                     />
                   ) : (
@@ -237,14 +237,14 @@ export const BeneficiosEditable = ({
             );
           })}
 
-          {/* Add button */}
+          {/* Add button - touch-friendly */}
           {editable && (
             <motion.button
               onClick={addBeneficio}
-              className="p-6 border-2 border-dashed border-muted-foreground/20 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              className="p-4 sm:p-5 md:p-6 border-2 border-dashed border-muted-foreground/20 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all min-h-[120px] sm:min-h-[140px] touch-manipulation"
             >
-              <Plus className="w-8 h-8 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Adicionar benefício</span>
+              <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+              <span className="text-xs sm:text-sm text-muted-foreground">Adicionar benefício</span>
             </motion.button>
           )}
         </motion.div>
