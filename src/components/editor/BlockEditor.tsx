@@ -250,6 +250,29 @@ export const BlockEditor = ({
     return def && !def.isFixed;
   }).length;
 
+  // Persist block order using the provided blocks list (declared early for use in handlers)
+  const persistBlockOrderWithBlocks = useCallback(async (blocksToSave: EditorBlock[]) => {
+    const order = blocksToSave
+      .filter(b => b.sectionKey !== 'rodape')
+      .map(b => b.sectionKey);
+    
+    if (blocksToSave.some(b => b.sectionKey === 'rodape')) {
+      order.push('rodape');
+    }
+    
+    await updateSectionOrder(lpId, order);
+    
+    const enabledSections = blocksToSave.map(b => b.sectionKey);
+    await saveSettings(lpId, {
+      enabled_sections: JSON.stringify(enabledSections) 
+    });
+  }, [lpId]);
+
+  // Legacy persistBlockOrder using current state
+  const persistBlockOrder = useCallback(async () => {
+    await persistBlockOrderWithBlocks(blocks);
+  }, [blocks, persistBlockOrderWithBlocks]);
+
   // Handlers
   const handleAddSection = useCallback(async (
     sectionKey: SectionKey, 
@@ -274,6 +297,7 @@ export const BlockEditor = ({
     // Find insert position (before rodape if exists)
     const rodapeIndex = blocks.findIndex(b => b.sectionKey === 'rodape');
     
+    let updatedBlocks: EditorBlock[];
     setBlocks(prev => {
       const updated = [...prev];
       if (rodapeIndex >= 0) {
@@ -281,7 +305,8 @@ export const BlockEditor = ({
       } else {
         updated.push(newBlock);
       }
-      return updated.map((b, idx) => ({ ...b, order: idx }));
+      updatedBlocks = updated.map((b, idx) => ({ ...b, order: idx }));
+      return updatedBlocks;
     });
 
     // Update content state
@@ -293,7 +318,16 @@ export const BlockEditor = ({
     // Save to backend
     try {
       await saveSectionContent(lpId, sectionKey, { __model_id: modelId } as unknown as LPContent);
-      await persistBlockOrder();
+      
+      // Persist using the calculated updated blocks
+      const finalBlocks = [...blocks];
+      if (rodapeIndex >= 0) {
+        finalBlocks.splice(rodapeIndex, 0, newBlock);
+      } else {
+        finalBlocks.push(newBlock);
+      }
+      await persistBlockOrderWithBlocks(finalBlocks.map((b, i) => ({ ...b, order: i })));
+      
       setSaveStatusSaved();
       toast({ title: `Seção "${SECTION_NAMES[sectionKey]}" adicionada!` });
       console.log('[S5.0 QA] Section added:', { sectionKey, modelId });
@@ -302,7 +336,7 @@ export const BlockEditor = ({
       setSaveStatusError();
       toast({ title: 'Erro ao adicionar seção', variant: 'destructive' });
     }
-  }, [lpId, blocks, dynamicBlockCount, userPlan, isMaster]);
+  }, [lpId, blocks, dynamicBlockCount, userPlan, isMaster, persistBlockOrderWithBlocks]);
 
   const handleChangeModel = useCallback(async (blockId: string, modelId: string) => {
     setSaveStatusSaving();
@@ -353,27 +387,28 @@ export const BlockEditor = ({
       isNew: true,
     };
 
-    setBlocks(prev => {
-      const idx = prev.findIndex(b => b.id === blockId);
-      const updated = [...prev];
-      updated.splice(idx + 1, 0, newBlock);
-      return updated.map((b, i) => ({ ...b, order: i }));
-    });
+    const idx = blocks.findIndex(b => b.id === blockId);
+    const updatedBlocks = [...blocks];
+    updatedBlocks.splice(idx + 1, 0, newBlock);
+    const finalBlocks = updatedBlocks.map((b, i) => ({ ...b, order: i }));
+
+    setBlocks(finalBlocks);
 
     try {
       await saveSectionContent(lpId, block.sectionKey, block.content);
-      await persistBlockOrder();
+      await persistBlockOrderWithBlocks(finalBlocks);
       toast({ title: 'Bloco duplicado!' });
     } catch (error) {
       console.error('[BlockEditor] Error duplicating block:', error);
     }
-  }, [lpId, blocks, dynamicBlockCount, userPlan, isMaster]);
+  }, [lpId, blocks, dynamicBlockCount, userPlan, isMaster, persistBlockOrderWithBlocks]);
 
   const handleRemoveBlock = useCallback(async (blockId: string) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
 
-    setBlocks(prev => prev.filter(b => b.id !== blockId).map((b, i) => ({ ...b, order: i })));
+    const updatedBlocks = blocks.filter(b => b.id !== blockId).map((b, i) => ({ ...b, order: i }));
+    setBlocks(updatedBlocks);
 
     // Remove from content state
     setContent(prev => {
@@ -391,14 +426,14 @@ export const BlockEditor = ({
 
       if (error) throw error;
       
-      await persistBlockOrder();
+      await persistBlockOrderWithBlocks(updatedBlocks);
       toast({ title: 'Bloco removido!' });
       console.log('[S5.0 QA] Block removed:', { sectionKey: block.sectionKey });
     } catch (error) {
       console.error('[BlockEditor] Error removing block:', error);
       toast({ title: 'Erro ao remover bloco', variant: 'destructive' });
     }
-  }, [lpId, blocks]);
+  }, [lpId, blocks, persistBlockOrderWithBlocks]);
 
   const handleReorder = useCallback(async (newOrder: EditorBlock[]) => {
     const menu = newOrder.find(b => b.sectionKey === 'menu');
@@ -416,26 +451,11 @@ export const BlockEditor = ({
     ].filter(Boolean).map((b, i) => ({ ...b!, order: i }));
 
     setBlocks(finalOrder);
-    await persistBlockOrder();
+    
+    // Persist with the new order
+    await persistBlockOrderWithBlocks(finalOrder);
     console.log('[S5.0 QA] Blocks reordered');
-  }, []);
-
-  const persistBlockOrder = async () => {
-    const order = blocks
-      .filter(b => b.sectionKey !== 'rodape')
-      .map(b => b.sectionKey);
-    
-    if (blocks.some(b => b.sectionKey === 'rodape')) {
-      order.push('rodape');
-    }
-    
-    await updateSectionOrder(lpId, order);
-    
-    const enabledSections = blocks.map(b => b.sectionKey);
-    await saveSettings(lpId, {
-      enabled_sections: JSON.stringify(enabledSections) 
-    });
-  };
+  }, [lpId]);
 
   const handleContentUpdate = useCallback((sectionKey: SectionKey, newContent: LPContent) => {
     setContent(prev => ({ ...prev, [sectionKey]: newContent }));
