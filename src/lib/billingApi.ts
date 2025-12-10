@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type PlanType = "free" | "pro" | "premium";
+export type PlanType = "free" | "pro" | "premium" | "master";
 
 export interface PlanLimits {
   plan: PlanType;
@@ -31,10 +31,44 @@ export interface Subscription {
   invoice_url: string | null;
 }
 
+// Master plan limits - unlimited everything
+const MASTER_PLAN_LIMITS: PlanLimits = {
+  plan: "master",
+  max_sites: 999,
+  max_storage_mb: 10240, // 10GB
+  custom_domain_limit: 999,
+  max_blocks: 999,
+  ab_testing_enabled: true,
+  export_leads_enabled: true,
+  premium_sections_enabled: true,
+  can_edit_background: true,
+  can_edit_gradients: true,
+  can_edit_typography: true,
+  can_edit_section_colors: true,
+  can_edit_glass_effects: true,
+};
+
+// Check if current user is admin_master
+async function checkIsAdminMaster(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return !error && data?.role === "admin_master";
+}
+
 // Get effective plan limits for current user
 export async function getEffectivePlanLimits(): Promise<PlanLimits | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // Check if user is admin_master FIRST
+  const isAdminMaster = await checkIsAdminMaster(user.id);
+  if (isAdminMaster) {
+    return MASTER_PLAN_LIMITS;
+  }
 
   const { data, error } = await supabase.rpc("get_effective_plan_limits", {
     _user_id: user.id,
@@ -178,6 +212,24 @@ export const PLAN_INFO = {
       blocks: Infinity,
       sites: Infinity,
       storage: 2048,
+    },
+  },
+  master: {
+    name: "Master",
+    price: "Ilimitado",
+    period: "",
+    features: [
+      "Acesso total ao sistema",
+      "LPs ilimitadas",
+      "Blocos ilimitados",
+      "Todos os recursos",
+      "10GB de armazenamento",
+      "Painel administrativo",
+    ],
+    limits: {
+      blocks: Infinity,
+      sites: Infinity,
+      storage: 10240,
     },
   },
 } as const;

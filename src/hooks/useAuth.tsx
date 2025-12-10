@@ -99,7 +99,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdminMaster = role === 'admin_master';
   const isClient = role === 'client' || role === null;
-  const canCreateSiteFlag = planLimits ? siteCount < planLimits.max_sites : false;
+  
+  // For admin_master, always allow creating sites
+  const canCreateSiteFlag = isAdminMaster 
+    ? true 
+    : (planLimits ? siteCount < planLimits.max_sites : false);
+
+  // Refresh function that can be called after LP deletion
+  const refreshSiteCount = async () => {
+    const sites = await getUserSiteCount();
+    setSiteCount(sites);
+  };
 
   return (
     <AuthContext.Provider value={{
@@ -113,7 +123,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdminMaster,
       isClient,
       canCreateSite: canCreateSiteFlag,
-      refresh
+      refresh: async () => {
+        await loadUserData();
+      }
     }}>
       {children}
     </AuthContext.Provider>
