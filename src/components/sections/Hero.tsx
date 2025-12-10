@@ -2,7 +2,9 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { trackCTAClick, trackSectionView } from "@/lib/tracking";
+import { getStyleClasses, getMotionVariants } from "@/lib/styleTokens";
 import heroImage from "@/assets/hero-dashboard.png";
+import type { StylePreset, MotionPreset } from "@/lib/sectionModels";
 
 interface HeroContent {
   badge?: string;
@@ -34,24 +36,21 @@ function normalizeHeroVariant(
   variant?: HeroVariantId | string
 ): HeroVariantId {
   switch (variant) {
-    /** → Modelo A (imagem + texto em 2 colunas) */
     case "hero_center":
     case "hero_benefits_intro":
+    case "hero_minimal_centered":
       return "modelo_a";
-
-    /** → Modelo B (centralizado com mockup) */
     case "hero_split_basic":
     case "hero_social_proof":
     case "hero_gallery_slider":
     case "hero_metrics_highlights":
+    case "hero_split_visionos":
       return "modelo_b";
-
-    /** → Modelo C (full background) */
     case "hero_headline_rotator":
     case "hero_parallax_vision":
     case "hero_cinematic_video":
+    case "hero_ticket_launch":
       return "modelo_c";
-
     default:
       if (
         variant === "modelo_a" ||
@@ -69,6 +68,8 @@ interface HeroProps {
   content?: HeroContent;
   previewOverride?: HeroContent;
   variante?: HeroVariantId;
+  stylePreset?: StylePreset;
+  motionPreset?: MotionPreset;
   onPrimaryCTAClick?: () => void;
   onSecondaryCTAClick?: () => void;
 }
@@ -91,6 +92,8 @@ export const Hero = ({
   content = {},
   previewOverride,
   variante = "modelo_a",
+  stylePreset = "glass",
+  motionPreset = "fade-stagger",
   onPrimaryCTAClick,
   onSecondaryCTAClick,
 }: HeroProps) => {
@@ -101,6 +104,7 @@ export const Hero = ({
   const normalizedVariant = normalizeHeroVariant(rawVariant);
 
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styles = getStyleClasses(stylePreset);
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);

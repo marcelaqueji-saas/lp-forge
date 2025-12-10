@@ -315,3 +315,124 @@ export const SECTION_IMAGE_TOKENS: Record<string, { key: string; label: string }
     { key: 'chamada_background_url', label: 'Imagem de fundo' },
   ],
 };
+
+// ============================================================
+// STYLE PRESET CLASSES (for stylePreset prop)
+// ============================================================
+
+import type { StylePreset, MotionPreset } from './sectionModels';
+
+export const STYLE_PRESET_CLASSES: Record<StylePreset, {
+  container: string;
+  card: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  badge: string;
+}> = {
+  glass: {
+    container: 'bg-background/60 backdrop-blur-xl',
+    card: 'bg-card/70 backdrop-blur-md border border-border/50 shadow-soft',
+    title: 'text-foreground',
+    subtitle: 'text-muted-foreground',
+    accent: 'bg-primary/10 text-primary',
+    badge: 'bg-primary/10 text-primary border border-primary/20',
+  },
+  visionos: {
+    container: 'bg-gradient-to-b from-background via-background/95 to-background/90',
+    card: 'bg-card/90 backdrop-blur-2xl border border-border/30 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-3xl',
+    title: 'text-foreground font-semibold',
+    subtitle: 'text-muted-foreground/80',
+    accent: 'bg-gradient-to-r from-primary/20 to-accent/20 text-primary',
+    badge: 'bg-gradient-to-r from-primary/15 to-accent/15 text-primary rounded-full px-4 py-1.5',
+  },
+  aurora: {
+    container: 'bg-gradient-to-br from-primary/5 via-background to-accent/5 relative overflow-hidden',
+    card: 'bg-card/80 backdrop-blur-sm border border-primary/10 shadow-[0_0_40px_-10px_hsl(var(--primary)/0.2)]',
+    title: 'text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text',
+    subtitle: 'text-muted-foreground',
+    accent: 'bg-gradient-to-r from-primary to-accent text-primary-foreground',
+    badge: 'bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse',
+  },
+  neumorphic: {
+    container: 'bg-muted/30',
+    card: 'bg-card shadow-[6px_6px_12px_rgba(0,0,0,0.08),-6px_-6px_12px_rgba(255,255,255,0.8)] border-0 rounded-2xl',
+    title: 'text-foreground',
+    subtitle: 'text-muted-foreground',
+    accent: 'bg-primary/10 text-primary shadow-inner',
+    badge: 'bg-muted shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] text-foreground',
+  },
+};
+
+// ============================================================
+// MOTION PRESET ANIMATIONS
+// ============================================================
+
+export const MOTION_PRESETS: Record<MotionPreset, {
+  container: object;
+  item: object;
+  stagger?: number;
+}> = {
+  'fade-stagger': {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } },
+    item: { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } },
+    stagger: 0.1,
+  },
+  parallax: {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.15 } } },
+    item: { hidden: { opacity: 0, y: 60, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6 } } },
+    stagger: 0.15,
+  },
+  tilt: {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } },
+    item: { hidden: { opacity: 0, rotateX: -15, y: 30 }, visible: { opacity: 1, rotateX: 0, y: 0, transition: { duration: 0.5, type: 'spring' } } },
+    stagger: 0.08,
+  },
+  spotlight: {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12 } } },
+    item: { hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } } },
+    stagger: 0.12,
+  },
+  magnetic: {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } },
+    item: { hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } } },
+    stagger: 0.1,
+  },
+  'slide-in-right': {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } },
+    item: { hidden: { opacity: 0, x: 100 }, visible: { opacity: 1, x: 0, transition: { duration: 0.5 } } },
+    stagger: 0.1,
+  },
+  'slide-in-up': {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } },
+    item: { hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } },
+    stagger: 0.1,
+  },
+  accordion: {
+    container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } },
+    item: { hidden: { opacity: 0, height: 0 }, visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } } },
+    stagger: 0.05,
+  },
+};
+
+// ============================================================
+// HELPER FUNCTIONS FOR PRESETS
+// ============================================================
+
+export function getStyleClasses(preset?: StylePreset) {
+  return STYLE_PRESET_CLASSES[preset || 'glass'];
+}
+
+export function getMotionVariants(preset?: MotionPreset) {
+  return MOTION_PRESETS[preset || 'fade-stagger'];
+}
+
+export function getCardClassName(stylePreset?: StylePreset, baseClass?: string): string {
+  const preset = STYLE_PRESET_CLASSES[stylePreset || 'glass'];
+  return `${baseClass || ''} ${preset.card}`.trim();
+}
+
+export function getContainerClassName(stylePreset?: StylePreset, baseClass?: string): string {
+  const preset = STYLE_PRESET_CLASSES[stylePreset || 'glass'];
+  return `${baseClass || ''} ${preset.container}`.trim();
+}
