@@ -483,6 +483,11 @@ const STYLE_PRESET_GRADIENTS: Record<StylePreset, string> = {
   visionos: 'bg-gradient-to-br from-slate-100/50 to-slate-200/30 dark:from-slate-800/50 dark:to-slate-900/30',
   aurora: 'bg-gradient-to-br from-violet-500/10 via-background to-cyan-500/10',
   neumorphic: 'bg-muted/40',
+  dark: 'bg-gradient-to-br from-zinc-900 to-zinc-800',
+  neon: 'bg-gradient-to-br from-zinc-950 to-zinc-900',
+  minimal: 'bg-white',
+  gradient: 'bg-gradient-to-br from-primary/10 via-background to-accent/10',
+  frosted: 'bg-white/40 backdrop-blur-sm',
 };
 
 export const ModelThumbnail = ({

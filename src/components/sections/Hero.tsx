@@ -63,7 +63,7 @@ function normalizeHeroVariant(
   }
 }
 
-interface HeroProps {
+export interface HeroProps {
   lpId?: string;
   content?: HeroContent;
   previewOverride?: HeroContent;
@@ -145,7 +145,7 @@ export const Hero = ({
     return (
       <section
         ref={sectionRef}
-        className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden"
+        className={`relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden ${styles.container}`}
         id="hero"
         data-section-key="hero"
       >
@@ -166,7 +166,7 @@ export const Hero = ({
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="inline-block text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-4"
+                className={`inline-block text-xs sm:text-sm font-medium mb-3 sm:mb-4 px-3 py-1 rounded-full ${styles.badge}`}
               >
                 {finalContent.badge}
               </motion.span>
@@ -176,7 +176,7 @@ export const Hero = ({
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 leading-tight break-words"
+              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 leading-tight break-words ${styles.title}`}
             >
               {finalContent.titulo}{" "}
               <span className="gradient-text break-words">{finalContent.destaque}</span>
@@ -186,7 +186,7 @@ export const Hero = ({
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-md break-words"
+              className={`text-base sm:text-lg mb-6 sm:mb-8 max-w-md break-words ${styles.subtitle}`}
             >
               {finalContent.subtitulo}
             </motion.p>
@@ -225,7 +225,7 @@ export const Hero = ({
     return (
       <section
         ref={sectionRef}
-        className="section-padding relative overflow-hidden"
+        className={`section-padding relative overflow-hidden ${styles.container}`}
         id="hero"
         data-section-key="hero"
       >
@@ -234,7 +234,7 @@ export const Hero = ({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6 sm:mb-8"
+              className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8 ${styles.badge}`}
             >
               {finalContent.badge}
             </motion.div>
@@ -243,7 +243,7 @@ export const Hero = ({
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="section-title mb-4 sm:mb-6"
+            className={`section-title mb-4 sm:mb-6 ${styles.title}`}
           >
             {finalContent.titulo}{" "}
             <span className="gradient-text break-words">{finalContent.destaque}</span>
@@ -252,7 +252,7 @@ export const Hero = ({
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="section-subtitle mx-auto mb-8 sm:mb-10"
+            className={`section-subtitle mx-auto mb-8 sm:mb-10 ${styles.subtitle}`}
           >
             {finalContent.subtitulo}
           </motion.p>
@@ -290,7 +290,7 @@ export const Hero = ({
   return (
     <section
       ref={sectionRef}
-      className="section-padding relative overflow-hidden"
+      className={`section-padding relative overflow-hidden ${styles.container}`}
       id="hero"
       data-section-key="hero"
     >
@@ -302,7 +302,7 @@ export const Hero = ({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6"
+                className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6 ${styles.badge}`}
               >
                 {finalContent.badge}
               </motion.div>
@@ -311,7 +311,7 @@ export const Hero = ({
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="section-title mb-4 sm:mb-6"
+              className={`section-title mb-4 sm:mb-6 ${styles.title}`}
             >
               {finalContent.titulo}{" "}
               <span className="gradient-text break-words">{finalContent.destaque}</span>
@@ -320,7 +320,7 @@ export const Hero = ({
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="section-subtitle mb-6 sm:mb-8"
+              className={`section-subtitle mb-6 sm:mb-8 ${styles.subtitle}`}
             >
               {finalContent.subtitulo}
             </motion.p>
@@ -355,16 +355,16 @@ export const Hero = ({
             className="order-1 lg:order-2"
           >
             {finalContent.imagem_principal ? (
-              <div className="relative">
+              <div className={`relative ${styles.card} rounded-xl sm:rounded-2xl overflow-hidden`}>
                 <img
                   src={finalContent.imagem_principal}
                   alt="Hero"
-                  className="relative w-full rounded-xl sm:rounded-2xl shadow-soft-lg"
+                  className="relative w-full"
                 />
               </div>
             ) : (
-              <div className="relative aspect-video bg-muted rounded-xl sm:rounded-2xl flex items-center justify-center">
-                <div className="text-muted-foreground text-sm">Preview imagem</div>
+              <div className={`relative aspect-video rounded-xl sm:rounded-2xl flex items-center justify-center ${styles.card}`}>
+                <div className={styles.subtitle}>Preview imagem</div>
               </div>
             )}
           </motion.div>
