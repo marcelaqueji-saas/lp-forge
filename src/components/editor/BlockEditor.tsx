@@ -644,7 +644,7 @@ export const BlockEditor = ({
           >
             <SEOHead settings={settings} />
             
-            {/* Renderizar seções em ordem */}
+            {/* Renderizar seções com edição inline - Sprint 4.4 */}
             {blocks.map((block) => (
               <section 
                 key={block.id}
@@ -657,7 +657,8 @@ export const BlockEditor = ({
                   content={content[block.sectionKey]}
                   settings={settings}
                   userPlan={userPlan}
-                  context="public"
+                  context="editor"
+                  editable={true}
                   disableAnimations={false}
                 />
               </section>

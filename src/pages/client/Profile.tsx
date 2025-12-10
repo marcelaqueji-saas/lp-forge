@@ -34,7 +34,7 @@ import { PLAN_INFO, getEffectivePlanLimits, type PlanLimits } from '@/lib/billin
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isAdminMaster } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,6 +50,9 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // [S4.4 QA] Log profile load
+  console.log('[S4.4 QA] Profile loaded:', { isAdminMaster, plan: profile?.plan });
 
   useEffect(() => {
     loadLimits();
@@ -159,11 +162,14 @@ const Profile = () => {
     }
   };
 
-  const currentPlan = limits?.plan || profile?.plan || 'free';
-  const planInfo = PLAN_INFO[currentPlan as keyof typeof PLAN_INFO];
+  // [S4.4] Master plan override
+  const currentPlan = isAdminMaster ? 'master' : (limits?.plan || profile?.plan || 'free');
+  const planInfo = isAdminMaster 
+    ? { name: 'Master', price: '∞', period: '', features: ['Acesso total', 'LPs ilimitadas', 'Armazenamento ilimitado', 'Todos os recursos'] }
+    : PLAN_INFO[currentPlan as keyof typeof PLAN_INFO];
   const storageUsed = profile?.storage_used_mb || 0;
-  const storageLimit = limits?.max_storage_mb || 50;
-  const storagePercent = Math.min((storageUsed / storageLimit) * 100, 100);
+  const storageLimit = isAdminMaster ? 999999 : (limits?.max_storage_mb || 50);
+  const storagePercent = isAdminMaster ? 0 : Math.min((storageUsed / storageLimit) * 100, 100);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -250,7 +256,8 @@ const Profile = () => {
                   </ul>
                 </div>
 
-                {currentPlan !== 'premium' && (
+                {/* Hide upgrade button for Master users */}
+                {!isAdminMaster && currentPlan !== 'premium' && (
                   <Button
                     onClick={() => navigate('/upgrade')}
                     className="w-full"
@@ -261,49 +268,60 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* Usage Stats */}
-              <div className="space-y-4">
-                {/* Storage */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+              {/* Usage Stats - Hide for Master */}
+              {!isAdminMaster && (
+                <div className="space-y-4">
+                  {/* Storage */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-4 h-4 text-muted-foreground" />
+                        Armazenamento
+                      </div>
+                      <span className="text-muted-foreground">
+                        {storageUsed}MB / {storageLimit}MB
+                      </span>
+                    </div>
+                    <Progress value={storagePercent} className="h-2" />
+                  </div>
+
+                  {/* Sites */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <LayoutGrid className="w-4 h-4 text-muted-foreground" />
+                        Landing Pages
+                      </div>
+                      <span className="text-muted-foreground">
+                        - / {limits?.max_sites || 1}
+                      </span>
+                    </div>
+                    <Progress value={0} className="h-2" />
+                  </div>
+
+                  {/* Domains */}
+                  <div className="flex items-center justify-between text-sm py-2">
                     <div className="flex items-center gap-2">
-                      <HardDrive className="w-4 h-4 text-muted-foreground" />
-                      Armazenamento
+                      <Globe className="w-4 h-4 text-muted-foreground" />
+                      Domínios personalizados
                     </div>
                     <span className="text-muted-foreground">
-                      {storageUsed}MB / {storageLimit}MB
+                      {limits?.custom_domain_limit === 0 
+                        ? 'Não disponível' 
+                        : `Até ${limits?.custom_domain_limit}`}
                     </span>
                   </div>
-                  <Progress value={storagePercent} className="h-2" />
                 </div>
+              )}
 
-                {/* Sites */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <LayoutGrid className="w-4 h-4 text-muted-foreground" />
-                      Landing Pages
-                    </div>
-                    <span className="text-muted-foreground">
-                      - / {limits?.max_sites || 1}
-                    </span>
-                  </div>
-                  <Progress value={0} className="h-2" />
+              {/* Master info */}
+              {isAdminMaster && (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 text-primary" />
+                  <p className="font-medium">Acesso Master</p>
+                  <p className="text-sm">Sem limites de uso</p>
                 </div>
-
-                {/* Domains */}
-                <div className="flex items-center justify-between text-sm py-2">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    Domínios personalizados
-                  </div>
-                  <span className="text-muted-foreground">
-                    {limits?.custom_domain_limit === 0 
-                      ? 'Não disponível' 
-                      : `Até ${limits?.custom_domain_limit}`}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </Card>
         </motion.div>
