@@ -15,6 +15,8 @@ import {
   Users,
 } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
+import { getStyleClasses, getMotionVariants } from '@/lib/styleTokens';
+import type { StylePreset, MotionPreset } from '@/lib/sectionModels';
 
 interface Beneficio {
   titulo: string;
@@ -29,11 +31,12 @@ interface BeneficiosContent {
 }
 
 interface BeneficiosProps {
-  /** ID da LP para tracking; se não vier, só renderiza visualmente */
   lpId?: string;
   content?: BeneficiosContent;
   previewOverride?: BeneficiosContent;
   variante?: 'modelo_a' | 'modelo_b' | 'modelo_c';
+  stylePreset?: StylePreset;
+  motionPreset?: MotionPreset;
   disableAnimations?: boolean;
   cardStyle?: string;
 }
@@ -95,9 +98,13 @@ export const Beneficios = ({
   content = {},
   previewOverride,
   variante = 'modelo_a',
+  stylePreset = 'glass',
+  motionPreset = 'fade-stagger',
   cardStyle = '',
 }: BeneficiosProps) => {
   const finalContent = { ...defaultContent, ...content, ...previewOverride };
+  const styles = getStyleClasses(stylePreset);
+  const motionConfig = getMotionVariants(motionPreset);
 
   let beneficios: Beneficio[] = [];
   try {
@@ -108,18 +115,8 @@ export const Beneficios = ({
     beneficios = [];
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
-  };
+  const containerVariants = motionConfig.container as any;
+  const itemVariants = motionConfig.item as any;
 
   // ref para rastrear visualização da seção
   const sectionRef = useRef<HTMLElement | null>(null);

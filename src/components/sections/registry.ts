@@ -5,6 +5,7 @@
 import { Hero } from './Hero';
 import HeroCenter from './HeroCenter';
 import HeroSplitBasic from './HeroSplitBasic';
+import HeroCarousel from './HeroCarousel';
 
 import { Beneficios } from './Beneficios';
 import { ProvasSociais } from './ProvasSociais';
@@ -15,6 +16,8 @@ import { FAQ } from './FAQ';
 import { ChamadaFinal } from './ChamadaFinal';
 import { Rodape } from './Rodape';
 import { MenuSection } from './MenuSection';
+import StoriesCarousel from './StoriesCarousel';
+import LogosInfiniteScroll from './LogosInfiniteScroll';
 
 // Premium components (lazy loaded where applicable)
 import HeroParallax from './premium/HeroParallax';
@@ -51,8 +54,11 @@ export const SECTION_COMPONENT_REGISTRY = {
     // Novos modelos v2.0
     hero_glass_aurora: Hero,
     hero_cinematic_video_spotlight: Hero,
+    hero_carousel_autoplay: HeroCarousel,
     hero_parallax_layers: HeroParallax,
     hero_ticket_launch: Hero,
+    hero_split_visionos: Hero,
+    hero_minimal_centered: Hero,
     // Legado (fallback)
     hero_basic: Hero,
     hero_center: HeroCenter,
@@ -118,8 +124,11 @@ export const SECTION_COMPONENT_REGISTRY = {
     // Novos modelos v2.0
     provas_sociais_depoimentos_glass: ProvasSociais,
     provas_sociais_carrossel_premium: ProvasSociais,
-    provas_sociais_logos_scroller: ProvasSociais,
+    provas_sociais_stories: StoriesCarousel,
+    provas_sociais_logos_scroller: LogosInfiniteScroll,
     provas_sociais_stats_hybrid: ProvasSociais,
+    provas_sociais_video_testimonials: ProvasSociais,
+    provas_sociais_featured_single: ProvasSociais,
     // Legado (fallback)
     testimonials_basic: ProvasSociais,
     testimonials_carousel: ProvasSociais,
