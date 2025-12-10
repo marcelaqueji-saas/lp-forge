@@ -20,6 +20,7 @@ import {
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { setSectionModel } from "@/lib/lpContentApi";
+import { TemplatePreview } from "./TemplatePreview";
 
 interface TemplatePickerProps {
   open: boolean;
@@ -277,7 +278,7 @@ export const TemplatePicker = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2.5 sm:gap-3 max-h-[calc(100vh-220px)] sm:max-h-[calc(100vh-200px)] overflow-y-auto pr-0.5 sm:pr-1 -mr-1">
-            {visibleVariants.map((variant) => {
+                {visibleVariants.map((variant) => {
               const { model, template, config } = variant;
               const locked = isLockedForUserPlan(variant);
               const selected = currentVariant === model.id;
@@ -298,6 +299,7 @@ export const TemplatePicker = ({
                   onClick={() => handleSelect(model.id)}
                   disabled={isSaving}
                 >
+                  {/* Live preview based on stylePreset */}
                   {template?.preview_thumbnail ? (
                     <div className="aspect-video rounded-md overflow-hidden bg-muted mb-2">
                       <img
@@ -308,9 +310,7 @@ export const TemplatePicker = ({
                       />
                     </div>
                   ) : (
-                    <div className="aspect-video flex items-center justify-center bg-muted rounded-md mb-2 text-[10px] sm:text-xs text-muted-foreground px-2 text-center">
-                      {model.name}
-                    </div>
+                    <TemplatePreview model={model} className="mb-2" />
                   )}
 
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1 gap-2">
