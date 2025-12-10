@@ -117,6 +117,9 @@ export const WizardStepCard = ({
       );
     }
 
+    // Get the selected model to pass stylePreset
+    const selectedModel = models.find(m => m.id === selectedModelId);
+
     return (
       <EditableComponent
         lpId={lpId}
@@ -124,6 +127,8 @@ export const WizardStepCard = ({
         userPlan={userPlan}
         editable={isEditing}
         variante={selectedModelId}
+        modelId={selectedModelId}
+        stylePreset={selectedModel?.stylePreset || 'glass'}
         onContentUpdate={onContentUpdate}
       />
     );

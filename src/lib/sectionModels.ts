@@ -1161,6 +1161,112 @@ const LEGACY_MODEL_FALLBACK: Record<string, string> = {
 };
 
 // ============================================================
+// MAPEAMENTO CENTRALIZADO: modelId → variante de layout
+// ============================================================
+
+export const MODEL_TO_LAYOUT_MAP: Record<string, 'modelo_a' | 'modelo_b' | 'modelo_c'> = {
+  // Menu
+  'menu_glass_minimal': 'modelo_a',
+  'menu_visionos_floating': 'modelo_b',
+  'menu_command_center': 'modelo_c',
+  
+  // Hero
+  'hero_glass_aurora': 'modelo_a',
+  'hero_cinematic_video_spotlight': 'modelo_c',
+  'hero_carousel_autoplay': 'modelo_b',
+  'hero_parallax_layers': 'modelo_c',
+  'hero_ticket_launch': 'modelo_c',
+  'hero_split_visionos': 'modelo_a',
+  'hero_minimal_centered': 'modelo_b',
+  'hero_dark': 'modelo_a',
+  'hero_neon': 'modelo_a',
+  'hero_minimal': 'modelo_b',
+  
+  // Como Funciona
+  'como_funciona_timeline_glass': 'modelo_a',
+  'como_funciona_steps_cards_3d': 'modelo_b',
+  'como_funciona_horizontal_flow': 'modelo_c',
+  
+  // Para Quem É
+  'para_quem_e_chips_personas': 'modelo_a',
+  'para_quem_e_personas_cards': 'modelo_b',
+  'para_quem_e_matrix': 'modelo_c',
+  
+  // Benefícios
+  'beneficios_icon_grid_glass': 'modelo_a',
+  'beneficios_timeline_numerada': 'modelo_b',
+  'beneficios_showcase_3d': 'modelo_c',
+  'beneficios_dark': 'modelo_a',
+  'beneficios_neon': 'modelo_a',
+  'beneficios_minimal': 'modelo_a',
+  
+  // Provas Sociais
+  'provas_sociais_depoimentos_glass': 'modelo_a',
+  'provas_sociais_carrossel_premium': 'modelo_b',
+  'provas_sociais_stories': 'modelo_c',
+  'provas_sociais_logos_scroller': 'modelo_b',
+  'provas_sociais_stats_hybrid': 'modelo_c',
+  'provas_sociais_video_testimonials': 'modelo_c',
+  'provas_sociais_featured_single': 'modelo_a',
+  'provas_sociais_dark': 'modelo_a',
+  'provas_sociais_neon': 'modelo_a',
+  'provas_sociais_minimal': 'modelo_a',
+  
+  // Planos
+  'planos_glass_three_tiers': 'modelo_a',
+  'planos_cards_pill': 'modelo_b',
+  'planos_tabela_comparativa_modern': 'modelo_c',
+  'planos_dark': 'modelo_a',
+  'planos_neon': 'modelo_a',
+  'planos_minimal': 'modelo_a',
+  
+  // FAQ
+  'faq_accordion_glass': 'modelo_a',
+  'faq_twocolumn_modern': 'modelo_b',
+  'faq_with_cta_spotlight': 'modelo_c',
+  'faq_dark': 'modelo_a',
+  'faq_neon': 'modelo_a',
+  'faq_minimal': 'modelo_a',
+  
+  // Chamada Final
+  'chamada_final_simple_glass': 'modelo_a',
+  'chamada_final_two_ctas': 'modelo_b',
+  'chamada_final_ticket_glow': 'modelo_c',
+  'cta_dark': 'modelo_a',
+  'cta_neon': 'modelo_a',
+  'cta_minimal': 'modelo_a',
+  
+  // Rodapé
+  'rodape_minimal_soft': 'modelo_a',
+  'rodape_columns_glass': 'modelo_b',
+  'rodape_visionos_bar': 'modelo_c',
+  'rodape_dark': 'modelo_a',
+  'rodape_neon': 'modelo_a',
+  'rodape_minimal': 'modelo_a',
+};
+
+/**
+ * Retorna a variante de layout (modelo_a/b/c) para um modelId
+ * Se o modelId não for encontrado, retorna 'modelo_a' como fallback
+ */
+export function getLayoutVariant(modelId?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
+  if (!modelId) return 'modelo_a';
+  
+  // Check direct mapping
+  if (MODEL_TO_LAYOUT_MAP[modelId]) {
+    return MODEL_TO_LAYOUT_MAP[modelId];
+  }
+  
+  // Check if it's already a layout variant
+  if (modelId === 'modelo_a' || modelId === 'modelo_b' || modelId === 'modelo_c') {
+    return modelId;
+  }
+  
+  // Default fallback
+  return 'modelo_a';
+}
+
+// ============================================================
 // UTILITÁRIOS
 // ============================================================
 

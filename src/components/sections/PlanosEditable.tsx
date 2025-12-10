@@ -9,7 +9,7 @@ import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { trackSectionView, trackCTAClick } from "@/lib/tracking";
 import { EditableField } from "@/components/editor/InlineEditableSection";
 import { saveSectionContent, LPContent } from "@/lib/lpContentApi";
-import { PlanLevel, StylePreset } from "@/lib/sectionModels";
+import { PlanLevel, StylePreset, getLayoutVariant } from "@/lib/sectionModels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -73,12 +73,7 @@ const defaultContent = {
   ]),
 };
 
-function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' {
-  if (variant === 'modelo_a' || variant === 'modelo_b') {
-    return variant;
-  }
-  return 'modelo_a';
-}
+// Layout variant mapping is handled by getLayoutVariant from sectionModels
 
 export const PlanosEditable = ({
   lpId,
@@ -90,14 +85,15 @@ export const PlanosEditable = ({
   editable = true,
   onContentUpdate,
 }: PlanosEditableProps) => {
-  const normalizedVariant = normalizeVariant(variante);
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S5.2 QA] PlanosEditable: mounted', { lpId, editable, variante, modelId, stylePreset, normalizedVariant });
-  }, [lpId, editable, variante, modelId, stylePreset, normalizedVariant]);
+    console.log('[S5.3 QA] PlanosEditable: mounted', { lpId, editable, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, modelId, stylePreset, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });

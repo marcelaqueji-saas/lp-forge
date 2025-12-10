@@ -9,7 +9,7 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { trackSectionView } from '@/lib/tracking';
 import { EditableField } from '@/components/editor/InlineEditableSection';
 import { LPContent, saveSectionContent } from '@/lib/lpContentApi';
-import { PlanLevel, StylePreset } from '@/lib/sectionModels';
+import { PlanLevel, StylePreset, getLayoutVariant } from '@/lib/sectionModels';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +58,8 @@ export const FAQEditable = ({
   editable = true,
   onContentUpdate,
 }: FAQEditableProps) => {
+  // Use centralized layout mapping - prefer modelId over variante
+  const normalizedVariant = getLayoutVariant(modelId || variante);
   const [localContent, setLocalContent] = useState<LPContent>(content);
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -66,8 +68,8 @@ export const FAQEditable = ({
 
   // QA Log
   useEffect(() => {
-    console.log('[S4.3 QA] FAQEditable: mounted', { lpId, editable });
-  }, [lpId, editable]);
+    console.log('[S5.3 QA] FAQEditable: mounted', { lpId, editable, modelId, stylePreset, normalizedVariant });
+  }, [lpId, editable, modelId, stylePreset, normalizedVariant]);
 
   // Parse perguntas JSON
   useEffect(() => {
@@ -86,7 +88,7 @@ export const FAQEditable = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasTrackedViewRef.current) {
-          trackSectionView(lpId, 'faq', variante);
+          trackSectionView(lpId, 'faq', normalizedVariant);
           hasTrackedViewRef.current = true;
           observer.disconnect();
         }
@@ -95,7 +97,7 @@ export const FAQEditable = ({
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, [lpId, variante]);
+  }, [lpId, normalizedVariant]);
 
   const handleUpdate = useCallback((key: string, value: string) => {
     setLocalContent(prev => ({ ...prev, [key]: value }));
