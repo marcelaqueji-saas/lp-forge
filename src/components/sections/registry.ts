@@ -6,14 +6,31 @@ import { Hero } from './Hero';
 import HeroCenter from './HeroCenter';
 import HeroSplitBasic from './HeroSplitBasic';
 import HeroCarousel from './HeroCarousel';
+import HeroDark from './HeroDark';
+import HeroNeon from './HeroNeon';
+import HeroMinimal from './HeroMinimal';
 
 import { Beneficios } from './Beneficios';
+import BeneficiosDark from './BeneficiosDark';
+import BeneficiosNeon from './BeneficiosNeon';
+import BeneficiosMinimal from './BeneficiosMinimal';
+
 import { ProvasSociais } from './ProvasSociais';
 import { ComoFunciona } from './ComoFunciona';
 import { ParaQuemE } from './ParaQuemE';
+
 import { Planos } from './Planos';
+import PlanosDark from './PlanosDark';
+import PlanosNeon from './PlanosNeon';
+import PlanosMinimal from './PlanosMinimal';
+
 import { FAQ } from './FAQ';
+
 import { ChamadaFinal } from './ChamadaFinal';
+import CTAFinalDark from './CTAFinalDark';
+import CTAFinalNeon from './CTAFinalNeon';
+import CTAFinalMinimal from './CTAFinalMinimal';
+
 import { Rodape } from './Rodape';
 import { MenuSection } from './MenuSection';
 import StoriesCarousel from './StoriesCarousel';
@@ -59,6 +76,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     hero_ticket_launch: Hero,
     hero_split_visionos: Hero,
     hero_minimal_centered: Hero,
+    // Style presets
+    hero_dark: HeroDark,
+    hero_neon: HeroNeon,
+    hero_minimal: HeroMinimal,
     // Legado (fallback)
     hero_basic: Hero,
     hero_center: HeroCenter,
@@ -110,6 +131,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     beneficios_icon_grid_glass: Beneficios,
     beneficios_timeline_numerada: Beneficios,
     beneficios_showcase_3d: Beneficios,
+    // Style presets
+    beneficios_dark: BeneficiosDark,
+    beneficios_neon: BeneficiosNeon,
+    beneficios_minimal: BeneficiosMinimal,
     // Legado (fallback)
     benefits_basic: Beneficios,
     benefits_icons: Beneficios,
@@ -144,6 +169,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     planos_glass_three_tiers: Planos,
     planos_cards_pill: Planos,
     planos_tabela_comparativa_modern: Planos,
+    // Style presets
+    planos_dark: PlanosDark,
+    planos_neon: PlanosNeon,
+    planos_minimal: PlanosMinimal,
     // Legado (fallback)
     pricing_basic: Planos,
     pricing_highlight: Planos,
@@ -175,6 +204,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     chamada_final_simple_glass: ChamadaFinal,
     chamada_final_two_ctas: ChamadaFinal,
     chamada_final_ticket_glow: ChamadaFinal,
+    // Style presets
+    cta_dark: CTAFinalDark,
+    cta_neon: CTAFinalNeon,
+    cta_minimal: CTAFinalMinimal,
     // Legado (fallback)
     cta_basic: ChamadaFinal,
     cta_background: ChamadaFinal,
