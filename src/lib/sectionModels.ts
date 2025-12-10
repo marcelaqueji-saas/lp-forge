@@ -87,7 +87,9 @@ export const SECTION_MODEL_KEY = '__model_id';
 // ============================================================
 
 export const SECTION_MODELS: SectionModel[] = [
-  // MENU
+  // ============================================================
+  // MENU (4 modelos)
+  // ============================================================
   {
     id: 'menu_horizontal',
     section: 'menu',
@@ -101,14 +103,7 @@ export const SECTION_MODELS: SectionModel[] = [
       { key: 'cta_label', label: 'Texto do botão', type: 'text' },
       { key: 'cta_url', label: 'URL do botão', type: 'url' },
     ],
-    images: [
-      {
-        key: 'logo',
-        label: 'Logo',
-        maxSizeMB: 1,
-        aspectRatio: '1:1',
-      },
-    ],
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
   },
   {
     id: 'menu_centered',
@@ -125,8 +120,40 @@ export const SECTION_MODELS: SectionModel[] = [
     ],
     images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
   },
+  {
+    id: 'menu_sticky_glass',
+    section: 'menu',
+    name: 'Menu Sticky Glass',
+    description: 'Menu fixo com efeito glassmorphism',
+    plan: 'pro',
+    category: 'navigation',
+    component: 'MenuSection',
+    fields: [
+      { key: 'marca', label: 'Marca', type: 'text' },
+      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
+      { key: 'cta_url', label: 'URL do botão', type: 'url' },
+    ],
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
+  },
+  {
+    id: 'menu_minimal',
+    section: 'menu',
+    name: 'Menu Minimalista',
+    description: 'Apenas logo e CTA, sem navegação',
+    plan: 'premium',
+    category: 'navigation',
+    component: 'MenuSection',
+    fields: [
+      { key: 'marca', label: 'Marca', type: 'text' },
+      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
+      { key: 'cta_url', label: 'URL do botão', type: 'url' },
+    ],
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
+  },
 
-  // HERO
+  // ============================================================
+  // HERO (8 modelos)
+  // ============================================================
   {
     id: 'hero_basic',
     section: 'hero',
@@ -161,6 +188,28 @@ export const SECTION_MODELS: SectionModel[] = [
     images: [{ key: 'imagem', label: 'Imagem lateral', maxSizeMB: 3 }],
   },
   {
+    id: 'hero_split_reverse',
+    section: 'hero',
+    name: 'Split Invertido',
+    description: 'Imagem à esquerda, texto à direita',
+    plan: 'pro',
+    category: 'hero',
+    component: 'HeroSplitBasic',
+    fields: HERO_FIELDS,
+    images: [{ key: 'imagem', label: 'Imagem lateral', maxSizeMB: 3 }],
+  },
+  {
+    id: 'hero_gradient',
+    section: 'hero',
+    name: 'Hero com Gradiente',
+    description: 'Fundo gradiente vibrante',
+    plan: 'pro',
+    category: 'hero',
+    component: 'Hero',
+    fields: HERO_FIELDS,
+    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
+  },
+  {
     id: 'hero_video_cinematic',
     section: 'hero',
     name: 'Vídeo Cinemático',
@@ -188,8 +237,21 @@ export const SECTION_MODELS: SectionModel[] = [
       { key: 'imagem_frente', label: 'Imagem frontal', maxSizeMB: 2 },
     ],
   },
+  {
+    id: 'hero_animated_text',
+    section: 'hero',
+    name: 'Texto Animado',
+    description: 'Título com animação typewriter',
+    plan: 'premium',
+    category: 'hero',
+    component: 'Hero',
+    fields: HERO_FIELDS,
+    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
+  },
 
-  // COMO FUNCIONA
+  // ============================================================
+  // COMO FUNCIONA (4 modelos)
+  // ============================================================
   {
     id: 'steps_basic',
     section: 'como_funciona',
@@ -213,6 +275,17 @@ export const SECTION_MODELS: SectionModel[] = [
     hasJsonEditor: true,
   },
   {
+    id: 'steps_zigzag',
+    section: 'como_funciona',
+    name: 'Zig-Zag Alternado',
+    description: 'Passos alternando lados',
+    plan: 'pro',
+    category: 'content',
+    component: 'ComoFunciona',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
     id: 'steps_cards',
     section: 'como_funciona',
     name: 'Cards Ilustrados',
@@ -224,7 +297,9 @@ export const SECTION_MODELS: SectionModel[] = [
     hasJsonEditor: true,
   },
 
-  // PARA QUEM É
+  // ============================================================
+  // PARA QUEM É (4 modelos)
+  // ============================================================
   {
     id: 'target_basic',
     section: 'para_quem_e',

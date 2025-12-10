@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Eye,
   Zap,
+  UserCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -125,6 +126,12 @@ const Dashboard = () => {
       title: 'Domínio',
       description: 'Configure seu domínio próprio',
       action: () => userLP && navigate(`/admin/lp/${userLP.id}/dominio`),
+    },
+    {
+      icon: UserCircle,
+      title: 'Meu Perfil',
+      description: 'Dados da conta e plano',
+      action: () => navigate('/painel/perfil'),
     },
   ];
 
