@@ -14,7 +14,8 @@ import {
   FileText,
   Undo2,
   Redo2,
-  Settings2
+  Settings2,
+  Wand2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ import { SectionSeparator } from '@/components/sections/SectionSeparator';
 import { SEOHead } from '@/components/SEOHead';
 import { StructurePhase } from './StructurePhase';
 import { ContentPhase } from './ContentPhase';
+import { WizardPhase } from './WizardPhase';
 import { WhatsAppConfigPanel } from './WhatsAppConfigPanel';
 import { SeparatorConfigPanel } from './SeparatorConfigPanel';
 import { WhatsAppFloatingButton, WhatsAppConfig } from '@/components/WhatsAppFloatingButton';
@@ -79,7 +81,7 @@ interface BlockEditorProps {
   onViewPublic: () => void;
 }
 
-type EditorPhase = 'structure' | 'content' | 'preview';
+type EditorPhase = 'wizard' | 'structure' | 'content' | 'preview';
 
 export const BlockEditor = ({
   lpId,
@@ -97,8 +99,8 @@ export const BlockEditor = ({
   const [content, setContent] = useState<Record<string, LPContent>>({});
   const [settings, setSettings] = useState<LPSettings>({});
   
-  // Phase control
-  const [phase, setPhase] = useState<EditorPhase>('structure');
+  // Phase control - default to wizard for new LPs
+  const [phase, setPhase] = useState<EditorPhase>('wizard');
 
   // Modals
   const [upgradeModal, setUpgradeModal] = useState({ open: false, feature: '' });
@@ -550,6 +552,10 @@ export const BlockEditor = ({
           {/* Phase Tabs */}
           <Tabs value={phase} onValueChange={(v) => setPhase(v as EditorPhase)} className="hidden sm:block">
             <TabsList className="h-9">
+              <TabsTrigger value="wizard" className="gap-2 text-xs">
+                <Wand2 className="w-3.5 h-3.5" />
+                Assistente
+              </TabsTrigger>
               <TabsTrigger value="structure" className="gap-2 text-xs">
                 <LayoutGrid className="w-3.5 h-3.5" />
                 Estrutura
@@ -683,18 +689,18 @@ export const BlockEditor = ({
         {/* Mobile phase selector */}
         <div className="sm:hidden px-4 pb-3">
           <Tabs value={phase} onValueChange={(v) => setPhase(v as EditorPhase)} className="w-full">
-            <TabsList className="w-full h-9">
-              <TabsTrigger value="structure" className="flex-1 text-xs">
-                <LayoutGrid className="w-3.5 h-3.5 mr-1" />
-                Estrutura
+            <TabsList className="w-full h-9 grid grid-cols-4">
+              <TabsTrigger value="wizard" className="text-xs px-1">
+                <Wand2 className="w-3.5 h-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex-1 text-xs">
-                <FileText className="w-3.5 h-3.5 mr-1" />
-                Conteúdo
+              <TabsTrigger value="structure" className="text-xs px-1">
+                <LayoutGrid className="w-3.5 h-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="preview" className="flex-1 text-xs">
-                <Eye className="w-3.5 h-3.5 mr-1" />
-                Preview
+              <TabsTrigger value="content" className="text-xs px-1">
+                <FileText className="w-3.5 h-3.5" />
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="text-xs px-1">
+                <Eye className="w-3.5 h-3.5" />
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -703,6 +709,29 @@ export const BlockEditor = ({
 
       {/* Content */}
       <AnimatePresence mode="wait">
+        {phase === 'wizard' && (
+          <motion.main
+            key="wizard"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="container mx-auto px-4 py-6 max-w-3xl"
+          >
+            <WizardPhase
+              blocks={blocks}
+              lpId={lpId}
+              userPlan={userPlan}
+              content={content}
+              settings={settings}
+              onAddSection={handleAddSection}
+              onContentUpdate={handleContentUpdate}
+              onComplete={() => setPhase('preview')}
+              onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'recursos premium' })}
+            />
+          </motion.main>
+        )}
+
         {phase === 'structure' && (
           <motion.main
             key="structure"
