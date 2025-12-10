@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { SectionKey, PlanLevelWithMaster, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
+import { SectionKey, PlanLevelWithMaster, SECTION_MODELS_BY_SECTION, StylePreset } from '@/lib/sectionModels';
 import {
   EditorBlock,
   getBlockDefinition,
@@ -32,6 +32,7 @@ import {
 } from '@/lib/blockEditorTypes';
 import { SaveIndicator, useSaveStatus } from './SaveIndicator';
 import { PublishChecklist } from './PublishChecklist';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { UpgradeModal } from '@/components/client/UpgradeModal';
 import { SectionLoader } from '@/components/sections/SectionLoader';
 import { SEOHead } from '@/components/SEOHead';
@@ -564,6 +565,25 @@ export const BlockEditor = ({
           </Tabs>
 
           <div className="flex items-center gap-2">
+            {/* Theme Switcher - Pro/Premium only */}
+            {(userPlan === 'pro' || userPlan === 'premium' || isMaster) && (
+              <ThemeSwitcher
+                currentTheme={(settings.global_theme as StylePreset) || 'glass'}
+                onThemeChange={async (theme) => {
+                  setSettings(prev => ({ ...prev, global_theme: theme }));
+                  setSaveStatusSaving();
+                  try {
+                    await saveSettings(lpId, { global_theme: theme });
+                    setSaveStatusSaved();
+                  } catch (error) {
+                    console.error('[BlockEditor] Error saving theme:', error);
+                    setSaveStatusError();
+                  }
+                }}
+                className="hidden sm:flex"
+              />
+            )}
+
             {/* Undo/Redo buttons */}
             <div className="hidden sm:flex items-center gap-1 mr-2">
               <Button

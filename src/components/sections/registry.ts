@@ -16,6 +16,10 @@ import BeneficiosNeon from './BeneficiosNeon';
 import BeneficiosMinimal from './BeneficiosMinimal';
 
 import { ProvasSociais } from './ProvasSociais';
+import ProvasSociaisDark from './ProvasSociaisDark';
+import ProvasSociaisNeon from './ProvasSociaisNeon';
+import ProvasSociaisMinimal from './ProvasSociaisMinimal';
+
 import { ComoFunciona } from './ComoFunciona';
 import { ParaQuemE } from './ParaQuemE';
 
@@ -25,6 +29,9 @@ import PlanosNeon from './PlanosNeon';
 import PlanosMinimal from './PlanosMinimal';
 
 import { FAQ } from './FAQ';
+import FAQDark from './FAQDark';
+import FAQNeon from './FAQNeon';
+import FAQMinimal from './FAQMinimal';
 
 import { ChamadaFinal } from './ChamadaFinal';
 import CTAFinalDark from './CTAFinalDark';
@@ -32,7 +39,15 @@ import CTAFinalNeon from './CTAFinalNeon';
 import CTAFinalMinimal from './CTAFinalMinimal';
 
 import { Rodape } from './Rodape';
+import RodapeDark from './RodapeDark';
+import RodapeNeon from './RodapeNeon';
+import RodapeMinimal from './RodapeMinimal';
+
 import { MenuSection } from './MenuSection';
+import MenuDark from './MenuDark';
+import MenuNeon from './MenuNeon';
+import MenuMinimal from './MenuMinimal';
+
 import StoriesCarousel from './StoriesCarousel';
 import LogosInfiniteScroll from './LogosInfiniteScroll';
 
@@ -55,6 +70,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     menu_glass_minimal: MenuSection,
     menu_visionos_floating: MenuSection,
     menu_command_center: MenuSection,
+    // Style presets
+    menu_dark: MenuDark,
+    menu_neon: MenuNeon,
+    menu_minimal_preset: MenuMinimal,
     // Legado (fallback)
     menu_horizontal: MenuSection,
     menu_centered: MenuSection,
@@ -154,6 +173,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     provas_sociais_stats_hybrid: ProvasSociais,
     provas_sociais_video_testimonials: ProvasSociais,
     provas_sociais_featured_single: ProvasSociais,
+    // Style presets
+    provas_sociais_dark: ProvasSociaisDark,
+    provas_sociais_neon: ProvasSociaisNeon,
+    provas_sociais_minimal: ProvasSociaisMinimal,
     // Legado (fallback)
     testimonials_basic: ProvasSociais,
     testimonials_carousel: ProvasSociais,
@@ -188,6 +211,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     faq_accordion_glass: FAQ,
     faq_twocolumn_modern: FAQ,
     faq_with_cta_spotlight: FAQ,
+    // Style presets
+    faq_dark: FAQDark,
+    faq_neon: FAQNeon,
+    faq_minimal: FAQMinimal,
     // Legado (fallback)
     faq_accordion: FAQ,
     faq_columns: FAQ,
@@ -223,6 +250,10 @@ export const SECTION_COMPONENT_REGISTRY = {
     rodape_minimal_soft: Rodape,
     rodape_columns_glass: Rodape,
     rodape_visionos_bar: Rodape,
+    // Style presets
+    rodape_dark: RodapeDark,
+    rodape_neon: RodapeNeon,
+    rodape_minimal: RodapeMinimal,
     // Legado (fallback)
     footer_basic: Rodape,
     footer_columns: Rodape,
