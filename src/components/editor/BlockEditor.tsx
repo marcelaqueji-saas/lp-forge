@@ -13,7 +13,8 @@ import {
   LayoutGrid,
   FileText,
   Undo2,
-  Redo2
+  Redo2,
+  Settings2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ import { SectionLoader } from '@/components/sections/SectionLoader';
 import { SEOHead } from '@/components/SEOHead';
 import { StructurePhase } from './StructurePhase';
 import { ContentPhase } from './ContentPhase';
+import { WhatsAppConfigPanel } from './WhatsAppConfigPanel';
+import { WhatsAppFloatingButton, WhatsAppConfig } from '@/components/WhatsAppFloatingButton';
 import {
   saveSectionContent,
   saveSettings,
@@ -53,6 +56,13 @@ import { trackEvent } from '@/lib/tracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { useEditHistory } from '@/hooks/useEditHistory';
 import { useLiveSync } from '@/hooks/useLiveSync';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 interface BlockEditorProps {
   lpId: string;
@@ -90,6 +100,7 @@ export const BlockEditor = ({
   // Modals
   const [upgradeModal, setUpgradeModal] = useState({ open: false, feature: '' });
   const [publishChecklistOpen, setPublishChecklistOpen] = useState(false);
+  const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
 
   // Save status indicator
   const { status: saveStatus, setSaving: setSaveStatusSaving, setSaved: setSaveStatusSaved, setError: setSaveStatusError } = useSaveStatus();
@@ -463,6 +474,34 @@ export const BlockEditor = ({
     console.log('[S5.0 QA] Content updated:', { sectionKey });
   }, [markLocalUpdate]);
 
+  // WhatsApp settings handler - receives (key, value) per field
+  const handleWhatsAppSettingsChange = useCallback(async (key: keyof WhatsAppConfig, value: string) => {
+    // Update local state immediately
+    setSettings(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+    
+    setSaveStatusSaving();
+    
+    try {
+      await saveSettings(lpId, { [key]: value });
+      setSaveStatusSaved();
+    } catch (error) {
+      console.error('[BlockEditor] Error saving WhatsApp settings:', error);
+      setSaveStatusError();
+      toast({ title: 'Erro ao salvar configurações', variant: 'destructive' });
+    }
+  }, [lpId]);
+
+  // Build WhatsApp config from settings
+  const whatsAppConfig: WhatsAppConfig = {
+    whatsapp_enabled: settings.whatsapp_enabled,
+    whatsapp_phone: settings.whatsapp_phone,
+    whatsapp_default_message: settings.whatsapp_default_message,
+    whatsapp_position: settings.whatsapp_position as 'bottom_right' | 'bottom_left',
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -547,6 +586,27 @@ export const BlockEditor = ({
                 <Redo2 className="w-4 h-4" />
               </Button>
             </div>
+
+            {/* Settings Sheet */}
+            <Sheet open={settingsSheetOpen} onOpenChange={setSettingsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Config</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Configurações da Página</SheetTitle>
+                </SheetHeader>
+                <div className="py-6 space-y-6">
+                  <WhatsAppConfigPanel
+                    config={whatsAppConfig}
+                    onChange={handleWhatsAppSettingsChange}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
 
             <Button variant="outline" size="sm" onClick={onViewPublic} className="h-9">
               <ExternalLink className="w-4 h-4 mr-2" />
@@ -674,6 +734,9 @@ export const BlockEditor = ({
                 />
               </section>
             ))}
+
+            {/* WhatsApp Floating Button in Preview */}
+            <WhatsAppFloatingButton settings={whatsAppConfig} />
           </motion.div>
         )}
       </AnimatePresence>
