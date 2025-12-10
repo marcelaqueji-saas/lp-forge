@@ -163,7 +163,7 @@ export interface PlanLimits {
   allowedModelTiers: PlanLevel[];
 }
 
-export const PLAN_LIMITS: Record<PlanLevel, PlanLimits> = {
+export const PLAN_LIMITS: Record<PlanLevel | 'master', PlanLimits> = {
   free: {
     maxLPs: 1,
     maxDynamicBlocks: 2,
@@ -190,8 +190,20 @@ export const PLAN_LIMITS: Record<PlanLevel, PlanLimits> = {
   },
   premium: {
     maxLPs: 10,
-    maxDynamicBlocks: 999, // Sem limite prático
+    maxDynamicBlocks: 999,
     maxStorageMB: 1024,
+    canEditBackground: true,
+    canEditGradients: true,
+    canEditSectionColors: true,
+    canEditTypography: true,
+    canEditGlassEffects: true,
+    canRequestCustomModel: true,
+    allowedModelTiers: ['free', 'pro', 'premium'],
+  },
+  master: {
+    maxLPs: 999,
+    maxDynamicBlocks: 999,
+    maxStorageMB: 10240,
     canEditBackground: true,
     canEditGradients: true,
     canEditSectionColors: true,
@@ -218,12 +230,14 @@ export function getDynamicBlocks(): BlockDefinition[] {
   return BLOCK_DEFINITIONS.filter(b => !b.isFixed);
 }
 
-export function canAddMoreBlocks(currentDynamicCount: number, plan: PlanLevel): boolean {
-  return currentDynamicCount < PLAN_LIMITS[plan].maxDynamicBlocks;
+export function canAddMoreBlocks(currentDynamicCount: number, plan: PlanLevel | 'master'): boolean {
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  return currentDynamicCount < limits.maxDynamicBlocks;
 }
 
-export function canUseModel(modelPlan: PlanLevel, userPlan: PlanLevel): boolean {
-  return PLAN_LIMITS[userPlan].allowedModelTiers.includes(modelPlan);
+export function canUseModel(modelPlan: PlanLevel, userPlan: PlanLevel | 'master'): boolean {
+  const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
+  return limits.allowedModelTiers.includes(modelPlan);
 }
 
 export function generateBlockId(): string {

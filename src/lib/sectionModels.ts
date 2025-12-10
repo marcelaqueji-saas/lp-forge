@@ -15,6 +15,7 @@ export type SectionKey =
   | 'rodape';
 
 export type PlanLevel = 'free' | 'pro' | 'premium';
+export type PlanLevelWithMaster = PlanLevel | 'master';
 
 export type ModelCategory = 
   | 'navigation'

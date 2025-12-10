@@ -1,10 +1,10 @@
 /**
- * AddBlockModal - Modal para adicionar novo bloco
+ * AddBlockModal - Modal para adicionar novo bloco com visualização de thumbnails
  */
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Check, Sparkles } from 'lucide-react';
+import { X, Lock, Check, Sparkles, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,12 +23,13 @@ import {
   canUseModel,
   PLAN_LIMITS 
 } from '@/lib/blockEditorTypes';
+import { ModelThumbnail } from './ModelThumbnail';
 
 interface AddBlockModalProps {
   open: boolean;
   onClose: () => void;
   position: number;
-  userPlan: PlanLevel;
+  userPlan: PlanLevel | 'master';
   currentDynamicCount: number;
   existingBlocks: SectionKey[];
   onAddBlock: (sectionKey: SectionKey, modelId: string, position: number) => void;
@@ -49,18 +50,20 @@ export const AddBlockModal = ({
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   const dynamicBlocks = getDynamicBlocks();
-  const limits = PLAN_LIMITS[userPlan];
-  const isAtLimit = currentDynamicCount >= limits.maxDynamicBlocks;
+  const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
+  const isMaster = userPlan === 'master';
+  const isAtLimit = !isMaster && currentDynamicCount >= limits.maxDynamicBlocks;
 
   const handleSectionSelect = (sectionKey: SectionKey) => {
     setSelectedSection(sectionKey);
     const models = SECTION_MODELS_BY_SECTION[sectionKey] || [];
-    const freeModel = models.find(m => canUseModel(m.plan, userPlan));
-    setSelectedModel(freeModel?.id || models[0]?.id || null);
+    // Find first accessible model
+    const accessibleModel = models.find(m => isMaster || canUseModel(m.plan, userPlan as PlanLevel));
+    setSelectedModel(accessibleModel?.id || models[0]?.id || null);
   };
 
   const handleModelSelect = (modelId: string, modelPlan: PlanLevel) => {
-    if (!canUseModel(modelPlan, userPlan)) {
+    if (!isMaster && !canUseModel(modelPlan, userPlan as PlanLevel)) {
       onUpgradeClick();
       return;
     }
@@ -70,9 +73,7 @@ export const AddBlockModal = ({
   const handleConfirm = () => {
     if (selectedSection && selectedModel) {
       onAddBlock(selectedSection, selectedModel, position);
-      onClose();
-      setSelectedSection(null);
-      setSelectedModel(null);
+      handleClose();
     }
   };
 
@@ -86,26 +87,31 @@ export const AddBlockModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle>Adicionar novo bloco</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <LayoutGrid className="w-5 h-5 text-primary" />
+            Adicionar novo bloco
+          </DialogTitle>
           <DialogDescription>
             {isAtLimit ? (
-              <span className="text-warning">
+              <span className="text-destructive">
                 Limite de {limits.maxDynamicBlocks} blocos atingido no plano {userPlan}.
               </span>
+            ) : isMaster ? (
+              <span className="text-primary">Plano Master - Todos os modelos disponíveis</span>
             ) : (
               `Escolha o tipo de seção (${currentDynamicCount}/${limits.maxDynamicBlocks} blocos)`
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row h-[500px]">
+        <div className="flex flex-col md:flex-row h-[550px]">
           {/* Lista de seções */}
-          <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r">
+          <div className="w-full md:w-2/5 border-b md:border-b-0 md:border-r bg-muted/20">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground mb-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                   Tipo de seção
                 </p>
                 {dynamicBlocks.map((block) => {
@@ -122,8 +128,8 @@ export const AddBlockModal = ({
                       className={cn(
                         "w-full text-left p-3 rounded-xl border transition-all",
                         isSelected 
-                          ? "bg-primary/10 border-primary" 
-                          : "bg-card hover:bg-muted/50 border-transparent",
+                          ? "bg-primary/10 border-primary shadow-sm" 
+                          : "bg-card hover:bg-muted/50 border-transparent hover:border-border",
                         isAtLimit && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -132,7 +138,7 @@ export const AddBlockModal = ({
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{block.name}</span>
                             {alreadyExists && (
-                              <Badge variant="outline" className="text-[9px]">
+                              <Badge variant="outline" className="text-[9px] py-0">
                                 Em uso
                               </Badge>
                             )}
@@ -142,7 +148,9 @@ export const AddBlockModal = ({
                           </p>
                         </div>
                         {isSelected && (
-                          <Check className="w-4 h-4 text-primary shrink-0" />
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3 text-primary-foreground" />
+                          </div>
                         )}
                       </div>
                     </motion.button>
@@ -152,70 +160,56 @@ export const AddBlockModal = ({
             </ScrollArea>
           </div>
 
-          {/* Lista de modelos */}
-          <div className="w-full md:w-1/2">
+          {/* Lista de modelos com thumbnails */}
+          <div className="w-full md:w-3/5">
             <ScrollArea className="h-full">
               <div className="p-4">
                 {selectedSection ? (
                   <>
-                    <p className="text-xs font-medium text-muted-foreground mb-3">
-                      Escolher modelo
+                    <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+                      Escolher modelo ({models.length} disponíveis)
                     </p>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {models.map((model) => {
-                        const isLocked = !canUseModel(model.plan, userPlan);
+                        const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
                         const isSelected = selectedModel === model.id;
                         
                         return (
-                          <motion.button
+                          <ModelThumbnail
                             key={model.id}
+                            modelId={model.id}
+                            name={model.name}
+                            plan={model.plan}
+                            isLocked={isLocked}
+                            isSelected={isSelected}
                             onClick={() => handleModelSelect(model.id, model.plan)}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            className={cn(
-                              "w-full text-left p-3 rounded-xl border transition-all",
-                              isSelected 
-                                ? "bg-primary/10 border-primary" 
-                                : "bg-card hover:bg-muted/50 border-transparent",
-                              isLocked && "opacity-60"
-                            )}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{model.name}</span>
-                                  {model.plan !== 'free' && (
-                                    <Badge 
-                                      variant={model.plan === 'premium' ? 'default' : 'secondary'}
-                                      className="text-[9px] px-1.5 py-0 uppercase"
-                                    >
-                                      {model.plan === 'premium' && <Sparkles className="w-2.5 h-2.5 mr-0.5" />}
-                                      {model.plan}
-                                    </Badge>
-                                  )}
-                                </div>
-                                {model.description && (
-                                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                                    {model.description}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="shrink-0 ml-2">
-                                {isLocked ? (
-                                  <Lock className="w-4 h-4 text-muted-foreground" />
-                                ) : isSelected ? (
-                                  <Check className="w-4 h-4 text-primary" />
-                                ) : null}
-                              </div>
-                            </div>
-                          </motion.button>
+                          />
                         );
                       })}
                     </div>
+                    
+                    {/* Selected model description */}
+                    {selectedModel && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20"
+                      >
+                        <p className="text-sm font-medium text-primary">
+                          {models.find(m => m.id === selectedModel)?.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {models.find(m => m.id === selectedModel)?.description || 'Clique em "Adicionar bloco" para incluir na página'}
+                        </p>
+                      </motion.div>
+                    )}
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    Selecione uma seção
+                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                    <LayoutGrid className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                    <p className="text-muted-foreground text-sm">
+                      Selecione um tipo de seção para ver os modelos disponíveis
+                    </p>
                   </div>
                 )}
               </div>
@@ -235,6 +229,8 @@ export const AddBlockModal = ({
               >
                 Fazer upgrade para adicionar mais blocos
               </Button>
+            ) : isMaster ? (
+              <span className="text-primary font-medium">♾️ Blocos ilimitados</span>
             ) : (
               `${limits.maxDynamicBlocks - currentDynamicCount} blocos disponíveis`
             )}
@@ -246,8 +242,16 @@ export const AddBlockModal = ({
             <Button 
               onClick={handleConfirm}
               disabled={!selectedSection || !selectedModel || isAtLimit}
+              className="min-w-[140px]"
             >
-              Adicionar bloco
+              {selectedSection && selectedModel ? (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Adicionar bloco
+                </>
+              ) : (
+                'Selecione um modelo'
+              )}
             </Button>
           </div>
         </div>

@@ -20,9 +20,12 @@ export interface LandingPage {
   slug: string;
   dominio?: string;
   dominio_verificado?: boolean;
+  dominio_verificacao_token?: string;
   publicado: boolean;
   created_at: string;
   owner_id?: string;
+  is_official?: boolean;
+  is_site?: boolean;
 }
 
 export type LPRole = 'owner' | 'editor' | 'viewer';

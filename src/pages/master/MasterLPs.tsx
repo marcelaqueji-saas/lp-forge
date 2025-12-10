@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Plus, ExternalLink, Edit, Globe, Eye } from 'lucide-react';
+import { ArrowLeft, Search, Plus, ExternalLink, Edit, Globe, Eye, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -23,6 +34,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { LandingPage } from '@/lib/lpContentApi';
 import { UserWithDetails, getAllUsers } from '@/lib/authApi';
+import { deleteLandingPageCompletely } from '@/lib/lpApi';
 
 const MasterLPs = () => {
   const navigate = useNavigate();
@@ -32,6 +44,11 @@ const MasterLPs = () => {
   const [search, setSearch] = useState('');
   const [createDialog, setCreateDialog] = useState(false);
   const [newLP, setNewLP] = useState({ nome: '', slug: '', owner_id: '' });
+  
+  // Delete state
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [lpToDelete, setLpToDelete] = useState<LandingPage | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -102,6 +119,28 @@ const MasterLPs = () => {
     loadData();
   };
 
+  const handleDeleteClick = (lp: LandingPage) => {
+    setLpToDelete(lp);
+    setDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!lpToDelete) return;
+    
+    setDeleting(true);
+    const success = await deleteLandingPageCompletely(lpToDelete.id);
+    setDeleting(false);
+    
+    if (success) {
+      toast({ title: 'LP excluída com sucesso!' });
+      setDeleteDialog(false);
+      setLpToDelete(null);
+      loadData();
+    } else {
+      toast({ title: 'Erro ao excluir LP', variant: 'destructive' });
+    }
+  };
+
   const filteredLPs = lps.filter(lp => 
     lp.nome.toLowerCase().includes(search.toLowerCase()) ||
     lp.slug.toLowerCase().includes(search.toLowerCase())
@@ -156,6 +195,11 @@ const MasterLPs = () => {
                     <Badge variant={lp.publicado ? "default" : "secondary"}>
                       {lp.publicado ? 'Publicado' : 'Rascunho'}
                     </Badge>
+                    {lp.is_official && (
+                      <Badge variant="outline" className="text-primary border-primary/30">
+                        Oficial
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">/{lp.slug}</p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
@@ -185,6 +229,13 @@ const MasterLPs = () => {
                     <Edit className="w-4 h-4 mr-1" />
                     Editar
                   </Button>
+                  <Button 
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteClick(lp)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             ))
@@ -192,6 +243,7 @@ const MasterLPs = () => {
         </div>
       </main>
 
+      {/* Create Dialog */}
       <Dialog open={createDialog} onOpenChange={setCreateDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -242,6 +294,46 @@ const MasterLPs = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Excluir Landing Page
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir <strong>"{lpToDelete?.nome}"</strong>?
+              </p>
+              <p className="text-destructive font-medium">
+                Esta ação irá remover permanentemente:
+              </p>
+              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                <li>Todo o conteúdo da página</li>
+                <li>Todos os leads capturados</li>
+                <li>Eventos e analytics</li>
+                <li>Configurações e webhooks</li>
+                <li>Arquivos de mídia</li>
+              </ul>
+              <p className="text-destructive font-semibold">
+                Esta ação não pode ser desfeita!
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Excluindo...' : 'Sim, excluir LP'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
