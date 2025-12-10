@@ -9,27 +9,29 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PlanLevel } from '@/lib/sectionModels';
+import { PlanLevel, PlanLevelWithMaster } from '@/lib/sectionModels';
 import { PLAN_LIMITS } from '@/lib/blockEditorTypes';
 
 interface PlanLimitIndicatorProps {
-  userPlan: PlanLevel;
+  userPlan: PlanLevelWithMaster;
   currentBlocks: number;
   onUpgradeClick: () => void;
   variant?: 'compact' | 'full';
   className?: string;
 }
 
-const PLAN_COLORS: Record<PlanLevel, string> = {
+const PLAN_COLORS: Record<PlanLevelWithMaster, string> = {
   free: 'bg-muted text-muted-foreground',
   pro: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   premium: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  master: 'bg-primary/10 text-primary border-primary/20',
 };
 
-const PLAN_LABELS: Record<PlanLevel, string> = {
+const PLAN_LABELS: Record<PlanLevelWithMaster, string> = {
   free: 'Gratuito',
   pro: 'Pro',
   premium: 'Premium',
+  master: 'Master',
 };
 
 export const PlanLimitIndicator = ({
@@ -41,9 +43,10 @@ export const PlanLimitIndicator = ({
 }: PlanLimitIndicatorProps) => {
   const limits = PLAN_LIMITS[userPlan];
   const maxBlocks = limits.maxDynamicBlocks;
-  const percentage = Math.min((currentBlocks / maxBlocks) * 100, 100);
-  const isAtLimit = currentBlocks >= maxBlocks;
-  const isNearLimit = currentBlocks >= maxBlocks - 1;
+  const isMaster = userPlan === 'master';
+  const percentage = isMaster ? 0 : Math.min((currentBlocks / maxBlocks) * 100, 100);
+  const isAtLimit = !isMaster && currentBlocks >= maxBlocks;
+  const isNearLimit = !isMaster && currentBlocks >= maxBlocks - 1;
 
   if (variant === 'compact') {
     return (
@@ -84,7 +87,7 @@ export const PlanLimitIndicator = ({
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={cn("text-xs border", PLAN_COLORS[userPlan])}>
-            {userPlan === 'premium' && <Sparkles className="w-3 h-3 mr-1" />}
+            {(userPlan === 'premium' || userPlan === 'master') && <Sparkles className="w-3 h-3 mr-1" />}
             Plano {PLAN_LABELS[userPlan]}
           </Badge>
           <TooltipProvider>
@@ -105,7 +108,8 @@ export const PlanLimitIndicator = ({
           </TooltipProvider>
         </div>
 
-        {userPlan !== 'premium' && (
+        {/* Não mostrar upgrade para premium ou master */}
+        {userPlan !== 'premium' && userPlan !== 'master' && (
           <Button
             variant="ghost"
             size="sm"
@@ -141,7 +145,8 @@ export const PlanLimitIndicator = ({
           />
         )}
 
-        {isAtLimit && userPlan !== 'premium' && (
+        {/* Botão de desbloquear apenas quando no limite e não é premium/master */}
+        {isAtLimit && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

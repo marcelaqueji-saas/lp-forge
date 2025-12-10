@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { SectionKey, PlanLevel, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
+import { SectionKey, PlanLevel, PlanLevelWithMaster, SECTION_MODELS_BY_SECTION } from '@/lib/sectionModels';
 import {
   EditorBlock,
   BLOCK_DEFINITIONS,
@@ -61,7 +61,7 @@ interface BlockEditorProps {
     slug: string;
     publicado: boolean;
   };
-  userPlan: PlanLevel;
+  userPlan: PlanLevelWithMaster;
   onPublish: () => void;
   onViewPublic: () => void;
 }

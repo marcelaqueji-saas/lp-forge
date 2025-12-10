@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { SectionKey, SECTION_MODELS_BY_SECTION, PlanLevel } from '@/lib/sectionModels';
+import { SectionKey, SECTION_MODELS_BY_SECTION, PlanLevel, PlanLevelWithMaster } from '@/lib/sectionModels';
 import { BlockDefinition, canUseModel } from '@/lib/blockEditorTypes';
 
 interface BlockCardProps {
@@ -46,7 +46,7 @@ interface BlockCardProps {
     isNew?: boolean;
   };
   definition: BlockDefinition;
-  userPlan: PlanLevel;
+  userPlan: PlanLevelWithMaster;
   isDragging?: boolean;
   onEdit: () => void;
   onChangeModel: (modelId: string) => void;
