@@ -42,6 +42,8 @@ const MasterLPs = () => {
   const [users, setUsers] = useState<UserWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [ownerFilter, setOwnerFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'name'>('updated');
   const [createDialog, setCreateDialog] = useState(false);
   const [newLP, setNewLP] = useState({ nome: '', slug: '', owner_id: '' });
   
@@ -49,6 +51,9 @@ const MasterLPs = () => {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [lpToDelete, setLpToDelete] = useState<LandingPage | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // [S4.4 QA] Log page load
+  console.log('[S4.4 QA] MasterLPs loaded');
 
   useEffect(() => {
     loadData();
@@ -141,10 +146,31 @@ const MasterLPs = () => {
     }
   };
 
-  const filteredLPs = lps.filter(lp => 
-    lp.nome.toLowerCase().includes(search.toLowerCase()) ||
-    lp.slug.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter and sort LPs
+  const filteredLPs = lps
+    .filter(lp => {
+      const matchesSearch = lp.nome.toLowerCase().includes(search.toLowerCase()) ||
+        lp.slug.toLowerCase().includes(search.toLowerCase());
+      const matchesOwner = ownerFilter === 'all' || lp.owner_id === ownerFilter;
+      return matchesSearch && matchesOwner;
+    })
+    .sort((a, b) => {
+      const getLastUpdated = (lp: any) => {
+        const contentUpdated = lp.lp_content?.[0]?.updated_at;
+        return contentUpdated || lp.created_at || '';
+      };
+
+      switch (sortBy) {
+        case 'updated':
+          return new Date(getLastUpdated(b)).getTime() - new Date(getLastUpdated(a)).getTime();
+        case 'created':
+          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+        case 'name':
+          return a.nome.localeCompare(b.nome);
+        default:
+          return 0;
+      }
+    });
 
   const getOwnerName = (ownerId: string | undefined) => {
     if (!ownerId) return 'Sem dono';
@@ -171,14 +197,44 @@ const MasterLPs = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou slug..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou slug..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Owner filter */}
+          <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filtrar por dono" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os donos</SelectItem>
+              {users.map(u => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.display_name || u.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Sort */}
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="updated">Última edição</SelectItem>
+              <SelectItem value="created">Data de criação</SelectItem>
+              <SelectItem value="name">Nome A-Z</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-3">

@@ -45,6 +45,18 @@ import { FAQ } from './FAQ';
 import { ChamadaFinal } from './ChamadaFinal';
 import { Rodape } from './Rodape';
 import { MenuSection } from './MenuSection';
+
+// EDITABLE SECTION COMPONENTS (Sprint 4.4)
+import { HeroEditable } from './HeroEditable';
+import { BeneficiosEditable } from './BeneficiosEditable';
+import { FAQEditable } from './FAQEditable';
+import { ComoFuncionaEditable } from './ComoFuncionaEditable';
+import { ParaQuemEEditable } from './ParaQuemEEditable';
+import { ProvasSociaisEditable } from './ProvasSociaisEditable';
+import { PlanosEditable } from './PlanosEditable';
+import { ChamadaFinalEditable } from './ChamadaFinalEditable';
+import { MenuEditable } from './MenuEditable';
+import { RodapeEditable } from './RodapeEditable';
 import HeroCenter from './HeroCenter';
 import HeroSplitBasic from './HeroSplitBasic';
 
@@ -444,6 +456,8 @@ interface SectionLoaderProps {
   disableAnimations?: boolean;
   userPlan?: PlanLevelWithMaster;
   context?: 'editor' | 'public';
+  editable?: boolean;
+  onContentUpdate?: (sectionKey: SectionKey, newContent: LPContent) => void;
 }
 
 function buildSectionStyles(content?: LPContent): React.CSSProperties {
@@ -464,6 +478,20 @@ function buildSectionStyles(content?: LPContent): React.CSSProperties {
   return styles;
 }
 
+// Map section keys to editable components
+const EDITABLE_COMPONENT_REGISTRY: Record<SectionKey, React.ComponentType<any> | null> = {
+  hero: HeroEditable,
+  beneficios: BeneficiosEditable,
+  faq: FAQEditable,
+  como_funciona: ComoFuncionaEditable,
+  para_quem_e: ParaQuemEEditable,
+  provas_sociais: ProvasSociaisEditable,
+  planos: PlanosEditable,
+  chamada_final: ChamadaFinalEditable,
+  menu: MenuEditable,
+  rodape: RodapeEditable,
+};
+
 export const SectionLoader: React.FC<SectionLoaderProps> = memo(
   ({
     sectionKey,
@@ -474,7 +502,11 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
     disableAnimations = false,
     userPlan = 'free',
     context = 'public',
+    editable = false,
+    onContentUpdate,
   }) => {
+    // [S4.4 QA] Check if editable mode
+    console.log(`[S4.4 QA] SectionLoader: ${sectionKey}, editable=${editable}, context=${context}`);
     const [templateMeta, setTemplateMeta] =
       useState<SectionTemplateRow | null>(null);
 
@@ -538,6 +570,25 @@ export const SectionLoader: React.FC<SectionLoaderProps> = memo(
 
     let Component: ComponentType<any> | null = null;
     let componentKey = '';
+
+    // [S4.4] If editable mode, use editable component directly
+    if (editable && lpId) {
+      const EditableComponent = EDITABLE_COMPONENT_REGISTRY[sectionKey];
+      if (EditableComponent) {
+        console.log(`[S4.4 QA] Using editable component for: ${sectionKey}`);
+        return (
+          <SectionErrorBoundary sectionName={sectionKey}>
+            <EditableComponent
+              lpId={lpId}
+              content={previewOverride || content}
+              userPlan={userPlan}
+              editable={true}
+              variante={mapVariantToLegacy(variant)}
+            />
+          </SectionErrorBoundary>
+        );
+      }
+    }
 
     // 1) Se o modelo da seção define explicitamente um componente, usa ele
     if (
