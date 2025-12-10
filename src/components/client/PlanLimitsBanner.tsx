@@ -80,6 +80,7 @@ export const PlanLimitsBanner = () => {
             size="sm"
             variant="outline"
             className="text-primary border-primary/30"
+            onClick={() => window.location.href = '/upgrade'}
           >
             <Zap className="w-4 h-4 mr-1" />
             Upgrade

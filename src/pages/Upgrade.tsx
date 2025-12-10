@@ -2,8 +2,8 @@
  * Upgrade Page - Comparativo de planos com CTA
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, 
@@ -18,13 +18,15 @@ import {
   Image,
   BarChart3,
   Globe,
-  Infinity
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PlanLevel } from '@/lib/sectionModels';
+import { initiateCheckout, getEffectivePlanLimits, type PlanType } from '@/lib/billingApi';
+import { toast } from 'sonner';
 
 interface PlanFeature {
   name: string;
@@ -113,17 +115,34 @@ const PLAN_PRICES: Record<PlanLevel, { value: string; period: string }> = {
 
 const Upgrade = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanLevel>('pro');
+  const [loading, setLoading] = useState<string | null>(null);
   const currentPlan = (profile?.plan as PlanLevel) || 'free';
 
-  const handleUpgrade = (plan: PlanLevel) => {
-    // Por enquanto, apenas mostra toast e navega de volta
-    // Futuramente, integrará com checkout
-    if (plan === currentPlan) return;
+  useEffect(() => {
+    if (searchParams.get('canceled') === 'true') {
+      toast.info('Checkout cancelado. Você pode tentar novamente quando quiser.');
+    }
+  }, [searchParams]);
+
+  const handleUpgrade = async (plan: PlanLevel) => {
+    if (plan === currentPlan || plan === 'free') return;
     
-    // Simula ação - em produção, redireciona para checkout
-    navigate('/painel', { state: { pendingUpgrade: plan } });
+    setLoading(plan);
+    try {
+      const result = await initiateCheckout(plan as 'pro' | 'premium');
+      if ('error' in result) {
+        toast.error(result.error);
+      } else if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      toast.error('Erro ao iniciar checkout. Tente novamente.');
+    } finally {
+      setLoading(null);
+    }
   };
 
   const renderFeatureValue = (value: string | boolean) => {
@@ -265,14 +284,25 @@ const Upgrade = () => {
                     e.stopPropagation();
                     handleUpgrade(plan);
                   }}
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || plan === 'free' || loading !== null}
                   variant={isPro ? 'default' : 'outline'}
                   className={cn(
                     "w-full",
                     isPro && "bg-primary hover:bg-primary/90"
                   )}
                 >
-                  {isCurrentPlan ? 'Plano atual' : 'Fazer upgrade'}
+                  {loading === plan ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : isCurrentPlan ? (
+                    'Plano atual'
+                  ) : plan === 'free' ? (
+                    'Gratuito'
+                  ) : (
+                    'Fazer upgrade'
+                  )}
                 </Button>
               </motion.div>
             );
