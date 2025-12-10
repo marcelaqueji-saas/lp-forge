@@ -32,6 +32,7 @@ import Dashboard from "./pages/Dashboard";
 import MeuSite from "./pages/MeuSite";
 import LPBuilder from "./pages/LPBuilder";
 import Upgrade from "./pages/Upgrade";
+import Profile from "./pages/client/Profile";
 
 // Admin LP pages (legacy - accessible to both)
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -159,6 +160,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Upgrade />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Profile page */}
+            <Route
+              path="/painel/perfil"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
