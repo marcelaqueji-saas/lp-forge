@@ -38,6 +38,7 @@ import { SEOHead } from '@/components/SEOHead';
 import { StructurePhase } from './StructurePhase';
 import { ContentPhase } from './ContentPhase';
 import { WhatsAppConfigPanel } from './WhatsAppConfigPanel';
+import { SeparatorConfigPanel } from './SeparatorConfigPanel';
 import { WhatsAppFloatingButton, WhatsAppConfig } from '@/components/WhatsAppFloatingButton';
 import {
   saveSectionContent,
@@ -600,10 +601,33 @@ export const BlockEditor = ({
                   <SheetTitle>Configurações da Página</SheetTitle>
                 </SheetHeader>
                 <div className="py-6 space-y-6">
-                  <WhatsAppConfigPanel
-                    config={whatsAppConfig}
-                    onChange={handleWhatsAppSettingsChange}
-                  />
+                  {/* WhatsApp Config */}
+                  <div>
+                    <h3 className="text-sm font-semibold mb-3">WhatsApp</h3>
+                    <WhatsAppConfigPanel
+                      config={whatsAppConfig}
+                      onChange={handleWhatsAppSettingsChange}
+                    />
+                  </div>
+                  
+                  {/* Separator Config */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-sm font-semibold mb-3">Separadores de Seção</h3>
+                    <SeparatorConfigPanel
+                      config={{
+                        separators_enabled: settings.separators_enabled,
+                        separator_type: settings.separator_type,
+                        separator_color: settings.separator_color,
+                      }}
+                      userPlan={userPlan}
+                      onChange={(key, value) => {
+                        setSettings(prev => ({ ...prev, [key]: value }));
+                        saveSettings(lpId, { [key]: value });
+                        setSaveStatusSaved();
+                      }}
+                      onUpgradeClick={() => setUpgradeModal({ open: true, feature: 'separadores premium' })}
+                    />
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
