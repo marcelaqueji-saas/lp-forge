@@ -1,5 +1,7 @@
 // ============================================================
 // REGISTRO CENTRAL DE MODELOS DE SEÇÃO (Section Models Registry)
+// noBRon - SaaS Landing Page Builder
+// v2.0 - Catálogo Refatorado
 // ============================================================
 
 export type SectionKey =
@@ -17,6 +19,8 @@ export type SectionKey =
 export type PlanLevel = 'free' | 'pro' | 'premium';
 export type PlanLevelWithMaster = PlanLevel | 'master';
 
+// Categorias no banco: básico, avançado, animado
+// Categorias internas para organização de componentes
 export type ModelCategory = 
   | 'navigation'
   | 'hero'
@@ -26,6 +30,12 @@ export type ModelCategory =
   | 'faq'
   | 'cta'
   | 'footer';
+
+// Categoria de template no banco (para TemplatePicker)
+export type TemplateCategory = 'básico' | 'avançado' | 'animado';
+
+export type StylePreset = 'glass' | 'visionos' | 'aurora' | 'neumorphic';
+export type MotionPreset = 'fade-stagger' | 'parallax' | 'tilt' | 'spotlight' | 'magnetic' | 'slide-in-right' | 'slide-in-up' | 'accordion';
 
 type FieldType = 'text' | 'textarea' | 'url';
 
@@ -38,8 +48,8 @@ export interface FieldConfig {
 export interface ImageConfig {
   key: string;
   label: string;
-  maxSizeMB?: number; // controle de custos de storage
-  aspectRatio?: string; // ratio recomendado do template
+  maxSizeMB?: number;
+  aspectRatio?: string;
 }
 
 export interface SectionModel {
@@ -49,16 +59,24 @@ export interface SectionModel {
   description?: string;
   plan: PlanLevel;
   category: ModelCategory;
+  thumbnail: string;
+  stylePreset?: StylePreset;
+  motionPreset?: MotionPreset;
   fields?: FieldConfig[];
   images?: ImageConfig[];
   hasJsonEditor?: boolean;
   component: string;
-  thumbnail?: string;
 }
 
 // ============================================================
 // CAMPOS PADRÃO REUTILIZÁVEIS
 // ============================================================
+
+const MENU_FIELDS: FieldConfig[] = [
+  { key: 'marca', label: 'Marca', type: 'text' },
+  { key: 'cta_label', label: 'Texto do botão', type: 'text' },
+  { key: 'cta_url', label: 'URL do botão', type: 'url' },
+];
 
 const HERO_FIELDS: FieldConfig[] = [
   { key: 'pre_titulo', label: 'Chamada curta', type: 'text' },
@@ -75,163 +93,117 @@ const SECTION_TITLE_FIELDS: FieldConfig[] = [
 
 const CTA_FIELDS: FieldConfig[] = [
   { key: 'titulo', label: 'Título', type: 'text' },
+  { key: 'subtitulo', label: 'Subtítulo', type: 'textarea' },
   { key: 'cta_label', label: 'Texto do botão', type: 'text' },
   { key: 'cta_url', label: 'URL do botão', type: 'url' },
 ];
 
+const FOOTER_FIELDS: FieldConfig[] = [
+  { key: 'copyright', label: 'Copyright', type: 'text' },
+];
+
 export const SECTION_MODEL_KEY = '__model_id';
 
-
 // ============================================================
-// MODELOS DE SEÇÃO - CATÁLOGO ESCALADO
-// Base: Visual Apple Glass em todas as seções
+// NOVO CATÁLOGO DE MODELOS v2.0
+// Thumbnails: /public/thumbnails/{sectionKey}/{modelId}.webp
 // ============================================================
 
 export const SECTION_MODELS: SectionModel[] = [
   // ============================================================
-  // MENU (4 modelos)
+  // MENU (3 modelos)
   // ============================================================
   {
-    id: 'menu_horizontal',
+    id: 'menu_glass_minimal',
     section: 'menu',
-    name: 'Menu Horizontal',
-    description: 'Logo à esquerda e navegação à direita',
+    name: 'Menu glass minimal',
+    description: 'Menu minimalista com efeito glass sutil',
     plan: 'free',
     category: 'navigation',
     component: 'MenuSection',
-    fields: [
-      { key: 'marca', label: 'Marca', type: 'text' },
-      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
-      { key: 'cta_url', label: 'URL do botão', type: 'url' },
-    ],
+    thumbnail: '/thumbnails/menu/menu_glass_minimal.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
+    fields: MENU_FIELDS,
     images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
   },
   {
-    id: 'menu_centered',
+    id: 'menu_visionos_floating',
     section: 'menu',
-    name: 'Menu Centralizado',
-    description: 'Logo no centro com links laterais',
+    name: 'Menu flutuante VisionOS',
+    description: 'Menu flutuante com estética VisionOS',
     plan: 'pro',
     category: 'navigation',
     component: 'MenuSection',
-    fields: [
-      { key: 'marca', label: 'Marca', type: 'text' },
-      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
-      { key: 'cta_url', label: 'URL do botão', type: 'url' },
-    ],
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
+    thumbnail: '/thumbnails/menu/menu_visionos_floating.webp',
+    stylePreset: 'visionos',
+    motionPreset: 'spotlight',
+    fields: MENU_FIELDS,
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
   },
   {
-    id: 'menu_sticky_glass',
+    id: 'menu_command_center',
     section: 'menu',
-    name: 'Menu Sticky Glass',
-    description: 'Menu fixo com efeito glassmorphism',
-    plan: 'pro',
-    category: 'navigation',
-    component: 'MenuSection',
-    fields: [
-      { key: 'marca', label: 'Marca', type: 'text' },
-      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
-      { key: 'cta_url', label: 'URL do botão', type: 'url' },
-    ],
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
-  },
-  {
-    id: 'menu_minimal',
-    section: 'menu',
-    name: 'Menu Minimalista',
-    description: 'Apenas logo e CTA, sem navegação',
+    name: 'Menu command center (⌘K)',
+    description: 'Menu com command palette integrado',
     plan: 'premium',
     category: 'navigation',
     component: 'MenuSection',
-    fields: [
-      { key: 'marca', label: 'Marca', type: 'text' },
-      { key: 'cta_label', label: 'Texto do botão', type: 'text' },
-      { key: 'cta_url', label: 'URL do botão', type: 'url' },
-    ],
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1 }],
+    thumbnail: '/thumbnails/menu/menu_command_center.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
+    fields: MENU_FIELDS,
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
   },
 
   // ============================================================
-  // HERO (8 modelos)
+  // HERO (4 modelos)
   // ============================================================
   {
-    id: 'hero_basic',
+    id: 'hero_glass_aurora',
     section: 'hero',
-    name: 'Simples e Centralizado',
-    description: 'Texto centralizado com CTA destacado',
+    name: 'Hero glass aurora',
+    description: 'Hero com efeito aurora e glass',
     plan: 'free',
     category: 'hero',
     component: 'Hero',
+    thumbnail: '/thumbnails/hero/hero_glass_aurora.webp',
+    stylePreset: 'aurora',
+    motionPreset: 'fade-stagger',
     fields: HERO_FIELDS,
     images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
   },
   {
-    id: 'hero_center',
+    id: 'hero_cinematic_video_spotlight',
     section: 'hero',
-    name: 'Hero Center',
-    description: 'Layout centralizado minimalista',
-    plan: 'free',
-    category: 'hero',
-    component: 'HeroCenter',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
-  },
-  {
-    id: 'hero_split',
-    section: 'hero',
-    name: 'Split Layout',
-    description: 'Texto de um lado, imagem do outro',
-    plan: 'pro',
-    category: 'hero',
-    component: 'HeroSplitBasic',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem lateral', maxSizeMB: 3 }],
-  },
-  {
-    id: 'hero_split_reverse',
-    section: 'hero',
-    name: 'Split Invertido',
-    description: 'Imagem à esquerda, texto à direita',
-    plan: 'pro',
-    category: 'hero',
-    component: 'HeroSplitBasic',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem lateral', maxSizeMB: 3 }],
-  },
-  {
-    id: 'hero_gradient',
-    section: 'hero',
-    name: 'Hero com Gradiente',
-    description: 'Fundo gradiente vibrante',
+    name: 'Hero vídeo cinematic + spotlight',
+    description: 'Hero com vídeo de fundo e efeito spotlight',
     plan: 'pro',
     category: 'hero',
     component: 'Hero',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
-  },
-  {
-    id: 'hero_video_cinematic',
-    section: 'hero',
-    name: 'Vídeo Cinemático',
-    description: 'Hero fullscreen com vídeo de fundo',
-    plan: 'premium',
-    category: 'hero',
-    component: 'HeroCinematicVideo',
+    thumbnail: '/thumbnails/hero/hero_cinematic_video_spotlight.webp',
+    stylePreset: 'glass',
+    motionPreset: 'spotlight',
     fields: [
       ...HERO_FIELDS,
-      { key: 'video_url', label: 'URL do vídeo', type: 'url' },
+      { key: 'video_url', label: 'URL do vídeo', type: 'url' as const },
     ],
     images: [],
   },
   {
-    id: 'hero_parallax',
+    id: 'hero_parallax_layers',
     section: 'hero',
-    name: 'Hero Parallax',
-    description: 'Efeito parallax com múltiplas camadas',
+    name: 'Hero com camadas em parallax',
+    description: 'Hero com múltiplas camadas em parallax',
     plan: 'premium',
     category: 'hero',
     component: 'HeroParallax',
+    thumbnail: '/thumbnails/hero/hero_parallax_layers.webp',
+    stylePreset: 'aurora',
+    motionPreset: 'parallax',
     fields: HERO_FIELDS,
     images: [
       { key: 'imagem', label: 'Imagem de fundo', maxSizeMB: 3 },
@@ -239,315 +211,471 @@ export const SECTION_MODELS: SectionModel[] = [
     ],
   },
   {
-    id: 'hero_animated_text',
+    id: 'hero_ticket_launch',
     section: 'hero',
-    name: 'Texto Animado',
-    description: 'Título com animação typewriter',
+    name: 'Hero ticket de lançamento',
+    description: 'Hero estilo ticket para lançamentos',
     plan: 'premium',
     category: 'hero',
     component: 'Hero',
+    thumbnail: '/thumbnails/hero/hero_ticket_launch.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
+    images: [{ key: 'imagem', label: 'Imagem do ticket', maxSizeMB: 2 }],
   },
 
   // ============================================================
-  // COMO FUNCIONA (4 modelos)
+  // COMO FUNCIONA (3 modelos)
   // ============================================================
   {
-    id: 'steps_basic',
+    id: 'como_funciona_timeline_glass',
     section: 'como_funciona',
-    name: '3 passos básicos',
-    description: 'Passos numerados em linha',
+    name: 'Timeline glass',
+    description: 'Timeline vertical com cards glass',
     plan: 'free',
     category: 'content',
     component: 'ComoFunciona',
+    thumbnail: '/thumbnails/como_funciona/como_funciona_timeline_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'steps_timeline',
+    id: 'como_funciona_steps_cards_3d',
     section: 'como_funciona',
-    name: 'Timeline Vertical',
-    description: 'Linha do tempo com ícones',
+    name: 'Passos em cards 3D',
+    description: 'Cards com efeito 3D e tilt',
     plan: 'pro',
     category: 'content',
     component: 'ComoFunciona',
+    thumbnail: '/thumbnails/como_funciona/como_funciona_steps_cards_3d.webp',
+    stylePreset: 'glass',
+    motionPreset: 'tilt',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'steps_zigzag',
+    id: 'como_funciona_horizontal_flow',
     section: 'como_funciona',
-    name: 'Zig-Zag Alternado',
-    description: 'Passos alternando lados',
-    plan: 'pro',
-    category: 'content',
-    component: 'ComoFunciona',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'steps_cards',
-    section: 'como_funciona',
-    name: 'Cards Ilustrados',
-    description: 'Passos em cards com ilustrações',
+    name: 'Fluxo horizontal interativo',
+    description: 'Fluxo horizontal com scroll interativo',
     plan: 'premium',
     category: 'content',
     component: 'ComoFunciona',
+    thumbnail: '/thumbnails/como_funciona/como_funciona_horizontal_flow.webp',
+    stylePreset: 'glass',
+    motionPreset: 'parallax',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
   // ============================================================
-  // PARA QUEM É (4 modelos)
+  // PARA QUEM É (3 modelos)
   // ============================================================
   {
-    id: 'target_basic',
+    id: 'para_quem_e_chips_personas',
     section: 'para_quem_e',
-    name: 'Perfis com ícones',
-    description: 'Lista simples de perfis',
+    name: 'Personas em chips',
+    description: 'Personas exibidas como chips clicáveis',
     plan: 'free',
     category: 'content',
     component: 'ParaQuemE',
+    thumbnail: '/thumbnails/para_quem_e/para_quem_e_chips_personas.webp',
+    stylePreset: 'neumorphic',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'target_cards',
+    id: 'para_quem_e_personas_cards',
     section: 'para_quem_e',
-    name: 'Cards de Persona',
-    description: 'Cards detalhados por persona',
+    name: 'Personas em cards ilustrados',
+    description: 'Cards detalhados com ilustrações',
     plan: 'pro',
     category: 'content',
     component: 'ParaQuemE',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'target_avatars',
-    section: 'para_quem_e',
-    name: 'Avatares com fotos',
-    description: 'Perfis com fotos circulares',
-    plan: 'premium',
-    category: 'content',
-    component: 'ParaQuemE',
+    thumbnail: '/thumbnails/para_quem_e/para_quem_e_personas_cards.webp',
+    stylePreset: 'glass',
+    motionPreset: 'tilt',
     fields: SECTION_TITLE_FIELDS,
     images: [{ key: 'avatar_default', label: 'Avatar padrão', maxSizeMB: 1 }],
     hasJsonEditor: true,
   },
-
-  // BENEFÍCIOS
   {
-    id: 'benefits_basic',
+    id: 'para_quem_e_matrix',
+    section: 'para_quem_e',
+    name: 'Matriz de perfis',
+    description: 'Matriz interativa de perfis',
+    plan: 'premium',
+    category: 'content',
+    component: 'ParaQuemE',
+    thumbnail: '/thumbnails/para_quem_e/para_quem_e_matrix.webp',
+    stylePreset: 'visionos',
+    motionPreset: 'spotlight',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+
+  // ============================================================
+  // BENEFÍCIOS (3 modelos)
+  // ============================================================
+  {
+    id: 'beneficios_icon_grid_glass',
     section: 'beneficios',
-    name: 'Grid simples',
-    description: 'Benefícios em grade 2x2 ou 3x3',
+    name: 'Grid de benefícios glass',
+    description: 'Grid responsivo com cards glass',
     plan: 'free',
     category: 'content',
     component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_icon_grid_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'benefits_icons',
+    id: 'beneficios_timeline_numerada',
     section: 'beneficios',
-    name: 'Lista com ícones',
-    description: 'Benefícios com ícones destacados',
+    name: 'Benefícios em sequência numerada',
+    description: 'Timeline numerada com animações',
     plan: 'pro',
     category: 'content',
     component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_timeline_numerada.webp',
+    stylePreset: 'aurora',
+    motionPreset: 'slide-in-right',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'benefits_bento',
+    id: 'beneficios_showcase_3d',
     section: 'beneficios',
-    name: 'Bento Grid',
-    description: 'Layout moderno estilo Apple',
+    name: 'Benefícios em cards 3D',
+    description: 'Cards com efeito 3D interativo',
     plan: 'premium',
     category: 'content',
     component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_showcase_3d.webp',
+    stylePreset: 'glass',
+    motionPreset: 'tilt',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
-  // PROVAS SOCIAIS
+  // ============================================================
+  // PROVAS SOCIAIS (4 modelos)
+  // ============================================================
   {
-    id: 'testimonials_basic',
+    id: 'provas_sociais_depoimentos_glass',
     section: 'provas_sociais',
-    name: 'Depoimentos simples',
-    description: 'Cards de depoimento em grade',
+    name: 'Depoimentos glass',
+    description: 'Cards de depoimento com efeito glass',
     plan: 'free',
     category: 'social',
     component: 'ProvasSociais',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_depoimentos_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'testimonials_carousel',
+    id: 'provas_sociais_carrossel_premium',
     section: 'provas_sociais',
-    name: 'Carrossel',
-    description: 'Depoimentos em carrossel animado',
+    name: 'Carrossel cinematográfico',
+    description: 'Carrossel de depoimentos animado',
     plan: 'pro',
     category: 'social',
     component: 'ProvasSociais',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_carrossel_premium.webp',
+    stylePreset: 'aurora',
+    motionPreset: 'slide-in-right',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'testimonials_video',
+    id: 'provas_sociais_logos_scroller',
     section: 'provas_sociais',
-    name: 'Vídeo Depoimentos',
-    description: 'Depoimentos em vídeo',
+    name: 'Marcas em scroller infinito',
+    description: 'Logos de clientes em scroll infinito',
+    plan: 'pro',
+    category: 'social',
+    component: 'ProvasSociais',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_logos_scroller.webp',
+    stylePreset: 'glass',
+    motionPreset: 'parallax',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'provas_sociais_stats_hybrid',
+    section: 'provas_sociais',
+    name: 'Depoimentos + métricas',
+    description: 'Depoimentos combinados com estatísticas',
     plan: 'premium',
     category: 'social',
     component: 'ProvasSociais',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_stats_hybrid.webp',
+    stylePreset: 'visionos',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
-  // PLANOS
+  // ============================================================
+  // PLANOS (3 modelos)
+  // ============================================================
   {
-    id: 'pricing_basic',
+    id: 'planos_glass_three_tiers',
     section: 'planos',
-    name: 'Cards básicos',
-    description: '2 ou 3 planos lado a lado',
+    name: '3 planos glass',
+    description: 'Três planos lado a lado com efeito glass',
     plan: 'free',
     category: 'pricing',
     component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_glass_three_tiers.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'pricing_highlight',
+    id: 'planos_cards_pill',
     section: 'planos',
-    name: 'Destaque central',
-    description: 'Plano do meio em destaque',
+    name: 'Cards pill empilhados',
+    description: 'Cards em formato pill com destaque',
     plan: 'pro',
     category: 'pricing',
     component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_cards_pill.webp',
+    stylePreset: 'neumorphic',
+    motionPreset: 'slide-in-up',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'pricing_comparison',
+    id: 'planos_tabela_comparativa_modern',
     section: 'planos',
-    name: 'Tabela comparativa',
-    description: 'Comparação detalhada de features',
+    name: 'Tabela comparativa moderna',
+    description: 'Tabela de comparação de features',
     plan: 'premium',
     category: 'pricing',
     component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_tabela_comparativa_modern.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
-  // FAQ
+  // ============================================================
+  // FAQ (3 modelos)
+  // ============================================================
   {
-    id: 'faq_accordion',
+    id: 'faq_accordion_glass',
     section: 'faq',
-    name: 'Acordeão clássico',
-    description: 'Perguntas expansíveis',
+    name: 'FAQ accordion glass',
+    description: 'Acordeão expansível com efeito glass',
     plan: 'free',
     category: 'faq',
     component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_accordion_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'accordion',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'faq_columns',
+    id: 'faq_twocolumn_modern',
     section: 'faq',
-    name: 'Duas colunas',
-    description: 'FAQ em duas colunas',
+    name: 'FAQ duas colunas',
+    description: 'Layout em duas colunas moderno',
     plan: 'pro',
     category: 'faq',
     component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_twocolumn_modern.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'faq_categorized',
+    id: 'faq_with_cta_spotlight',
     section: 'faq',
-    name: 'Por categorias',
-    description: 'FAQ organizado por temas',
+    name: 'FAQ com CTA spotlight',
+    description: 'FAQ com CTA destacado no final',
     plan: 'premium',
     category: 'faq',
     component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_with_cta_spotlight.webp',
+    stylePreset: 'visionos',
+    motionPreset: 'spotlight',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
-  // CTA FINAL
+  // ============================================================
+  // CHAMADA FINAL (3 modelos)
+  // ============================================================
   {
-    id: 'cta_basic',
+    id: 'chamada_final_simple_glass',
     section: 'chamada_final',
-    name: 'CTA Simples',
-    description: 'Texto e botão centralizados',
+    name: 'Chamada final glass',
+    description: 'CTA simples com efeito glass',
     plan: 'free',
     category: 'cta',
     component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/chamada_final_simple_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: CTA_FIELDS,
   },
   {
-    id: 'cta_background',
+    id: 'chamada_final_two_ctas',
     section: 'chamada_final',
-    name: 'CTA com Background',
-    description: 'Fundo colorido ou com imagem',
+    name: 'Chamada com dois caminhos',
+    description: 'Duas opções de CTA lado a lado',
     plan: 'pro',
     category: 'cta',
     component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/chamada_final_two_ctas.webp',
+    stylePreset: 'glass',
+    motionPreset: 'tilt',
+    fields: [
+      ...CTA_FIELDS,
+      { key: 'cta_secundario_label', label: 'Texto CTA secundário', type: 'text' as const },
+      { key: 'cta_secundario_url', label: 'URL CTA secundário', type: 'url' as const },
+    ],
+  },
+  {
+    id: 'chamada_final_ticket_glow',
+    section: 'chamada_final',
+    name: 'Ticket final com glow',
+    description: 'CTA estilo ticket com efeito glow',
+    plan: 'premium',
+    category: 'cta',
+    component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/chamada_final_ticket_glow.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
     fields: CTA_FIELDS,
     images: [{ key: 'imagem', label: 'Imagem de fundo', maxSizeMB: 2 }],
   },
-  {
-    id: 'cta_glass',
-    section: 'chamada_final',
-    name: 'CTA Glass Premium',
-    description: 'Efeito glass com animações',
-    plan: 'premium',
-    category: 'cta',
-    component: 'ChamadaFinal',
-    fields: CTA_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem', maxSizeMB: 2 }],
-  },
 
-  // RODAPÉ
+  // ============================================================
+  // RODAPÉ (3 modelos)
+  // ============================================================
   {
-    id: 'footer_basic',
+    id: 'rodape_minimal_soft',
     section: 'rodape',
-    name: 'Simples',
-    description: 'Uma linha com copyright',
+    name: 'Rodapé minimal',
+    description: 'Rodapé minimalista com copyright',
     plan: 'free',
     category: 'footer',
     component: 'Rodape',
-    fields: [{ key: 'copyright', label: 'Copyright', type: 'text' }],
+    thumbnail: '/thumbnails/rodape/rodape_minimal_soft.webp',
+    stylePreset: 'neumorphic',
+    motionPreset: 'fade-stagger',
+    fields: FOOTER_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'footer_columns',
+    id: 'rodape_columns_glass',
     section: 'rodape',
-    name: 'Múltiplas colunas',
-    description: 'Footer com colunas de links',
+    name: 'Rodapé com colunas',
+    description: 'Rodapé com múltiplas colunas de links',
     plan: 'pro',
     category: 'footer',
     component: 'Rodape',
-    fields: [{ key: 'copyright', label: 'Copyright', type: 'text' }],
+    thumbnail: '/thumbnails/rodape/rodape_columns_glass.webp',
+    stylePreset: 'glass',
+    motionPreset: 'fade-stagger',
+    fields: FOOTER_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'footer_newsletter',
+    id: 'rodape_visionos_bar',
     section: 'rodape',
-    name: 'Com Newsletter',
-    description: 'Footer com formulário de newsletter',
+    name: 'Barra final VisionOS',
+    description: 'Barra de rodapé estilo VisionOS',
     plan: 'premium',
     category: 'footer',
     component: 'Rodape',
-    fields: [
-      { key: 'copyright', label: 'Copyright', type: 'text' },
-      { key: 'newsletter_titulo', label: 'Título Newsletter', type: 'text' },
-    ],
+    thumbnail: '/thumbnails/rodape/rodape_visionos_bar.webp',
+    stylePreset: 'visionos',
+    motionPreset: 'spotlight',
+    fields: FOOTER_FIELDS,
     hasJsonEditor: true,
   },
 ];
+
+// ============================================================
+// MAPEAMENTO DE IDs ANTIGOS PARA NOVOS (FALLBACK)
+// Garante compatibilidade com LPs criadas com catálogo anterior
+// ============================================================
+
+const LEGACY_MODEL_FALLBACK: Record<string, string> = {
+  // Menu antigos
+  'menu_horizontal': 'menu_glass_minimal',
+  'menu_centered': 'menu_visionos_floating',
+  'menu_sticky_glass': 'menu_visionos_floating',
+  'menu_minimal': 'menu_command_center',
+  'menu_basic': 'menu_glass_minimal',
+  
+  // Hero antigos
+  'hero_basic': 'hero_glass_aurora',
+  'hero_center': 'hero_glass_aurora',
+  'hero_split': 'hero_cinematic_video_spotlight',
+  'hero_split_reverse': 'hero_cinematic_video_spotlight',
+  'hero_gradient': 'hero_glass_aurora',
+  'hero_video_cinematic': 'hero_cinematic_video_spotlight',
+  'hero_parallax': 'hero_parallax_layers',
+  'hero_animated_text': 'hero_ticket_launch',
+  
+  // Como funciona antigos
+  'steps_basic': 'como_funciona_timeline_glass',
+  'steps_timeline': 'como_funciona_timeline_glass',
+  'steps_zigzag': 'como_funciona_steps_cards_3d',
+  'steps_cards': 'como_funciona_horizontal_flow',
+  
+  // Para quem é antigos
+  'target_basic': 'para_quem_e_chips_personas',
+  'target_cards': 'para_quem_e_personas_cards',
+  'target_avatars': 'para_quem_e_matrix',
+  
+  // Benefícios antigos
+  'benefits_basic': 'beneficios_icon_grid_glass',
+  'benefits_icons': 'beneficios_timeline_numerada',
+  'benefits_bento': 'beneficios_showcase_3d',
+  
+  // Provas sociais antigas
+  'testimonials_basic': 'provas_sociais_depoimentos_glass',
+  'testimonials_carousel': 'provas_sociais_carrossel_premium',
+  'testimonials_video': 'provas_sociais_stats_hybrid',
+  
+  // Planos antigos
+  'pricing_basic': 'planos_glass_three_tiers',
+  'pricing_highlight': 'planos_cards_pill',
+  'pricing_comparison': 'planos_tabela_comparativa_modern',
+  
+  // FAQ antigos
+  'faq_accordion': 'faq_accordion_glass',
+  'faq_columns': 'faq_twocolumn_modern',
+  'faq_categorized': 'faq_with_cta_spotlight',
+  'faq_basic': 'faq_accordion_glass',
+  
+  // CTA antigos
+  'cta_basic': 'chamada_final_simple_glass',
+  'cta_background': 'chamada_final_two_ctas',
+  'cta_glass': 'chamada_final_ticket_glow',
+  
+  // Rodapé antigos
+  'footer_basic': 'rodape_minimal_soft',
+  'footer_columns': 'rodape_columns_glass',
+  'footer_newsletter': 'rodape_visionos_bar',
+};
 
 // ============================================================
 // UTILITÁRIOS
@@ -559,10 +687,45 @@ export const SECTION_MODELS_BY_SECTION: Record<SectionKey, SectionModel[]> =
     return acc;
   }, {} as Record<SectionKey, SectionModel[]>);
 
-export function getSectionModel(section: SectionKey, variant?: string) {
+/**
+ * Retorna o modelo de seção pelo sectionKey e variant (modelId).
+ * Se o variant for um ID legado, faz fallback para o novo ID equivalente.
+ * Se não encontrar, retorna o primeiro modelo da seção (free).
+ */
+export function getSectionModel(section: SectionKey, variant?: string): SectionModel | undefined {
   const list = SECTION_MODELS_BY_SECTION[section] || [];
+  if (!list.length) return undefined;
+  
   if (!variant) return list[0];
-  return list.find(v => v.id === variant) || list[0];
+  
+  // Tenta encontrar pelo ID exato
+  let found = list.find(v => v.id === variant);
+  if (found) return found;
+  
+  // Tenta fallback de modelo legado
+  const fallbackId = LEGACY_MODEL_FALLBACK[variant];
+  if (fallbackId) {
+    found = list.find(v => v.id === fallbackId);
+    if (found) return found;
+  }
+  
+  // Retorna primeiro modelo como fallback final
+  return list[0];
+}
+
+/**
+ * Retorna o ID do modelo resolvido (considerando fallbacks)
+ */
+export function resolveModelId(section: SectionKey, variant?: string): string {
+  const model = getSectionModel(section, variant);
+  return model?.id || SECTION_MODELS_BY_SECTION[section]?.[0]?.id || '';
+}
+
+/**
+ * Verifica se um modelId é legado e precisa de migração
+ */
+export function isLegacyModelId(modelId: string): boolean {
+  return modelId in LEGACY_MODEL_FALLBACK;
 }
 
 export const SECTION_DISPLAY_NAMES: Record<SectionKey, string> = {
@@ -577,3 +740,18 @@ export const SECTION_DISPLAY_NAMES: Record<SectionKey, string> = {
   chamada_final: 'Chamada Final',
   rodape: 'Rodapé',
 };
+
+/**
+ * Retorna todos os IDs de modelos para uma seção
+ */
+export function getModelIdsForSection(section: SectionKey): string[] {
+  return (SECTION_MODELS_BY_SECTION[section] || []).map(m => m.id);
+}
+
+/**
+ * Retorna o primeiro modelo free de uma seção (fallback seguro)
+ */
+export function getDefaultModel(section: SectionKey): SectionModel | undefined {
+  const list = SECTION_MODELS_BY_SECTION[section] || [];
+  return list.find(m => m.plan === 'free') || list[0];
+}
