@@ -1,7 +1,11 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Zap, Crown, Sparkles } from 'lucide-react';
+import { Lock, Zap, Crown, Sparkles, Loader2, Check } from 'lucide-react';
 import { PlanTier } from '@/lib/authApi';
+import { initiateCheckout, PLAN_INFO } from '@/lib/billingApi';
+import { toast } from 'sonner';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -30,11 +34,36 @@ export const UpgradeModal = ({
   requiredPlan = 'pro',
   currentPlan = 'free' 
 }: UpgradeModalProps) => {
-  const handleUpgrade = () => {
-    // Navega para a página de upgrade
-    window.location.href = '/upgrade';
-    onClose();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (requiredPlan === 'free') return;
+    
+    setLoading(true);
+    try {
+      const result = await initiateCheckout(requiredPlan as 'pro' | 'premium');
+      if ('error' in result) {
+        // If Stripe not configured, redirect to upgrade page
+        if (result.error.includes('not configured')) {
+          toast.info('Sistema de pagamento em configuração. Redirecionando...');
+          navigate('/upgrade');
+        } else {
+          toast.error(result.error);
+        }
+      } else if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      toast.error('Erro ao iniciar checkout. Tente novamente.');
+      navigate('/upgrade');
+    } finally {
+      setLoading(false);
+      onClose();
+    }
   };
+
+  const planInfo = PLAN_INFO[requiredPlan as keyof typeof PLAN_INFO];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -62,22 +91,36 @@ export const UpgradeModal = ({
           </div>
 
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 {PLAN_ICONS[requiredPlan]}
-                <span className="text-sm">Plano necessário:</span>
+                <span className="font-semibold text-primary">{PLAN_NAMES[requiredPlan]}</span>
               </div>
-              <span className="font-semibold text-primary">{PLAN_NAMES[requiredPlan]}</span>
+              <span className="font-bold">{planInfo?.price}{planInfo?.period}</span>
             </div>
+            {planInfo && (
+              <ul className="space-y-1.5">
+                {planInfo.features.slice(0, 3).map((feat, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Check className="w-3 h-3 text-primary" />
+                    {feat}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="flex gap-3 mt-6">
             <Button variant="outline" onClick={onClose} className="flex-1">
               Agora não
             </Button>
-            <Button onClick={handleUpgrade} className="flex-1">
-              <Zap className="w-4 h-4 mr-2" />
-              Fazer upgrade
+            <Button onClick={handleUpgrade} disabled={loading} className="flex-1">
+              {loading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4 mr-2" />
+              )}
+              {loading ? 'Processando...' : 'Fazer upgrade'}
             </Button>
           </div>
         </div>

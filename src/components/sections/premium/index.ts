@@ -1,5 +1,5 @@
 // Premium section templates
-export { HeroParallax } from './HeroParallax';
+export { default as HeroParallax } from './HeroParallax';
 export { HeroSplit } from './HeroSplit';
 export { Cards3DShowcase } from './Cards3DShowcase';
 export { FeaturesFloat } from './FeaturesFloat';
