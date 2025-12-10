@@ -107,6 +107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_audit_logs: {
+        Row: {
+          amount_cents: number | null
+          created_at: string | null
+          currency: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          plan_from: string | null
+          plan_to: string | null
+          stripe_event_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          plan_from?: string | null
+          plan_to?: string | null
+          stripe_event_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          plan_from?: string | null
+          plan_to?: string | null
+          stripe_event_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cookie_consents: {
         Row: {
           consent_categories: Json | null
@@ -648,6 +687,51 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          invoice_url: string | null
+          plan: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          invoice_url?: string | null
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          invoice_url?: string | null
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saas_settings: {
         Row: {
           created_at: string
@@ -980,9 +1064,31 @@ export type Database = {
         Args: { _lp_id: string; _user_id: string }
         Returns: boolean
       }
+      can_use_feature: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
+      }
       check_lead_rate_limit: {
         Args: { _email: string; _lp_id: string }
         Returns: boolean
+      }
+      get_effective_plan_limits: {
+        Args: { _user_id: string }
+        Returns: {
+          ab_testing_enabled: boolean
+          can_edit_background: boolean
+          can_edit_glass_effects: boolean
+          can_edit_gradients: boolean
+          can_edit_section_colors: boolean
+          can_edit_typography: boolean
+          custom_domain_limit: number
+          export_leads_enabled: boolean
+          max_blocks: number
+          max_sites: number
+          max_storage_mb: number
+          plan: string
+          premium_sections_enabled: boolean
+        }[]
       }
       get_lp_analytics: {
         Args: { _end_date?: string; _lp_id: string; _start_date?: string }
