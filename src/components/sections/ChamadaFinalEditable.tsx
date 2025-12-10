@@ -1,6 +1,6 @@
 /**
  * ChamadaFinalEditable - Seção CTA Final com edição inline
- * Sprint 4.4: 100% do conteúdo editável inline
+ * Sprint 5.1: Suporte a múltiplas variantes (modelo_a, modelo_b, modelo_c)
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -28,6 +28,13 @@ const defaultContent = {
   url_botao: "#planos",
 };
 
+function normalizeVariant(variant?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
+  if (variant === 'modelo_a' || variant === 'modelo_b' || variant === 'modelo_c') {
+    return variant;
+  }
+  return 'modelo_a';
+}
+
 export const ChamadaFinalEditable = ({
   lpId,
   content,
@@ -36,13 +43,14 @@ export const ChamadaFinalEditable = ({
   editable = true,
   onContentUpdate,
 }: ChamadaFinalEditableProps) => {
+  const normalizedVariant = normalizeVariant(variante);
   const [localContent, setLocalContent] = useState<LPContent>({ ...defaultContent, ...content });
   const sectionRef = useRef<HTMLElement | null>(null);
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    console.log('[S4.4 QA] ChamadaFinalEditable: mounted', { lpId, editable, variante });
-  }, [lpId, editable, variante]);
+    console.log('[S5.1 QA] ChamadaFinalEditable: mounted', { lpId, editable, variante, normalizedVariant });
+  }, [lpId, editable, variante, normalizedVariant]);
 
   useEffect(() => {
     setLocalContent({ ...defaultContent, ...content });
@@ -53,7 +61,7 @@ export const ChamadaFinalEditable = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasTrackedViewRef.current) {
-          trackSectionView(lpId, "chamada_final", variante);
+          trackSectionView(lpId, "chamada_final", normalizedVariant);
           hasTrackedViewRef.current = true;
           observer.disconnect();
         }
@@ -62,20 +70,163 @@ export const ChamadaFinalEditable = ({
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, [lpId, variante]);
+  }, [lpId, normalizedVariant]);
 
   const handleUpdate = useCallback((key: string, value: string) => {
     setLocalContent(prev => ({ ...prev, [key]: value }));
     onContentUpdate?.(key, value);
-    console.log('[S4.4 QA] InlineText: OK -', key);
   }, [onContentUpdate]);
 
   const handleCTAClick = () => {
-    if (lpId) trackCTAClick(lpId, 'chamada_final', 'primary', variante);
+    if (lpId) trackCTAClick(lpId, 'chamada_final', 'primary', normalizedVariant);
   };
 
   const fc = localContent;
 
+  // MODELO C - Minimal side-by-side
+  if (normalizedVariant === 'modelo_c') {
+    return (
+      <section
+        ref={sectionRef}
+        className="section-padding"
+        id="cta-final"
+        data-section-key="chamada_final"
+      >
+        <div className="section-container">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row items-center justify-between gap-8 p-8 rounded-2xl border border-border bg-card/50"
+          >
+            <div>
+              <EditableField
+                value={fc.titulo || ''}
+                fieldKey="titulo"
+                sectionKey="chamada_final"
+                lpId={lpId}
+                content={localContent}
+                onUpdate={handleUpdate}
+                as="h2"
+                editable={editable}
+                placeholder="Título"
+                className="text-2xl md:text-3xl font-bold mb-2 break-words"
+              />
+              <EditableField
+                value={fc.subtitulo || ''}
+                fieldKey="subtitulo"
+                sectionKey="chamada_final"
+                lpId={lpId}
+                content={localContent}
+                onUpdate={handleUpdate}
+                as="p"
+                editable={editable}
+                placeholder="Subtítulo"
+                className="text-muted-foreground break-words"
+              />
+            </div>
+            <EditableLink
+              label={fc.texto_botao || 'CTA'}
+              url={fc.url_botao || '#'}
+              labelKey="texto_botao"
+              urlKey="url_botao"
+              sectionKey="chamada_final"
+              lpId={lpId}
+              content={localContent}
+              onUpdate={handleUpdate}
+              editable={editable}
+            >
+              <a
+                href={editable ? undefined : fc.url_botao}
+                onClick={handleCTAClick}
+                className="btn-primary gap-2 whitespace-nowrap"
+              >
+                {fc.texto_botao}
+                <ArrowRight className="w-5 h-5" />
+              </a>
+            </EditableLink>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // MODELO B - Card centralizado
+  if (normalizedVariant === 'modelo_b') {
+    return (
+      <section
+        ref={sectionRef}
+        className="section-padding relative overflow-hidden"
+        id="cta-final"
+        data-section-key="chamada_final"
+      >
+        <div className="absolute inset-0 gradient-bg opacity-10" />
+        <div className="section-container relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="p-8 md:p-12 lg:p-16 text-center max-w-4xl mx-auto rounded-3xl premium-card-glass-medium"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              Oferta especial
+            </div>
+            
+            <EditableField
+              value={fc.titulo || ''}
+              fieldKey="titulo"
+              sectionKey="chamada_final"
+              lpId={lpId}
+              content={localContent}
+              onUpdate={handleUpdate}
+              as="h2"
+              editable={editable}
+              placeholder="Título"
+              className="section-title mb-4 break-words"
+            />
+            
+            <EditableField
+              value={fc.subtitulo || ''}
+              fieldKey="subtitulo"
+              sectionKey="chamada_final"
+              lpId={lpId}
+              content={localContent}
+              onUpdate={handleUpdate}
+              as="p"
+              editable={editable}
+              placeholder="Subtítulo"
+              className="section-subtitle mx-auto mb-8 break-words"
+              multiline
+            />
+            
+            <EditableLink
+              label={fc.texto_botao || 'CTA'}
+              url={fc.url_botao || '#'}
+              labelKey="texto_botao"
+              urlKey="url_botao"
+              sectionKey="chamada_final"
+              lpId={lpId}
+              content={localContent}
+              onUpdate={handleUpdate}
+              editable={editable}
+            >
+              <a
+                href={editable ? undefined : fc.url_botao}
+                onClick={handleCTAClick}
+                className="btn-primary gap-2 text-lg px-8 py-4"
+              >
+                {fc.texto_botao}
+                <ArrowRight className="w-5 h-5" />
+              </a>
+            </EditableLink>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // MODELO A - Full width gradient (default)
   return (
     <section
       ref={sectionRef}
@@ -90,13 +241,11 @@ export const ChamadaFinalEditable = ({
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center px-1"
         >
-          {/* Badge opcional */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6">
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Comece grátis
           </div>
 
-          {/* Título */}
           <EditableField
             value={fc.titulo || ''}
             fieldKey="titulo"
@@ -110,7 +259,6 @@ export const ChamadaFinalEditable = ({
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 break-words"
           />
 
-          {/* Subtítulo */}
           <EditableField
             value={fc.subtitulo || ''}
             fieldKey="subtitulo"
@@ -125,7 +273,6 @@ export const ChamadaFinalEditable = ({
             multiline
           />
 
-          {/* Botão CTA */}
           <div className="flex justify-center">
             <EditableLink
               label={fc.texto_botao || 'CTA'}
@@ -155,7 +302,6 @@ export const ChamadaFinalEditable = ({
             </EditableLink>
           </div>
 
-          {/* Trust badges - mobile-first */}
           <div className="mt-6 sm:mt-8 flex flex-col xs:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
