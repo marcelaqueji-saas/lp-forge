@@ -97,7 +97,7 @@ export const BlockEditor = ({
   const limits = PLAN_LIMITS[userPlan];
 
   // Scroll tracking no modo preview
-  useScrollTracking(lpId);
+  useScrollTracking({ lpId, enabled: viewMode === 'preview' });
 
   // Carregar dados iniciais
   useEffect(() => {
