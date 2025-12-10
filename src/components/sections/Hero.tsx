@@ -141,7 +141,7 @@ export const Hero = ({
     return (
       <section
         ref={sectionRef}
-        className="relative min-h-[80vh] flex items-center overflow-hidden"
+        className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden"
         id="hero"
         data-section-key="hero"
       >
@@ -156,13 +156,13 @@ export const Hero = ({
           </div>
         )}
 
-        <div className="section-container relative z-10">
+        <div className="section-container relative z-10 py-8 sm:py-0">
           <div className="max-w-xl">
             {finalContent.badge && (
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="inline-block text-sm font-medium text-primary mb-4"
+                className="inline-block text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-4"
               >
                 {finalContent.badge}
               </motion.span>
@@ -172,17 +172,17 @@ export const Hero = ({
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 leading-tight break-words"
             >
               {finalContent.titulo}{" "}
-              <span className="gradient-text">{finalContent.destaque}</span>
+              <span className="gradient-text break-words">{finalContent.destaque}</span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg text-muted-foreground mb-8 max-w-md"
+              className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-md break-words"
             >
               {finalContent.subtitulo}
             </motion.p>
@@ -191,19 +191,19 @@ export const Hero = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap gap-3"
+              className="flex flex-col xs:flex-row gap-3"
             >
               <a
                 href={finalContent.url_botao_primario}
                 onClick={handlePrimaryClick}
-                className="btn-primary"
+                className="btn-primary text-center text-sm sm:text-base"
               >
                 {finalContent.texto_botao_primario}
               </a>
               <a
                 href={finalContent.url_botao_secundario}
                 onClick={handleSecondaryClick}
-                className="btn-secondary"
+                className="btn-secondary text-center text-sm sm:text-base"
               >
                 {finalContent.texto_botao_secundario}
               </a>
@@ -230,7 +230,7 @@ export const Hero = ({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6 sm:mb-8"
             >
               {finalContent.badge}
             </motion.div>
@@ -239,16 +239,16 @@ export const Hero = ({
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="section-title mb-6"
+            className="section-title mb-4 sm:mb-6"
           >
             {finalContent.titulo}{" "}
-            <span className="gradient-text">{finalContent.destaque}</span>
+            <span className="gradient-text break-words">{finalContent.destaque}</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="section-subtitle mx-auto mb-10"
+            className="section-subtitle mx-auto mb-8 sm:mb-10"
           >
             {finalContent.subtitulo}
           </motion.p>
@@ -256,22 +256,22 @@ export const Hero = ({
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+            className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center mb-12 sm:mb-16"
           >
             <a
               href={finalContent.url_botao_primario}
               onClick={handlePrimaryClick}
-              className="btn-primary gap-2"
+              className="btn-primary gap-2 text-sm sm:text-base justify-center"
             >
               {finalContent.texto_botao_primario}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </a>
             <a
               href={finalContent.url_botao_secundario}
               onClick={handleSecondaryClick}
-              className="btn-secondary gap-2"
+              className="btn-secondary gap-2 text-sm sm:text-base justify-center"
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {finalContent.texto_botao_secundario}
             </a>
           </motion.div>
@@ -291,14 +291,14 @@ export const Hero = ({
       data-section-key="hero"
     >
       <div className="section-container relative">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
           <div className="order-2 lg:order-1">
             {finalContent.badge && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6"
               >
                 {finalContent.badge}
               </motion.div>
@@ -307,16 +307,16 @@ export const Hero = ({
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="section-title mb-6"
+              className="section-title mb-4 sm:mb-6"
             >
               {finalContent.titulo}{" "}
-              <span className="gradient-text">{finalContent.destaque}</span>
+              <span className="gradient-text break-words">{finalContent.destaque}</span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="section-subtitle mb-8"
+              className="section-subtitle mb-6 sm:mb-8"
             >
               {finalContent.subtitulo}
             </motion.p>
@@ -324,22 +324,22 @@ export const Hero = ({
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row gap-4"
+              className="flex flex-col xs:flex-row gap-3 sm:gap-4"
             >
               <a
                 href={finalContent.url_botao_primario}
                 onClick={handlePrimaryClick}
-                className="btn-primary gap-2"
+                className="btn-primary gap-2 text-sm sm:text-base justify-center xs:justify-start"
               >
                 {finalContent.texto_botao_primario}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </a>
               <a
                 href={finalContent.url_botao_secundario}
                 onClick={handleSecondaryClick}
-                className="btn-secondary gap-2"
+                className="btn-secondary gap-2 text-sm sm:text-base justify-center xs:justify-start"
               >
-                <Play className="w-4 h-4" />
+                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {finalContent.texto_botao_secundario}
               </a>
             </motion.div>
@@ -355,12 +355,12 @@ export const Hero = ({
                 <img
                   src={finalContent.imagem_principal}
                   alt="Hero"
-                  className="relative w-full rounded-2xl shadow-soft-lg"
+                  className="relative w-full rounded-xl sm:rounded-2xl shadow-soft-lg"
                 />
               </div>
             ) : (
-              <div className="relative aspect-video bg-muted rounded-2xl flex items-center justify-center">
-                <div className="text-muted-foreground">Preview imagem</div>
+              <div className="relative aspect-video bg-muted rounded-xl sm:rounded-2xl flex items-center justify-center">
+                <div className="text-muted-foreground text-sm">Preview imagem</div>
               </div>
             )}
           </motion.div>
