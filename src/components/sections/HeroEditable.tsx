@@ -88,23 +88,24 @@ export const HeroEditable = ({
 
   const fc = localContent;
 
-  // MODELO A - Imagem do lado
+  // MODELO A - Imagem do lado - Mobile-First
   return (
     <section
       ref={sectionRef}
-      className="section-padding relative overflow-hidden"
+      className="section-padding relative overflow-hidden overflow-x-hidden"
       id="hero"
       data-section-key="hero"
     >
-      <div className="section-container relative">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="order-2 lg:order-1">
+      <div className="section-container relative w-full max-w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
+          {/* Text Content - Mobile first order */}
+          <div className="order-2 lg:order-1 w-full max-w-full">
             {/* Badge */}
             {fc.badge && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6"
               >
                 <EditableField
                   value={fc.badge || ''}
@@ -120,13 +121,13 @@ export const HeroEditable = ({
               </motion.div>
             )}
 
-            {/* Título */}
+            {/* Título - Mobile-optimized */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
+              className="mb-4 sm:mb-6"
             >
-              <h1 className="section-title">
+              <h1 className="section-title break-words whitespace-normal overflow-wrap-anywhere">
                 <EditableField
                   value={fc.titulo || ''}
                   fieldKey="titulo"
@@ -137,8 +138,9 @@ export const HeroEditable = ({
                   as="span"
                   editable={editable}
                   placeholder="Título principal"
+                  className="break-words"
                 />{" "}
-                <span className="gradient-text">
+                <span className="gradient-text break-words">
                   <EditableField
                     value={fc.destaque || ''}
                     fieldKey="destaque"
@@ -149,16 +151,17 @@ export const HeroEditable = ({
                     as="span"
                     editable={editable}
                     placeholder="Destaque"
+                    className="break-words"
                   />
                 </span>
               </h1>
             </motion.div>
 
-            {/* Subtítulo */}
+            {/* Subtítulo - Mobile-optimized */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="section-subtitle mb-8"
+              className="section-subtitle mb-6 sm:mb-8"
             >
               <EditableField
                 value={fc.subtitulo || ''}
@@ -171,14 +174,15 @@ export const HeroEditable = ({
                 editable={editable}
                 placeholder="Subtítulo descritivo"
                 multiline
+                className="break-words whitespace-normal"
               />
             </motion.div>
 
-            {/* Botões */}
+            {/* Botões - Mobile full-width, desktop inline */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row gap-4"
+              className="flex flex-col xs:flex-row gap-3 sm:gap-4 w-full"
             >
               <EditableLink
                 label={fc.texto_botao_primario || 'CTA Principal'}
@@ -190,12 +194,12 @@ export const HeroEditable = ({
                 content={localContent}
                 onUpdate={handleUpdate}
                 editable={editable}
-                className="btn-primary gap-2"
+                className="w-full xs:w-auto"
               >
                 <a
                   href={editable ? undefined : fc.url_botao_primario}
                   onClick={handlePrimaryClick}
-                  className="btn-primary gap-2"
+                  className="btn-primary gap-2 w-full xs:w-auto justify-center text-sm sm:text-base py-3 sm:py-3"
                 >
                   {fc.texto_botao_primario}
                   <ArrowRight className="w-4 h-4" />
@@ -212,12 +216,12 @@ export const HeroEditable = ({
                 content={localContent}
                 onUpdate={handleUpdate}
                 editable={editable}
-                className="btn-secondary gap-2"
+                className="w-full xs:w-auto"
               >
                 <a
                   href={editable ? undefined : fc.url_botao_secundario}
                   onClick={handleSecondaryClick}
-                  className="btn-secondary gap-2"
+                  className="btn-secondary gap-2 w-full xs:w-auto justify-center text-sm sm:text-base py-3 sm:py-3"
                 >
                   <Play className="w-4 h-4" />
                   {fc.texto_botao_secundario}
@@ -226,11 +230,11 @@ export const HeroEditable = ({
             </motion.div>
           </div>
 
-          {/* Imagem */}
+          {/* Imagem - Mobile-optimized */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="order-1 lg:order-2"
+            className="order-1 lg:order-2 w-full max-w-full"
           >
             <EditableImageField
               src={fc.imagem_principal}
@@ -241,7 +245,7 @@ export const HeroEditable = ({
               userPlan={userPlan}
               onUpdate={handleUpdate}
               alt="Hero"
-              className="w-full rounded-2xl shadow-soft-lg"
+              className="w-full max-w-full rounded-xl sm:rounded-2xl shadow-soft-lg"
               aspectRatio="video"
               editable={editable}
               placeholder="Imagem do Hero"

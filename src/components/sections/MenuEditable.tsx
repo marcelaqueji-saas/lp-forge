@@ -114,14 +114,14 @@ export const MenuEditable = ({
   return (
     <header
       ref={sectionRef}
-      className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b"
+      className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b overflow-x-hidden"
       id="menu"
       data-section-key="menu"
     >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo / Brand */}
-          <div className="flex items-center gap-3">
+      <div className="container mx-auto px-3 sm:px-4 max-w-full">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          {/* Logo / Brand - Mobile optimized */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink">
             {fc.logo_url ? (
               <EditableImageField
                 src={fc.logo_url}
@@ -132,7 +132,7 @@ export const MenuEditable = ({
                 userPlan={userPlan}
                 onUpdate={handleUpdate}
                 alt="Logo"
-                className="h-8 w-auto"
+                className="h-7 sm:h-8 w-auto max-w-[120px] sm:max-w-none"
                 aspectRatio="auto"
                 editable={editable}
                 placeholder="Logo"
@@ -148,13 +148,13 @@ export const MenuEditable = ({
                 as="span"
                 editable={editable}
                 placeholder="Nome da marca"
-                className="text-xl font-bold"
+                className="text-lg sm:text-xl font-bold truncate max-w-[150px] sm:max-w-none"
               />
             )}
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
             {links.map((link, idx) => (
               <div key={idx} className="relative group">
                 {editable ? (
@@ -182,7 +182,7 @@ export const MenuEditable = ({
             ))}
           </nav>
 
-          {/* CTA Button */}
+          {/* CTA Button - Desktop */}
           <div className="hidden md:block">
             <EditableLink
               label={fc.cta_label || 'CTA'}
@@ -209,41 +209,50 @@ export const MenuEditable = ({
             </EditableLink>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile menu button - Touch optimized */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 -mr-2 rounded-lg active:bg-muted touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </button>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Full-width, touch-friendly */}
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden py-4 border-t"
+            className="md:hidden py-3 sm:py-4 border-t overflow-x-hidden"
           >
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-1 sm:gap-2">
               {links.map((link, idx) => (
                 <a
                   key={idx}
                   href={link.url}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-muted transition-colors"
+                  className={cn(
+                    "flex items-center justify-between px-3 sm:px-4 py-3 rounded-lg",
+                    "hover:bg-muted active:bg-muted/80 transition-colors",
+                    "touch-manipulation min-h-[48px]"
+                  )}
                 >
-                  <span className="font-medium">{link.label}</span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium text-sm sm:text-base">{link.label}</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </a>
               ))}
-              <div className="pt-4 px-4">
-                <Button className="w-full" onClick={handleCTAClick} asChild={!editable}>
+              <div className="pt-3 sm:pt-4 px-3 sm:px-4 pb-safe">
+                <Button 
+                  className="w-full min-h-[48px] text-sm sm:text-base" 
+                  onClick={handleCTAClick} 
+                  asChild={!editable}
+                >
                   {editable ? (
                     <span>{fc.cta_label}</span>
                   ) : (
