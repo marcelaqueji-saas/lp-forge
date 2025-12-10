@@ -1,6 +1,7 @@
 /**
  * ContentPhase - Fase de conteúdo do editor
  * Sprint 5.0: Edição inline de textos, imagens e listas
+ * + SectionStylePanel para edição de estilos por seção
  */
 
 import { useState, useCallback } from 'react';
@@ -12,7 +13,8 @@ import {
   Image,
   Type,
   List,
-  Link2
+  Link2,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +31,11 @@ import {
 } from '@/lib/blockEditorTypes';
 import { SECTION_NAMES, LPContent, saveSectionContent } from '@/lib/lpContentApi';
 import { toast } from '@/hooks/use-toast';
+import { SectionStylePanel } from './SectionStylePanel';
+import { 
+  BackgroundMode,
+  SectionContentStyle 
+} from '@/lib/sectionStyleTypes';
 
 // Editable components
 import { HeroEditable } from '@/components/sections/HeroEditable';
@@ -49,6 +56,7 @@ interface ContentPhaseProps {
   content: Record<string, LPContent>;
   settings: Record<string, any>;
   onContentUpdate: (sectionKey: SectionKey, newContent: LPContent) => void;
+  onSettingsUpdate?: (newSettings: Record<string, any>) => void;
 }
 
 // Section content type indicators
@@ -117,9 +125,11 @@ export const ContentPhase = ({
   content,
   settings,
   onContentUpdate,
+  onSettingsUpdate,
 }: ContentPhaseProps) => {
   const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [stylingSection, setStylingSection] = useState<SectionKey | null>(null);
 
   const isMaster = userPlan === 'master';
 
@@ -175,6 +185,28 @@ export const ContentPhase = ({
     const keys = Object.keys(sectionContent).filter(k => !k.startsWith('_'));
     return keys.length > 1 ? 'edited' : 'default';
   };
+
+  // Get background mode from settings
+  const backgroundMode = (settings?.background_mode as BackgroundMode) || 'global';
+
+  // Handle section style changes
+  const handleSectionStyleChange = useCallback(async (
+    sectionKey: SectionKey,
+    styleKey: keyof SectionContentStyle,
+    value: string | undefined
+  ) => {
+    const currentContent = content[sectionKey] || {};
+    const newContent = { ...currentContent, [styleKey]: value };
+    
+    try {
+      await saveSectionContent(lpId, sectionKey, newContent);
+      onContentUpdate(sectionKey, newContent);
+      console.log('[S5.0 QA] ContentPhase: Style saved', { sectionKey, styleKey });
+    } catch (error) {
+      console.error('[ContentPhase] Style save error:', error);
+      toast({ title: 'Erro ao salvar estilo', variant: 'destructive' });
+    }
+  }, [lpId, content, onContentUpdate]);
 
   const renderEditableComponent = (block: EditorBlock) => {
     const EditableComponent = EDITABLE_COMPONENTS[block.sectionKey];
@@ -277,19 +309,35 @@ export const ContentPhase = ({
                     <span className="xs:hidden">OK</span>
                   </Button>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStartEditing(block.sectionKey, block.id);
-                    }}
-                    className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
-                  >
-                    <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden xs:inline">Editar conteúdo</span>
-                    <span className="xs:hidden">Editar</span>
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartEditing(block.sectionKey, block.id);
+                      }}
+                      className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
+                    >
+                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                      <span className="hidden xs:inline">Editar</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStylingSection(stylingSection === block.sectionKey ? null : block.sectionKey);
+                      }}
+                      className={cn(
+                        "h-7 sm:h-8 w-7 sm:w-8 p-0",
+                        stylingSection === block.sectionKey && "bg-primary/10 text-primary"
+                      )}
+                      title="Estilos da seção"
+                    >
+                      <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </Button>
+                  </>
                 )}
                 <Button
                   variant="ghost"
@@ -307,6 +355,54 @@ export const ContentPhase = ({
                 </Button>
               </div>
             </div>
+
+            {/* Style panel for this section */}
+            <AnimatePresence>
+              {stylingSection === block.sectionKey && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="border-t p-3"
+                >
+                  <SectionStylePanel
+                    sectionKey={block.sectionKey}
+                    backgroundMode={backgroundMode}
+                    currentBackground={{
+                      type: (content[block.sectionKey] as any)?.background_type,
+                      color: (content[block.sectionKey] as any)?.background_color,
+                      gradient: (content[block.sectionKey] as any)?.background_gradient,
+                      imageUrl: (content[block.sectionKey] as any)?.background_image_url,
+                    }}
+                    currentColors={{
+                      primaryColor: (content[block.sectionKey] as any)?.primary_color,
+                      secondaryColor: (content[block.sectionKey] as any)?.secondary_color,
+                      accentColor: (content[block.sectionKey] as any)?.accent_color,
+                    }}
+                    currentButton={{
+                      variant: (content[block.sectionKey] as any)?.button_variant,
+                      radius: (content[block.sectionKey] as any)?.button_radius,
+                      colorOverride: (content[block.sectionKey] as any)?.button_color_override,
+                    }}
+                    onBackgroundChange={(config) => {
+                      if (config.type === 'solid') {
+                        handleSectionStyleChange(block.sectionKey, 'background_type', 'solid');
+                        handleSectionStyleChange(block.sectionKey, 'background_color', config.value);
+                      } else if (config.type === 'gradient') {
+                        handleSectionStyleChange(block.sectionKey, 'background_type', 'gradient');
+                        handleSectionStyleChange(block.sectionKey, 'background_gradient', config.value);
+                      } else if (config.type === 'image') {
+                        handleSectionStyleChange(block.sectionKey, 'background_type', 'image');
+                        handleSectionStyleChange(block.sectionKey, 'background_image_url', config.value);
+                      }
+                    }}
+                    onColorChange={(key, value) => handleSectionStyleChange(block.sectionKey, key as any, value)}
+                    onButtonChange={(key, value) => handleSectionStyleChange(block.sectionKey, key as any, value)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Expanded content - Full section preview with editing */}
             <AnimatePresence>
