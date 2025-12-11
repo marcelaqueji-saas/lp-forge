@@ -185,7 +185,7 @@ export const BlockEditor = ({
         existingBlocks.push({
           id: generateBlockId(),
           sectionKey: 'menu',
-          modelId: (contentData.menu as any)?.['__model_id'] || 'menu_horizontal',
+          modelId: (contentData.menu as any)?.['__model_id'] || 'menu_glass_minimal',
           order: 0,
           content: contentData.menu || {},
         });
@@ -196,7 +196,7 @@ export const BlockEditor = ({
         existingBlocks.push({
           id: generateBlockId(),
           sectionKey: 'hero',
-          modelId: (contentData.hero as any)?.['__model_id'] || 'hero-basic',
+          modelId: (contentData.hero as any)?.['__model_id'] || 'hero_glass_aurora',
           order: 1,
           content: contentData.hero || {},
         });
@@ -224,7 +224,7 @@ export const BlockEditor = ({
         existingBlocks.push({
           id: generateBlockId(),
           sectionKey: 'rodape',
-          modelId: (contentData.rodape as any)?.['__model_id'] || 'footer-basic',
+          modelId: (contentData.rodape as any)?.['__model_id'] || 'rodape_minimal_soft',
           order: 999,
           content: contentData.rodape || {},
         });
@@ -235,14 +235,14 @@ export const BlockEditor = ({
         existingBlocks.push({
           id: generateBlockId(),
           sectionKey: 'menu',
-          modelId: 'menu_horizontal',
+          modelId: 'menu_glass_minimal',
           order: 0,
-          content: { __model_id: 'menu_horizontal' } as unknown as LPContent,
+          content: { __model_id: 'menu_glass_minimal' } as unknown as LPContent,
           isNew: true,
         });
         
         // Save initial menu
-        await saveSectionContent(lpId, 'menu', { __model_id: 'menu_horizontal' } as unknown as LPContent);
+        await saveSectionContent(lpId, 'menu', { __model_id: 'menu_glass_minimal' } as unknown as LPContent);
       }
 
       setBlocks(existingBlocks);
@@ -257,7 +257,22 @@ export const BlockEditor = ({
 
   const getDefaultModel = (sectionKey: SectionKey): string => {
     const models = SECTION_MODELS_BY_SECTION[sectionKey] || [];
-    return models[0]?.id || `${sectionKey}-basic`;
+    if (models.length > 0) return models[0].id;
+    
+    // Fallback to default IDs from simplified catalog
+    const defaults: Record<SectionKey, string> = {
+      menu: 'menu_glass_minimal',
+      hero: 'hero_glass_aurora',
+      como_funciona: 'como_funciona_timeline_glass',
+      para_quem_e: 'para_quem_e_chips_personas',
+      beneficios: 'beneficios_icon_grid_glass',
+      provas_sociais: 'provas_sociais_depoimentos_glass',
+      planos: 'planos_glass_three_tiers',
+      faq: 'faq_accordion_glass',
+      chamada_final: 'chamada_final_simple_glass',
+      rodape: 'rodape_minimal_soft',
+    };
+    return defaults[sectionKey] || `${sectionKey}_default`;
   };
 
   // Count dynamic blocks (not fixed)
