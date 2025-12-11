@@ -1,9 +1,10 @@
 /**
  * StructurePhase - Fase de estrutura do editor
  * Sprint 5.0: Escolha sequencial de seções e modelos
+ * Com preview em tempo real do modelo antes de adicionar
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { 
   Plus, 
@@ -14,17 +15,22 @@ import {
   Layout,
   ChevronDown,
   Lock,
-  Sparkles
+  Sparkles,
+  Eye,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { 
   SectionKey, 
   SECTION_MODELS_BY_SECTION, 
   PlanLevelWithMaster,
-  PlanLevel 
+  PlanLevel,
+  getSectionModel,
+  SECTION_MODEL_KEY
 } from '@/lib/sectionModels';
 import { 
   EditorBlock, 
@@ -35,6 +41,7 @@ import {
 } from '@/lib/blockEditorTypes';
 import { SECTION_NAMES } from '@/lib/lpContentApi';
 import { ModelThumbnail } from './ModelThumbnail';
+import { SectionLoader } from '@/components/sections/SectionLoader';
 
 interface StructurePhaseProps {
   blocks: EditorBlock[];
@@ -64,6 +71,96 @@ const SECTION_SEQUENCE: SectionKey[] = [
   'rodape'
 ];
 
+// Conteúdo de exemplo para preview de cada seção
+const getPreviewContent = (sectionKey: SectionKey): Record<string, any> => {
+  const baseContent: Record<SectionKey, Record<string, any>> = {
+    menu: {
+      brand_name: 'Sua Marca',
+      links: JSON.stringify([
+        { label: 'Início', url: '#' },
+        { label: 'Recursos', url: '#recursos' },
+        { label: 'Preços', url: '#precos' }
+      ]),
+      cta_label: 'Começar agora',
+      cta_url: '#'
+    },
+    hero: {
+      titulo: 'Título principal da sua página',
+      subtitulo: 'Um subtítulo impactante que descreve seu produto ou serviço de forma clara e objetiva.',
+      cta_primary_label: 'Começar agora',
+      cta_primary_url: '#',
+      cta_secondary_label: 'Saiba mais',
+      cta_secondary_url: '#'
+    },
+    como_funciona: {
+      titulo: 'Como funciona',
+      subtitulo: 'Veja como é fácil começar',
+      passos: JSON.stringify([
+        { numero: '1', titulo: 'Cadastre-se', descricao: 'Crie sua conta em segundos' },
+        { numero: '2', titulo: 'Configure', descricao: 'Personalize do seu jeito' },
+        { numero: '3', titulo: 'Aproveite', descricao: 'Comece a usar imediatamente' }
+      ])
+    },
+    para_quem_e: {
+      titulo: 'Para quem é',
+      subtitulo: 'Solução ideal para diferentes perfis',
+      perfis: JSON.stringify([
+        { titulo: 'Empreendedores', descricao: 'Que querem escalar seus negócios' },
+        { titulo: 'Freelancers', descricao: 'Que buscam mais clientes' },
+        { titulo: 'Empresas', descricao: 'Que precisam de resultados' }
+      ])
+    },
+    beneficios: {
+      titulo: 'Benefícios',
+      subtitulo: 'Por que escolher nossa solução',
+      items: JSON.stringify([
+        { titulo: 'Rápido', descricao: 'Resultados em minutos' },
+        { titulo: 'Fácil', descricao: 'Sem complicação' },
+        { titulo: 'Seguro', descricao: 'Proteção total' }
+      ])
+    },
+    provas_sociais: {
+      titulo: 'O que nossos clientes dizem',
+      subtitulo: 'Depoimentos reais',
+      depoimentos: JSON.stringify([
+        { nome: 'João Silva', cargo: 'CEO', empresa: 'TechCorp', texto: 'Excelente solução!' },
+        { nome: 'Maria Santos', cargo: 'Gerente', empresa: 'StartupX', texto: 'Recomendo!' }
+      ])
+    },
+    planos: {
+      titulo: 'Nossos planos',
+      subtitulo: 'Escolha o ideal para você',
+      planos: JSON.stringify([
+        { nome: 'Básico', preco: 'R$ 29', periodo: '/mês', recursos: ['Recurso 1', 'Recurso 2'], destaque: false },
+        { nome: 'Pro', preco: 'R$ 79', periodo: '/mês', recursos: ['Tudo do Básico', 'Recurso 3'], destaque: true }
+      ])
+    },
+    faq: {
+      titulo: 'Perguntas frequentes',
+      subtitulo: 'Tire suas dúvidas',
+      perguntas: JSON.stringify([
+        { pergunta: 'Como funciona?', resposta: 'É muito simples...' },
+        { pergunta: 'Tem garantia?', resposta: 'Sim, 30 dias!' }
+      ])
+    },
+    chamada_final: {
+      titulo: 'Pronto para começar?',
+      subtitulo: 'Junte-se a milhares de clientes satisfeitos',
+      cta_label: 'Criar conta grátis',
+      cta_url: '#'
+    },
+    rodape: {
+      copyright: '© 2024 Sua Marca. Todos os direitos reservados.',
+      links: JSON.stringify([
+        { label: 'Termos', url: '#' },
+        { label: 'Privacidade', url: '#' }
+      ])
+    }
+  };
+  
+  return baseContent[sectionKey] || {};
+};
+
 export const StructurePhase = ({
   blocks,
   lpId,
@@ -80,6 +177,7 @@ export const StructurePhase = ({
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [previewModel, setPreviewModel] = useState<{ sectionKey: SectionKey; modelId: string } | null>(null);
   const [addingSection, setAddingSection] = useState(false);
+  const [showPreviewPanel, setShowPreviewPanel] = useState(false);
 
   const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
   const isMaster = userPlan === 'master';
@@ -108,11 +206,22 @@ export const StructurePhase = ({
     !['menu', 'hero', 'rodape'].includes(b.sectionKey)
   );
 
+  // Preview content memoizado - inclui o model ID para o SectionLoader resolver
+  const previewContent = useMemo(() => {
+    if (!previewModel) return {};
+    const baseContent = getPreviewContent(previewModel.sectionKey);
+    return {
+      ...baseContent,
+      [SECTION_MODEL_KEY]: previewModel.modelId
+    };
+  }, [previewModel]);
+
   const handleSelectModel = async (sectionKey: SectionKey, modelId: string) => {
     setAddingSection(true);
     try {
       await onAddSection(sectionKey, modelId);
       setPreviewModel(null);
+      setShowPreviewPanel(false);
       console.log('[S5.0 QA] StructurePhase: Section added', { sectionKey, modelId });
     } finally {
       setAddingSection(false);
@@ -137,6 +246,11 @@ export const StructurePhase = ({
     onReorder(fullOrder);
     console.log('[S5.0 QA] StructurePhase: Reordered', reorderedDynamic.map(b => b.sectionKey));
   }, [menuBlock, heroBlock, footerBlock, onReorder]);
+
+  const handlePreviewModel = (sectionKey: SectionKey, modelId: string) => {
+    setPreviewModel({ sectionKey, modelId });
+    setShowPreviewPanel(true);
+  };
 
   const renderBlockCard = (block: EditorBlock, canModify: boolean = true) => {
     const definition = getBlockDefinition(block.sectionKey);
@@ -307,23 +421,18 @@ export const StructurePhase = ({
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-foreground">Escolha um modelo:</p>
+            <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-foreground">
+              Escolha um modelo <span className="text-muted-foreground font-normal">(clique para ver preview)</span>:
+            </p>
             <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               {models.map((model) => {
                 const isLocked = !isMaster && !canUseModel(model.plan, userPlan as PlanLevel);
-                const isSelected = previewModel?.modelId === model.id;
+                const isSelected = previewModel?.modelId === model.id && previewModel?.sectionKey === nextSectionToAdd;
                 
                 return (
                   <div 
                     key={model.id}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      if (isLocked) {
-                        onUpgradeClick();
-                      } else {
-                        setPreviewModel({ sectionKey: nextSectionToAdd, modelId: model.id });
-                      }
-                    }}
+                    className="relative group"
                   >
                     <ModelThumbnail
                       modelId={model.id}
@@ -331,8 +440,20 @@ export const StructurePhase = ({
                       plan={model.plan}
                       isLocked={isLocked}
                       isSelected={isSelected}
-                      onClick={() => {}}
+                      onClick={() => {
+                        if (isLocked) {
+                          onUpgradeClick();
+                        } else {
+                          handlePreviewModel(nextSectionToAdd, model.id);
+                        }
+                      }}
                     />
+                    {/* Preview indicator */}
+                    {!isLocked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg pointer-events-none">
+                        <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -345,10 +466,27 @@ export const StructurePhase = ({
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t"
               >
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Eye className="w-4 h-4" />
+                    <span>Modelo selecionado: <strong className="text-foreground">{models.find(m => m.id === previewModel.modelId)?.name}</strong></span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPreviewPanel(!showPreviewPanel)}
+                    className="text-xs"
+                  >
+                    {showPreviewPanel ? 'Esconder' : 'Ver'} preview
+                  </Button>
+                </div>
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => setPreviewModel(null)}
+                    onClick={() => {
+                      setPreviewModel(null);
+                      setShowPreviewPanel(false);
+                    }}
                     className="w-full sm:w-auto text-sm"
                   >
                     Cancelar
@@ -365,6 +503,58 @@ export const StructurePhase = ({
               </motion.div>
             )}
           </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
+
+  // Preview Panel Component
+  const renderPreviewPanel = () => {
+    if (!previewModel || !showPreviewPanel) return null;
+
+    const model = getSectionModel(previewModel.sectionKey, previewModel.modelId);
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="mt-4"
+      >
+        <Card className="border-2 border-primary/30 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">Preview: {model?.name || previewModel.modelId}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPreviewPanel(false)}
+              className="h-7 w-7 p-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="relative bg-background">
+            {/* Preview container with scale for better viewing */}
+            <div className="overflow-hidden" style={{ maxHeight: '400px' }}>
+              <ScrollArea className="h-[400px]">
+                <div className="transform origin-top scale-[0.6] sm:scale-75 lg:scale-90" style={{ width: '166.67%', transformOrigin: 'top left' }}>
+                  <SectionLoader
+                    sectionKey={previewModel.sectionKey}
+                    content={previewContent}
+                    settings={settings}
+                    lpId="preview"
+                    editable={false}
+                    userPlan={userPlan}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+            {/* Gradient overlay */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          </div>
         </Card>
       </motion.div>
     );
@@ -430,6 +620,11 @@ export const StructurePhase = ({
 
       {/* Add next section card */}
       {renderAddSectionCard()}
+
+      {/* Live Preview Panel */}
+      <AnimatePresence>
+        {renderPreviewPanel()}
+      </AnimatePresence>
 
       {/* Footer Block (fixed, last) */}
       {footerBlock && (
