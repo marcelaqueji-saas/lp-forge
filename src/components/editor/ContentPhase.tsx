@@ -220,6 +220,10 @@ export const ContentPhase = ({
 
     const sectionContent = content[block.sectionKey] || {};
     const isEditing = editingSection === block.sectionKey;
+    
+    // Get model info for stylePreset
+    const models = SECTION_MODELS_BY_SECTION[block.sectionKey] || [];
+    const currentModel = models.find(m => m.id === block.modelId);
 
     return (
       <EditableComponent
@@ -228,6 +232,8 @@ export const ContentPhase = ({
         userPlan={userPlan}
         editable={isEditing}
         variante={block.modelId}
+        modelId={block.modelId}
+        stylePreset={currentModel?.stylePreset || 'glass'}
         onContentUpdate={(key: string, value: string) => 
           handleSectionContentUpdate(block.sectionKey, key, value)
         }
