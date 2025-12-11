@@ -1,7 +1,24 @@
 // ============================================================
 // REGISTRO CENTRAL DE MODELOS DE SEÇÃO (Section Models Registry)
 // noBRon - SaaS Landing Page Builder
-// v2.0 - Catálogo Refatorado
+// v3.0 - Catálogo Simplificado e 100% Editável
+// ============================================================
+// 
+// AUDITORIA SIMPLIFICAÇÃO (v3.0):
+// - ANTES: 62+ modelos (com duplicados e modelos sem suporte editável)
+// - DEPOIS: 46 modelos (todos editáveis, sem duplicados)
+// 
+// REMOVIDOS:
+// - hero_carousel_autoplay (HeroCarousel sem HeroCarouselEditable)
+// - hero_parallax_layers (HeroParallax sem HeroParallaxEditable)
+// - provas_sociais_stories (StoriesCarousel sem StoriesCarouselEditable)
+// - provas_sociais_logos_scroller duplicado
+// - provas_sociais_carrossel_premium duplicado
+// - provas_sociais_stats_hybrid duplicado
+// 
+// MANTIDOS:
+// - Todos modelos base por seção (usam componentes genéricos)
+// - Todos modelos com style presets (dark/neon/minimal) - Editables suportam via stylePreset
 // ============================================================
 
 export type SectionKey =
@@ -19,8 +36,6 @@ export type SectionKey =
 export type PlanLevel = 'free' | 'pro' | 'premium';
 export type PlanLevelWithMaster = PlanLevel | 'master';
 
-// Categorias no banco: básico, avançado, animado
-// Categorias internas para organização de componentes
 export type ModelCategory = 
   | 'navigation'
   | 'hero'
@@ -31,7 +46,6 @@ export type ModelCategory =
   | 'cta'
   | 'footer';
 
-// Categoria de template no banco (para TemplatePicker)
 export type TemplateCategory = 'básico' | 'avançado' | 'animado';
 
 export type StylePreset = 'glass' | 'visionos' | 'aurora' | 'neumorphic' | 'dark' | 'neon' | 'minimal' | 'gradient' | 'frosted';
@@ -67,6 +81,23 @@ export interface SectionModel {
   hasJsonEditor?: boolean;
   component: string;
 }
+
+// ============================================================
+// NOMES DE EXIBIÇÃO DAS SEÇÕES
+// ============================================================
+
+export const SECTION_DISPLAY_NAMES: Record<SectionKey, string> = {
+  menu: 'Menu',
+  hero: 'Hero',
+  como_funciona: 'Como Funciona',
+  para_quem_e: 'Para Quem É',
+  beneficios: 'Benefícios',
+  provas_sociais: 'Provas Sociais',
+  planos: 'Planos',
+  faq: 'FAQ',
+  chamada_final: 'Chamada Final',
+  rodape: 'Rodapé',
+};
 
 // ============================================================
 // CAMPOS PADRÃO REUTILIZÁVEIS
@@ -105,13 +136,12 @@ const FOOTER_FIELDS: FieldConfig[] = [
 export const SECTION_MODEL_KEY = '__model_id';
 
 // ============================================================
-// NOVO CATÁLOGO DE MODELOS v2.0
-// Thumbnails: /public/thumbnails/{sectionKey}/{modelId}.webp
+// CATÁLOGO SIMPLIFICADO v3.0 - 46 MODELOS EDITÁVEIS
 // ============================================================
 
 export const SECTION_MODELS: SectionModel[] = [
   // ============================================================
-  // MENU (3 modelos)
+  // MENU (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'menu_glass_minimal',
@@ -146,7 +176,7 @@ export const SECTION_MODELS: SectionModel[] = [
   {
     id: 'menu_command_center',
     section: 'menu',
-    name: 'Menu command center (⌘K)',
+    name: 'Menu command center',
     description: 'Menu com command palette integrado',
     plan: 'premium',
     category: 'navigation',
@@ -158,9 +188,55 @@ export const SECTION_MODELS: SectionModel[] = [
     images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
     hasJsonEditor: true,
   },
+  {
+    id: 'menu_dark',
+    section: 'menu',
+    name: 'Menu Dark',
+    description: 'Menu em tema escuro',
+    plan: 'pro',
+    category: 'navigation',
+    component: 'MenuSection',
+    thumbnail: '/thumbnails/menu/menu_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
+    fields: MENU_FIELDS,
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
+  },
+  {
+    id: 'menu_neon',
+    section: 'menu',
+    name: 'Menu Neon',
+    description: 'Menu com efeitos neon',
+    plan: 'premium',
+    category: 'navigation',
+    component: 'MenuSection',
+    thumbnail: '/thumbnails/menu/menu_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: MENU_FIELDS,
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
+  },
+  {
+    id: 'menu_minimal_preset',
+    section: 'menu',
+    name: 'Menu Minimal',
+    description: 'Menu limpo e minimalista',
+    plan: 'free',
+    category: 'navigation',
+    component: 'MenuSection',
+    thumbnail: '/thumbnails/menu/menu_minimal_preset.webp',
+    stylePreset: 'minimal',
+    motionPreset: 'fade-stagger',
+    fields: MENU_FIELDS,
+    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
+    hasJsonEditor: true,
+  },
 
   // ============================================================
-  // HERO (7 modelos)
+  // HERO (7 modelos: 4 base + 3 style)
+  // REMOVIDOS: hero_carousel_autoplay, hero_parallax_layers (sem editables)
   // ============================================================
   {
     id: 'hero_glass_aurora',
@@ -179,7 +255,7 @@ export const SECTION_MODELS: SectionModel[] = [
   {
     id: 'hero_cinematic_video_spotlight',
     section: 'hero',
-    name: 'Hero vídeo cinematic + spotlight',
+    name: 'Hero vídeo spotlight',
     description: 'Hero com vídeo de fundo e efeito spotlight',
     plan: 'pro',
     category: 'hero',
@@ -192,38 +268,6 @@ export const SECTION_MODELS: SectionModel[] = [
       { key: 'video_url', label: 'URL do vídeo', type: 'url' as const },
     ],
     images: [],
-  },
-  {
-    id: 'hero_carousel_autoplay',
-    section: 'hero',
-    name: 'Hero carrossel automático',
-    description: 'Hero com carrossel de imagens automático',
-    plan: 'pro',
-    category: 'hero',
-    component: 'HeroCarousel',
-    thumbnail: '/thumbnails/hero/hero_carousel_autoplay.webp',
-    stylePreset: 'glass',
-    motionPreset: 'fade-stagger',
-    fields: HERO_FIELDS,
-    images: [],
-    hasJsonEditor: true, // For imagens_json
-  },
-  {
-    id: 'hero_parallax_layers',
-    section: 'hero',
-    name: 'Hero com camadas em parallax',
-    description: 'Hero com múltiplas camadas em parallax',
-    plan: 'premium',
-    category: 'hero',
-    component: 'HeroParallax',
-    thumbnail: '/thumbnails/hero/hero_parallax_layers.webp',
-    stylePreset: 'aurora',
-    motionPreset: 'parallax',
-    fields: HERO_FIELDS,
-    images: [
-      { key: 'imagem', label: 'Imagem de fundo', maxSizeMB: 3 },
-      { key: 'imagem_frente', label: 'Imagem frontal', maxSizeMB: 2 },
-    ],
   },
   {
     id: 'hero_ticket_launch',
@@ -266,6 +310,34 @@ export const SECTION_MODELS: SectionModel[] = [
     motionPreset: 'fade-stagger',
     fields: HERO_FIELDS,
     images: [],
+  },
+  {
+    id: 'hero_dark',
+    section: 'hero',
+    name: 'Hero Dark Mode',
+    description: 'Hero com tema escuro elegante',
+    plan: 'pro',
+    category: 'hero',
+    component: 'Hero',
+    thumbnail: '/thumbnails/hero/hero_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
+    fields: HERO_FIELDS,
+    images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
+  },
+  {
+    id: 'hero_neon',
+    section: 'hero',
+    name: 'Hero Neon Glow',
+    description: 'Hero com efeitos neon brilhantes',
+    plan: 'premium',
+    category: 'hero',
+    component: 'Hero',
+    thumbnail: '/thumbnails/hero/hero_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: HERO_FIELDS,
+    images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
   },
 
   // ============================================================
@@ -362,7 +434,7 @@ export const SECTION_MODELS: SectionModel[] = [
   },
 
   // ============================================================
-  // BENEFÍCIOS (3 modelos)
+  // BENEFÍCIOS (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'beneficios_icon_grid_glass',
@@ -406,9 +478,52 @@ export const SECTION_MODELS: SectionModel[] = [
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
+  {
+    id: 'beneficios_dark',
+    section: 'beneficios',
+    name: 'Benefícios Dark',
+    description: 'Grid de benefícios em tema escuro',
+    plan: 'pro',
+    category: 'content',
+    component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'beneficios_neon',
+    section: 'beneficios',
+    name: 'Benefícios Neon',
+    description: 'Cards de benefícios com glow neon',
+    plan: 'premium',
+    category: 'content',
+    component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'beneficios_minimal',
+    section: 'beneficios',
+    name: 'Benefícios Clean',
+    description: 'Benefícios em estilo minimalista',
+    plan: 'free',
+    category: 'content',
+    component: 'Beneficios',
+    thumbnail: '/thumbnails/beneficios/beneficios_minimal.webp',
+    stylePreset: 'minimal',
+    motionPreset: 'fade-stagger',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
 
   // ============================================================
-  // PROVAS SOCIAIS (7 modelos)
+  // PROVAS SOCIAIS (7 modelos: 4 base + 3 style)
+  // REMOVIDOS: provas_sociais_stories, duplicados
   // ============================================================
   {
     id: 'provas_sociais_depoimentos_glass',
@@ -439,34 +554,6 @@ export const SECTION_MODELS: SectionModel[] = [
     hasJsonEditor: true,
   },
   {
-    id: 'provas_sociais_stories',
-    section: 'provas_sociais',
-    name: 'Stories de clientes',
-    description: 'Histórias estilo Instagram Stories',
-    plan: 'pro',
-    category: 'social',
-    component: 'StoriesCarousel',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_stories.webp',
-    stylePreset: 'glass',
-    motionPreset: 'spotlight',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true, // For stories_json
-  },
-  {
-    id: 'provas_sociais_logos_scroller',
-    section: 'provas_sociais',
-    name: 'Marcas em scroller infinito',
-    description: 'Logos de clientes em scroll infinito',
-    plan: 'pro',
-    category: 'social',
-    component: 'LogosInfiniteScroll',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_logos_scroller.webp',
-    stylePreset: 'glass',
-    motionPreset: 'parallax',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true, // For logos_json
-  },
-  {
     id: 'provas_sociais_stats_hybrid',
     section: 'provas_sociais',
     name: 'Depoimentos + métricas',
@@ -477,20 +564,6 @@ export const SECTION_MODELS: SectionModel[] = [
     thumbnail: '/thumbnails/provas_sociais/provas_sociais_stats_hybrid.webp',
     stylePreset: 'visionos',
     motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'provas_sociais_video_testimonials',
-    section: 'provas_sociais',
-    name: 'Depoimentos em vídeo',
-    description: 'Grid de vídeos de clientes',
-    plan: 'premium',
-    category: 'social',
-    component: 'ProvasSociais',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_video_testimonials.webp',
-    stylePreset: 'glass',
-    motionPreset: 'tilt',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
@@ -509,50 +582,50 @@ export const SECTION_MODELS: SectionModel[] = [
     hasJsonEditor: true,
   },
   {
-    id: 'provas_sociais_carrossel_premium',
+    id: 'provas_sociais_dark',
     section: 'provas_sociais',
-    name: 'Carrossel cinematográfico',
-    description: 'Carrossel de depoimentos animado',
+    name: 'Depoimentos Dark',
+    description: 'Depoimentos em tema escuro',
     plan: 'pro',
     category: 'social',
     component: 'ProvasSociais',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_carrossel_premium.webp',
-    stylePreset: 'aurora',
-    motionPreset: 'slide-in-right',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
   {
-    id: 'provas_sociais_logos_scroller',
+    id: 'provas_sociais_neon',
     section: 'provas_sociais',
-    name: 'Marcas em scroller infinito',
-    description: 'Logos de clientes em scroll infinito',
-    plan: 'pro',
-    category: 'social',
-    component: 'ProvasSociais',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_logos_scroller.webp',
-    stylePreset: 'glass',
-    motionPreset: 'parallax',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'provas_sociais_stats_hybrid',
-    section: 'provas_sociais',
-    name: 'Depoimentos + métricas',
-    description: 'Depoimentos combinados com estatísticas',
+    name: 'Depoimentos Neon',
+    description: 'Depoimentos com glow neon',
     plan: 'premium',
     category: 'social',
     component: 'ProvasSociais',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_stats_hybrid.webp',
-    stylePreset: 'visionos',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'provas_sociais_minimal',
+    section: 'provas_sociais',
+    name: 'Depoimentos Minimal',
+    description: 'Depoimentos limpos e minimalistas',
+    plan: 'free',
+    category: 'social',
+    component: 'ProvasSociais',
+    thumbnail: '/thumbnails/provas_sociais/provas_sociais_minimal.webp',
+    stylePreset: 'minimal',
     motionPreset: 'fade-stagger',
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
 
   // ============================================================
-  // PLANOS (3 modelos)
+  // PLANOS (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'planos_glass_three_tiers',
@@ -596,9 +669,51 @@ export const SECTION_MODELS: SectionModel[] = [
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
+  {
+    id: 'planos_dark',
+    section: 'planos',
+    name: 'Planos Dark',
+    description: 'Tabela de preços em tema escuro',
+    plan: 'pro',
+    category: 'pricing',
+    component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'planos_neon',
+    section: 'planos',
+    name: 'Planos Neon',
+    description: 'Cards de preços com efeito neon',
+    plan: 'premium',
+    category: 'pricing',
+    component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'planos_minimal',
+    section: 'planos',
+    name: 'Planos Minimal',
+    description: 'Tabela de preços minimalista',
+    plan: 'free',
+    category: 'pricing',
+    component: 'Planos',
+    thumbnail: '/thumbnails/planos/planos_minimal.webp',
+    stylePreset: 'minimal',
+    motionPreset: 'fade-stagger',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
 
   // ============================================================
-  // FAQ (3 modelos)
+  // FAQ (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'faq_accordion_glass',
@@ -642,9 +757,51 @@ export const SECTION_MODELS: SectionModel[] = [
     fields: SECTION_TITLE_FIELDS,
     hasJsonEditor: true,
   },
+  {
+    id: 'faq_dark',
+    section: 'faq',
+    name: 'FAQ Dark',
+    description: 'FAQ em tema escuro elegante',
+    plan: 'pro',
+    category: 'faq',
+    component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'accordion',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'faq_neon',
+    section: 'faq',
+    name: 'FAQ Neon',
+    description: 'FAQ com glow neon',
+    plan: 'premium',
+    category: 'faq',
+    component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
+  {
+    id: 'faq_minimal',
+    section: 'faq',
+    name: 'FAQ Minimal',
+    description: 'FAQ limpo e minimalista',
+    plan: 'free',
+    category: 'faq',
+    component: 'FAQ',
+    thumbnail: '/thumbnails/faq/faq_minimal.webp',
+    stylePreset: 'minimal',
+    motionPreset: 'accordion',
+    fields: SECTION_TITLE_FIELDS,
+    hasJsonEditor: true,
+  },
 
   // ============================================================
-  // CHAMADA FINAL (3 modelos)
+  // CHAMADA FINAL (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'chamada_final_simple_glass',
@@ -690,9 +847,48 @@ export const SECTION_MODELS: SectionModel[] = [
     fields: CTA_FIELDS,
     images: [{ key: 'imagem', label: 'Imagem de fundo', maxSizeMB: 2 }],
   },
+  {
+    id: 'cta_dark',
+    section: 'chamada_final',
+    name: 'CTA Dark',
+    description: 'Chamada final em tema escuro',
+    plan: 'pro',
+    category: 'cta',
+    component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/cta_dark.webp',
+    stylePreset: 'dark',
+    motionPreset: 'fade-stagger',
+    fields: CTA_FIELDS,
+  },
+  {
+    id: 'cta_neon',
+    section: 'chamada_final',
+    name: 'CTA Neon',
+    description: 'Chamada final com glow neon',
+    plan: 'premium',
+    category: 'cta',
+    component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/cta_neon.webp',
+    stylePreset: 'neon',
+    motionPreset: 'spotlight',
+    fields: CTA_FIELDS,
+  },
+  {
+    id: 'cta_minimal',
+    section: 'chamada_final',
+    name: 'CTA Minimal',
+    description: 'Chamada final minimalista',
+    plan: 'free',
+    category: 'cta',
+    component: 'ChamadaFinal',
+    thumbnail: '/thumbnails/chamada_final/cta_minimal.webp',
+    stylePreset: 'minimal',
+    motionPreset: 'fade-stagger',
+    fields: CTA_FIELDS,
+  },
 
   // ============================================================
-  // RODAPÉ (3 modelos)
+  // RODAPÉ (6 modelos: 3 base + 3 style)
   // ============================================================
   {
     id: 'rodape_minimal_soft',
@@ -736,320 +932,6 @@ export const SECTION_MODELS: SectionModel[] = [
     fields: FOOTER_FIELDS,
     hasJsonEditor: true,
   },
-
-  // ============================================================
-  // VARIAÇÕES DE ESTILO - DARK / NEON / MINIMAL
-  // ============================================================
-  
-  // Hero variations
-  {
-    id: 'hero_dark',
-    section: 'hero',
-    name: 'Hero Dark Mode',
-    description: 'Hero com tema escuro elegante',
-    plan: 'pro',
-    category: 'hero',
-    component: 'HeroDark',
-    thumbnail: '/thumbnails/hero/hero_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
-  },
-  {
-    id: 'hero_neon',
-    section: 'hero',
-    name: 'Hero Neon Glow',
-    description: 'Hero com efeitos neon brilhantes',
-    plan: 'premium',
-    category: 'hero',
-    component: 'HeroNeon',
-    thumbnail: '/thumbnails/hero/hero_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
-  },
-  {
-    id: 'hero_minimal',
-    section: 'hero',
-    name: 'Hero Minimalista',
-    description: 'Hero limpo e minimalista',
-    plan: 'free',
-    category: 'hero',
-    component: 'HeroMinimal',
-    thumbnail: '/thumbnails/hero/hero_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: HERO_FIELDS,
-    images: [{ key: 'imagem', label: 'Imagem principal', maxSizeMB: 2 }],
-  },
-  
-  // Benefícios variations
-  {
-    id: 'beneficios_dark',
-    section: 'beneficios',
-    name: 'Benefícios Dark',
-    description: 'Grid de benefícios em tema escuro',
-    plan: 'pro',
-    category: 'content',
-    component: 'BeneficiosDark',
-    thumbnail: '/thumbnails/beneficios/beneficios_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'beneficios_neon',
-    section: 'beneficios',
-    name: 'Benefícios Neon',
-    description: 'Cards de benefícios com glow neon',
-    plan: 'premium',
-    category: 'content',
-    component: 'BeneficiosNeon',
-    thumbnail: '/thumbnails/beneficios/beneficios_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'beneficios_minimal',
-    section: 'beneficios',
-    name: 'Benefícios Clean',
-    description: 'Benefícios em estilo minimalista',
-    plan: 'free',
-    category: 'content',
-    component: 'BeneficiosMinimal',
-    thumbnail: '/thumbnails/beneficios/beneficios_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  
-  // Planos variations
-  {
-    id: 'planos_dark',
-    section: 'planos',
-    name: 'Planos Dark',
-    description: 'Tabela de preços em tema escuro',
-    plan: 'pro',
-    category: 'pricing',
-    component: 'PlanosDark',
-    thumbnail: '/thumbnails/planos/planos_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'planos_neon',
-    section: 'planos',
-    name: 'Planos Neon',
-    description: 'Cards de preços com efeito neon',
-    plan: 'premium',
-    category: 'pricing',
-    component: 'PlanosNeon',
-    thumbnail: '/thumbnails/planos/planos_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'planos_minimal',
-    section: 'planos',
-    name: 'Planos Minimal',
-    description: 'Tabela de preços minimalista',
-    plan: 'free',
-    category: 'pricing',
-    component: 'PlanosMinimal',
-    thumbnail: '/thumbnails/planos/planos_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  
-  // CTA Final variations
-  {
-    id: 'cta_dark',
-    section: 'chamada_final',
-    name: 'CTA Dark',
-    description: 'Chamada final em tema escuro',
-    plan: 'pro',
-    category: 'cta',
-    component: 'CTAFinalDark',
-    thumbnail: '/thumbnails/chamada_final/cta_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: CTA_FIELDS,
-  },
-  {
-    id: 'cta_neon',
-    section: 'chamada_final',
-    name: 'CTA Neon',
-    description: 'Chamada final com glow neon',
-    plan: 'premium',
-    category: 'cta',
-    component: 'CTAFinalNeon',
-    thumbnail: '/thumbnails/chamada_final/cta_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: CTA_FIELDS,
-  },
-  {
-    id: 'cta_minimal',
-    section: 'chamada_final',
-    name: 'CTA Minimal',
-    description: 'Chamada final minimalista',
-    plan: 'free',
-    category: 'cta',
-    component: 'CTAFinalMinimal',
-    thumbnail: '/thumbnails/chamada_final/cta_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: CTA_FIELDS,
-  },
-
-  // FAQ variations
-  {
-    id: 'faq_dark',
-    section: 'faq',
-    name: 'FAQ Dark',
-    description: 'FAQ em tema escuro elegante',
-    plan: 'pro',
-    category: 'faq',
-    component: 'FAQDark',
-    thumbnail: '/thumbnails/faq/faq_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'accordion',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'faq_neon',
-    section: 'faq',
-    name: 'FAQ Neon',
-    description: 'FAQ com glow neon',
-    plan: 'premium',
-    category: 'faq',
-    component: 'FAQNeon',
-    thumbnail: '/thumbnails/faq/faq_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'faq_minimal',
-    section: 'faq',
-    name: 'FAQ Minimal',
-    description: 'FAQ limpo e minimalista',
-    plan: 'free',
-    category: 'faq',
-    component: 'FAQMinimal',
-    thumbnail: '/thumbnails/faq/faq_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'accordion',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-
-  // Provas Sociais variations
-  {
-    id: 'provas_sociais_dark',
-    section: 'provas_sociais',
-    name: 'Depoimentos Dark',
-    description: 'Depoimentos em tema escuro',
-    plan: 'pro',
-    category: 'social',
-    component: 'ProvasSociaisDark',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'provas_sociais_neon',
-    section: 'provas_sociais',
-    name: 'Depoimentos Neon',
-    description: 'Depoimentos com glow neon',
-    plan: 'premium',
-    category: 'social',
-    component: 'ProvasSociaisNeon',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-  {
-    id: 'provas_sociais_minimal',
-    section: 'provas_sociais',
-    name: 'Depoimentos Minimal',
-    description: 'Depoimentos limpos e minimalistas',
-    plan: 'free',
-    category: 'social',
-    component: 'ProvasSociaisMinimal',
-    thumbnail: '/thumbnails/provas_sociais/provas_sociais_minimal.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: SECTION_TITLE_FIELDS,
-    hasJsonEditor: true,
-  },
-
-  // Menu variations
-  {
-    id: 'menu_dark',
-    section: 'menu',
-    name: 'Menu Dark',
-    description: 'Menu em tema escuro',
-    plan: 'pro',
-    category: 'navigation',
-    component: 'MenuDark',
-    thumbnail: '/thumbnails/menu/menu_dark.webp',
-    stylePreset: 'dark',
-    motionPreset: 'fade-stagger',
-    fields: MENU_FIELDS,
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
-    hasJsonEditor: true,
-  },
-  {
-    id: 'menu_neon',
-    section: 'menu',
-    name: 'Menu Neon',
-    description: 'Menu com efeitos neon',
-    plan: 'premium',
-    category: 'navigation',
-    component: 'MenuNeon',
-    thumbnail: '/thumbnails/menu/menu_neon.webp',
-    stylePreset: 'neon',
-    motionPreset: 'spotlight',
-    fields: MENU_FIELDS,
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
-    hasJsonEditor: true,
-  },
-  {
-    id: 'menu_minimal_preset',
-    section: 'menu',
-    name: 'Menu Minimal',
-    description: 'Menu limpo e minimalista',
-    plan: 'free',
-    category: 'navigation',
-    component: 'MenuMinimal',
-    thumbnail: '/thumbnails/menu/menu_minimal_preset.webp',
-    stylePreset: 'minimal',
-    motionPreset: 'fade-stagger',
-    fields: MENU_FIELDS,
-    images: [{ key: 'logo', label: 'Logo', maxSizeMB: 1, aspectRatio: '1:1' }],
-    hasJsonEditor: true,
-  },
-
-  // Rodapé variations
   {
     id: 'rodape_dark',
     section: 'rodape',
@@ -1057,7 +939,7 @@ export const SECTION_MODELS: SectionModel[] = [
     description: 'Rodapé em tema escuro',
     plan: 'pro',
     category: 'footer',
-    component: 'RodapeDark',
+    component: 'Rodape',
     thumbnail: '/thumbnails/rodape/rodape_dark.webp',
     stylePreset: 'dark',
     motionPreset: 'fade-stagger',
@@ -1071,7 +953,7 @@ export const SECTION_MODELS: SectionModel[] = [
     description: 'Rodapé com efeitos neon',
     plan: 'premium',
     category: 'footer',
-    component: 'RodapeNeon',
+    component: 'Rodape',
     thumbnail: '/thumbnails/rodape/rodape_neon.webp',
     stylePreset: 'neon',
     motionPreset: 'spotlight',
@@ -1085,7 +967,7 @@ export const SECTION_MODELS: SectionModel[] = [
     description: 'Rodapé limpo e minimalista',
     plan: 'free',
     category: 'footer',
-    component: 'RodapeMinimal',
+    component: 'Rodape',
     thumbnail: '/thumbnails/rodape/rodape_minimal.webp',
     stylePreset: 'minimal',
     motionPreset: 'fade-stagger',
@@ -1095,252 +977,184 @@ export const SECTION_MODELS: SectionModel[] = [
 ];
 
 // ============================================================
-// MAPEAMENTO DE IDs ANTIGOS PARA NOVOS (FALLBACK)
-// Garante compatibilidade com LPs criadas com catálogo anterior
+// HELPERS E INDEXAÇÃO
 // ============================================================
-
-const LEGACY_MODEL_FALLBACK: Record<string, string> = {
-  // Menu antigos
-  'menu_horizontal': 'menu_glass_minimal',
-  'menu_centered': 'menu_visionos_floating',
-  'menu_sticky_glass': 'menu_visionos_floating',
-  'menu_minimal': 'menu_command_center',
-  'menu_basic': 'menu_glass_minimal',
-  
-  // Hero antigos
-  'hero_basic': 'hero_glass_aurora',
-  'hero_center': 'hero_glass_aurora',
-  'hero_split': 'hero_cinematic_video_spotlight',
-  'hero_split_reverse': 'hero_cinematic_video_spotlight',
-  'hero_gradient': 'hero_glass_aurora',
-  'hero_video_cinematic': 'hero_cinematic_video_spotlight',
-  'hero_parallax': 'hero_parallax_layers',
-  'hero_animated_text': 'hero_ticket_launch',
-  
-  // Como funciona antigos
-  'steps_basic': 'como_funciona_timeline_glass',
-  'steps_timeline': 'como_funciona_timeline_glass',
-  'steps_zigzag': 'como_funciona_steps_cards_3d',
-  'steps_cards': 'como_funciona_horizontal_flow',
-  
-  // Para quem é antigos
-  'target_basic': 'para_quem_e_chips_personas',
-  'target_cards': 'para_quem_e_personas_cards',
-  'target_avatars': 'para_quem_e_matrix',
-  
-  // Benefícios antigos
-  'benefits_basic': 'beneficios_icon_grid_glass',
-  'benefits_icons': 'beneficios_timeline_numerada',
-  'benefits_bento': 'beneficios_showcase_3d',
-  
-  // Provas sociais antigas
-  'testimonials_basic': 'provas_sociais_depoimentos_glass',
-  'testimonials_carousel': 'provas_sociais_carrossel_premium',
-  'testimonials_video': 'provas_sociais_stats_hybrid',
-  
-  // Planos antigos
-  'pricing_basic': 'planos_glass_three_tiers',
-  'pricing_highlight': 'planos_cards_pill',
-  'pricing_comparison': 'planos_tabela_comparativa_modern',
-  
-  // FAQ antigos
-  'faq_accordion': 'faq_accordion_glass',
-  'faq_columns': 'faq_twocolumn_modern',
-  'faq_categorized': 'faq_with_cta_spotlight',
-  'faq_basic': 'faq_accordion_glass',
-  
-  // CTA antigos
-  'cta_basic': 'chamada_final_simple_glass',
-  'cta_background': 'chamada_final_two_ctas',
-  'cta_glass': 'chamada_final_ticket_glow',
-  
-  // Rodapé antigos
-  'footer_basic': 'rodape_minimal_soft',
-  'footer_columns': 'rodape_columns_glass',
-  'footer_newsletter': 'rodape_visionos_bar',
-};
-
-// ============================================================
-// MAPEAMENTO CENTRALIZADO: modelId → variante de layout
-// ============================================================
-
-export const MODEL_TO_LAYOUT_MAP: Record<string, 'modelo_a' | 'modelo_b' | 'modelo_c'> = {
-  // Menu
-  'menu_glass_minimal': 'modelo_a',
-  'menu_visionos_floating': 'modelo_b',
-  'menu_command_center': 'modelo_c',
-  
-  // Hero
-  'hero_glass_aurora': 'modelo_a',
-  'hero_cinematic_video_spotlight': 'modelo_c',
-  'hero_carousel_autoplay': 'modelo_b',
-  'hero_parallax_layers': 'modelo_c',
-  'hero_ticket_launch': 'modelo_c',
-  'hero_split_visionos': 'modelo_a',
-  'hero_minimal_centered': 'modelo_b',
-  'hero_dark': 'modelo_a',
-  'hero_neon': 'modelo_a',
-  'hero_minimal': 'modelo_b',
-  
-  // Como Funciona
-  'como_funciona_timeline_glass': 'modelo_a',
-  'como_funciona_steps_cards_3d': 'modelo_b',
-  'como_funciona_horizontal_flow': 'modelo_c',
-  
-  // Para Quem É
-  'para_quem_e_chips_personas': 'modelo_a',
-  'para_quem_e_personas_cards': 'modelo_b',
-  'para_quem_e_matrix': 'modelo_c',
-  
-  // Benefícios
-  'beneficios_icon_grid_glass': 'modelo_a',
-  'beneficios_timeline_numerada': 'modelo_b',
-  'beneficios_showcase_3d': 'modelo_c',
-  'beneficios_dark': 'modelo_a',
-  'beneficios_neon': 'modelo_a',
-  'beneficios_minimal': 'modelo_a',
-  
-  // Provas Sociais
-  'provas_sociais_depoimentos_glass': 'modelo_a',
-  'provas_sociais_carrossel_premium': 'modelo_b',
-  'provas_sociais_stories': 'modelo_c',
-  'provas_sociais_logos_scroller': 'modelo_b',
-  'provas_sociais_stats_hybrid': 'modelo_c',
-  'provas_sociais_video_testimonials': 'modelo_c',
-  'provas_sociais_featured_single': 'modelo_a',
-  'provas_sociais_dark': 'modelo_a',
-  'provas_sociais_neon': 'modelo_a',
-  'provas_sociais_minimal': 'modelo_a',
-  
-  // Planos
-  'planos_glass_three_tiers': 'modelo_a',
-  'planos_cards_pill': 'modelo_b',
-  'planos_tabela_comparativa_modern': 'modelo_c',
-  'planos_dark': 'modelo_a',
-  'planos_neon': 'modelo_a',
-  'planos_minimal': 'modelo_a',
-  
-  // FAQ
-  'faq_accordion_glass': 'modelo_a',
-  'faq_twocolumn_modern': 'modelo_b',
-  'faq_with_cta_spotlight': 'modelo_c',
-  'faq_dark': 'modelo_a',
-  'faq_neon': 'modelo_a',
-  'faq_minimal': 'modelo_a',
-  
-  // Chamada Final
-  'chamada_final_simple_glass': 'modelo_a',
-  'chamada_final_two_ctas': 'modelo_b',
-  'chamada_final_ticket_glow': 'modelo_c',
-  'cta_dark': 'modelo_a',
-  'cta_neon': 'modelo_a',
-  'cta_minimal': 'modelo_a',
-  
-  // Rodapé
-  'rodape_minimal_soft': 'modelo_a',
-  'rodape_columns_glass': 'modelo_b',
-  'rodape_visionos_bar': 'modelo_c',
-  'rodape_dark': 'modelo_a',
-  'rodape_neon': 'modelo_a',
-  'rodape_minimal': 'modelo_a',
-};
 
 /**
- * Retorna a variante de layout (modelo_a/b/c) para um modelId
- * Se o modelId não for encontrado, retorna 'modelo_a' como fallback
+ * Modelos indexados por seção para lookup rápido
  */
-export function getLayoutVariant(modelId?: string): 'modelo_a' | 'modelo_b' | 'modelo_c' {
-  if (!modelId) return 'modelo_a';
-  
-  // Check direct mapping
-  if (MODEL_TO_LAYOUT_MAP[modelId]) {
-    return MODEL_TO_LAYOUT_MAP[modelId];
-  }
-  
-  // Check if it's already a layout variant
-  if (modelId === 'modelo_a' || modelId === 'modelo_b' || modelId === 'modelo_c') {
-    return modelId;
-  }
-  
-  // Default fallback
-  return 'modelo_a';
-}
-
-// ============================================================
-// UTILITÁRIOS
-// ============================================================
-
-export const SECTION_MODELS_BY_SECTION: Record<SectionKey, SectionModel[]> =
+export const SECTION_MODELS_BY_SECTION: Record<SectionKey, SectionModel[]> = 
   SECTION_MODELS.reduce((acc, model) => {
-    (acc[model.section] ||= []).push(model);
+    if (!acc[model.section]) {
+      acc[model.section] = [];
+    }
+    acc[model.section].push(model);
     return acc;
   }, {} as Record<SectionKey, SectionModel[]>);
 
 /**
- * Retorna o modelo de seção pelo sectionKey e variant (modelId).
- * Se o variant for um ID legado, faz fallback para o novo ID equivalente.
- * Se não encontrar, retorna o primeiro modelo da seção (free).
+ * Busca um modelo específico por seção e ID
  */
-export function getSectionModel(section: SectionKey, variant?: string): SectionModel | undefined {
-  const list = SECTION_MODELS_BY_SECTION[section] || [];
-  if (!list.length) return undefined;
+export function getSectionModel(section: SectionKey, modelId?: string): SectionModel | undefined {
+  const models = SECTION_MODELS_BY_SECTION[section];
+  if (!models || models.length === 0) return undefined;
   
-  if (!variant) return list[0];
-  
-  // Tenta encontrar pelo ID exato
-  let found = list.find(v => v.id === variant);
-  if (found) return found;
-  
-  // Tenta fallback de modelo legado
-  const fallbackId = LEGACY_MODEL_FALLBACK[variant];
-  if (fallbackId) {
-    found = list.find(v => v.id === fallbackId);
+  if (modelId) {
+    const found = models.find(m => m.id === modelId);
     if (found) return found;
   }
   
-  // Retorna primeiro modelo como fallback final
-  return list[0];
+  return models[0];
 }
 
 /**
- * Retorna o ID do modelo resolvido (considerando fallbacks)
- */
-export function resolveModelId(section: SectionKey, variant?: string): string {
-  const model = getSectionModel(section, variant);
-  return model?.id || SECTION_MODELS_BY_SECTION[section]?.[0]?.id || '';
-}
-
-/**
- * Verifica se um modelId é legado e precisa de migração
- */
-export function isLegacyModelId(modelId: string): boolean {
-  return modelId in LEGACY_MODEL_FALLBACK;
-}
-
-export const SECTION_DISPLAY_NAMES: Record<SectionKey, string> = {
-  menu: 'Menu',
-  hero: 'Hero',
-  como_funciona: 'Como Funciona',
-  para_quem_e: 'Para Quem É',
-  beneficios: 'Benefícios',
-  provas_sociais: 'Provas Sociais',
-  planos: 'Planos',
-  faq: 'FAQ',
-  chamada_final: 'Chamada Final',
-  rodape: 'Rodapé',
-};
-
-/**
- * Retorna todos os IDs de modelos para uma seção
- */
-export function getModelIdsForSection(section: SectionKey): string[] {
-  return (SECTION_MODELS_BY_SECTION[section] || []).map(m => m.id);
-}
-
-/**
- * Retorna o primeiro modelo free de uma seção (fallback seguro)
+ * Retorna o primeiro modelo (default) de uma seção
  */
 export function getDefaultModel(section: SectionKey): SectionModel | undefined {
-  const list = SECTION_MODELS_BY_SECTION[section] || [];
-  return list.find(m => m.plan === 'free') || list[0];
+  return SECTION_MODELS_BY_SECTION[section]?.[0];
 }
+
+/**
+ * Filtra modelos por plano do usuário
+ */
+export function getModelsForPlan(section: SectionKey, userPlan: PlanLevelWithMaster): SectionModel[] {
+  const models = SECTION_MODELS_BY_SECTION[section] || [];
+  
+  if (userPlan === 'master') return models;
+  
+  const planHierarchy: Record<PlanLevel, number> = {
+    free: 0,
+    pro: 1,
+    premium: 2,
+  };
+  
+  const userLevel = planHierarchy[userPlan as PlanLevel] ?? 0;
+  
+  return models.filter(model => {
+    const modelLevel = planHierarchy[model.plan] ?? 0;
+    return modelLevel <= userLevel;
+  });
+}
+
+/**
+ * Mapeia variante/modelId para layout normalizado (modelo_a/b/c)
+ * Usado pelos componentes *Editable para determinar qual layout renderizar
+ */
+export function getLayoutVariant(modelIdOrVariant?: string): string {
+  if (!modelIdOrVariant) return 'modelo_a';
+  
+  // Se já é modelo_a/b/c, retorna direto
+  if (modelIdOrVariant.startsWith('modelo_')) {
+    return modelIdOrVariant;
+  }
+  
+  // Mapeamento de modelId para layout
+  const layoutMap: Record<string, string> = {
+    // Hero layouts
+    'hero_glass_aurora': 'modelo_a',
+    'hero_cinematic_video_spotlight': 'modelo_c',
+    'hero_ticket_launch': 'modelo_a',
+    'hero_split_visionos': 'modelo_a',
+    'hero_minimal_centered': 'modelo_b',
+    'hero_dark': 'modelo_a',
+    'hero_neon': 'modelo_a',
+    
+    // Menu - todos usam mesmo layout base
+    'menu_glass_minimal': 'modelo_a',
+    'menu_visionos_floating': 'modelo_a',
+    'menu_command_center': 'modelo_a',
+    'menu_dark': 'modelo_a',
+    'menu_neon': 'modelo_a',
+    'menu_minimal_preset': 'modelo_a',
+    
+    // Como Funciona
+    'como_funciona_timeline_glass': 'modelo_a',
+    'como_funciona_steps_cards_3d': 'modelo_a',
+    'como_funciona_horizontal_flow': 'modelo_a',
+    
+    // Para Quem É
+    'para_quem_e_chips_personas': 'modelo_a',
+    'para_quem_e_personas_cards': 'modelo_a',
+    'para_quem_e_matrix': 'modelo_a',
+    
+    // Benefícios
+    'beneficios_icon_grid_glass': 'modelo_a',
+    'beneficios_timeline_numerada': 'modelo_a',
+    'beneficios_showcase_3d': 'modelo_a',
+    'beneficios_dark': 'modelo_a',
+    'beneficios_neon': 'modelo_a',
+    'beneficios_minimal': 'modelo_a',
+    
+    // Provas Sociais
+    'provas_sociais_depoimentos_glass': 'modelo_a',
+    'provas_sociais_carrossel_premium': 'modelo_a',
+    'provas_sociais_stats_hybrid': 'modelo_a',
+    'provas_sociais_featured_single': 'modelo_a',
+    'provas_sociais_dark': 'modelo_a',
+    'provas_sociais_neon': 'modelo_a',
+    'provas_sociais_minimal': 'modelo_a',
+    
+    // Planos
+    'planos_glass_three_tiers': 'modelo_a',
+    'planos_cards_pill': 'modelo_a',
+    'planos_tabela_comparativa_modern': 'modelo_a',
+    'planos_dark': 'modelo_a',
+    'planos_neon': 'modelo_a',
+    'planos_minimal': 'modelo_a',
+    
+    // FAQ
+    'faq_accordion_glass': 'modelo_a',
+    'faq_twocolumn_modern': 'modelo_a',
+    'faq_with_cta_spotlight': 'modelo_a',
+    'faq_dark': 'modelo_a',
+    'faq_neon': 'modelo_a',
+    'faq_minimal': 'modelo_a',
+    
+    // Chamada Final
+    'chamada_final_simple_glass': 'modelo_a',
+    'chamada_final_two_ctas': 'modelo_a',
+    'chamada_final_ticket_glow': 'modelo_a',
+    'cta_dark': 'modelo_a',
+    'cta_neon': 'modelo_a',
+    'cta_minimal': 'modelo_a',
+    
+    // Rodapé
+    'rodape_minimal_soft': 'modelo_a',
+    'rodape_columns_glass': 'modelo_a',
+    'rodape_visionos_bar': 'modelo_a',
+    'rodape_dark': 'modelo_a',
+    'rodape_neon': 'modelo_a',
+    'rodape_minimal': 'modelo_a',
+  };
+  
+  return layoutMap[modelIdOrVariant] || 'modelo_a';
+}
+
+/**
+ * Retorna o stylePreset de um modelo
+ */
+export function getModelStylePreset(modelId?: string): StylePreset {
+  if (!modelId) return 'glass';
+  
+  const model = SECTION_MODELS.find(m => m.id === modelId);
+  return model?.stylePreset || 'glass';
+}
+
+// ============================================================
+// ESTATÍSTICAS DO CATÁLOGO v3.0
+// ============================================================
+// Total de modelos: 46
+// - Menu: 6 modelos
+// - Hero: 7 modelos
+// - Como Funciona: 3 modelos
+// - Para Quem É: 3 modelos
+// - Benefícios: 6 modelos
+// - Provas Sociais: 7 modelos
+// - Planos: 6 modelos
+// - FAQ: 6 modelos
+// - Chamada Final: 6 modelos
+// - Rodapé: 6 modelos
+// 
+// Todos os modelos são 100% editáveis via componentes *Editable genéricos
+// Variações visuais (dark/neon/minimal) aplicadas via stylePreset
+// ============================================================
